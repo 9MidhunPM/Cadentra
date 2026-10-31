@@ -3,12 +3,15 @@
 Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
 
 Role: Subscription Workflows
-Branch: feature/subscription-actions
-Reviewed main incorporated: 9136adf (Gate A, calendar/getter and billing rule helpers)
+Branch: feature/subscription-integration
+Reviewed main incorporated: 382fa2b69035e86bf928cb879349cc2d3440dc1b (PRs #11/#12 merged)
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
 Frozen policy verification: 2d61b8d51a45a2df13edb8a868950046ca887a76
+Named template plan labels: c046593f7e91b9fdd58f0b2d16dbd863988fdae5
+Lifecycle/availability boundary coverage: 3f759740b2196f3d8973ba5798214d85d18f3980
+Actual worker/action race verification: a9817959c5af35b06b5d1eecdf3279974423334a
 Prior getter implementation a40fe5a and calendar bdb1cf2 were integrated in PRs #6/#1.
 
 ## Delivered behavior
@@ -73,13 +76,18 @@ Dates above illustrate a request, not a production clock override.
 
 ## Checks actually run
 
-Python 3.12.13; reviewed migrations 0001/0002. The final owned suite uses the fresh
-isolated cadentra_subscriptions_verify_test database. The original workstream test
-DB is preserved for investigation of retained upstream race-test fixtures.
+Python 3.12.13; PostgreSQL 18.6; reviewed migrations 0001/0002. The current suite
+uses the separate cadentra_subscriptions_integration_test database. The original
+workstream test DB and earlier verification DB remain intact. Worker/race fixtures
+use independently migrated UUID schemas and remove only those newly created schemas.
 
-- backend/.venv/bin/python -m pytest backend/tests/subscriptions -q:
-  101 passed, 80 subtests passed. Includes 10 calendar, 25 billing-input,
-  39 workflow and 27 API cases. No missing-service skips.
+- backend/.venv/bin/python -m pytest backend/tests -q:
+  314 passed, 121 subtests passed in 59.25s on reviewed main 382fa2b plus this
+  integration slice. Includes all 124 subscription cases: 10 calendar,
+  25 billing-input, 52 workflow, 27 API, four actual worker and six race cases.
+  No missing-service skips. The 13 added guard cases cover future activation,
+  terminal-state edits, renewal date constraints, due pause/close guards,
+  requested-start availability endpoints and template-plan mismatch.
 - Real template copy/edit race uses independent connections and observes an
   actual PostgreSQL lock wait; cached template rows refresh coherently.
 - Policy tests cover disabled pause/close/renew for staff and an actual customer
@@ -90,6 +98,9 @@ DB is preserved for investigation of retained upstream race-test fixtures.
 - python3 scripts/check_pack.py and git diff --check: PASS.
 - Independent standards/specification/UI reviews found issues that were fixed;
   final focused reviews have no remaining blocker in the owned code.
+- Coordinator's earlier reviewed PR #11 integration: 280 backend tests,
+  121 subtests and 113 frontend tests pass, plus type/lint/build/Ruff/pack/security.
+  This combined run was performed by the coordinator, not rerun locally here.
 
 Native Chromium QA used the real API/PostgreSQL at http://127.0.0.1:5172 through
 its same-origin proxy (API 8002), at 1440x1000 and 390x844. Browser plugin was not
@@ -103,22 +114,31 @@ reports and screenshots stay outside the repository in /tmp/cadentra-agent2-qa.
 
 ## Remaining integration gates and honest limits
 
-The last broad backend run after billing PR #7 reported 176 passed/8 failed:
+The historical broad backend run after billing PR #7 reported 176 passed/8 failed:
 the obsolete coordinator-owned subscriptions501 assertion, committed financial
 race fixtures polluting global empty-table assumptions, and two owned assertions
 that were subsequently made before/after or baseline-relative. The final owned
-101-case suite passes in a clean DB. Root/Noel are fixing shared tests/fixture
-isolation; do not claim the full integrated suite is green until it is rerun.
+suite now passes 124 cases within the green full 314-case run in a separate DB.
+Root/Noel corrected the shared tests/fixture isolation.
 No global truncate, financial-data deletion or database drop was performed.
 
-T09-T13/T33/T34 have service/API evidence, with lifecycle catch-up tests using
-seeded durable outcomes. Still required before full-role goal completion:
-1. Reviewed merge and a green full integrated suite after the owner fixes.
-2. Actual billing-generated pause/catch-up/expiry outcomes and a real
-   billing-versus-action/line-edit race using the final recurring issuer.
-3. Joint T31 through invoice creation/payment/customer-portal reload, plus live
+T09-T13/T33/T34 now have actual service/API/worker/concurrency evidence. The
+integration test slice still requires coordinator review/merge. The remaining
+full-role verification is joint T31 through invoice creation/payment/customer-portal reload, plus live
    portal ownership isolation. The native staff journey proves only its portion.
 No deployment, external email delivery or hardware/performance claim is made.
+
+Actual integrated evidence: four real worker cases and six real billing/action
+lock-order cases pass against reviewed main 382fa2b plus this owned test slice.
+The worker cases create real subscriptions and invoices, retain historical PAUSED
+outcomes and defer closure until backlog is drained. Race tests use three distinct
+physical connections, observed PostgreSQL Lock/blocking-PID relationships and both
+lock orders for edit/pause/close; historical invoice snapshots/dates remain intact
+and only future cycles change. No alternate billing service is used. Each fixture
+migrates and removes only its own freshly created UUID schema in the separate
+integration test DB. Final standards/specification source reviews found no blocker.
+The final integrated run includes all ten cases; no seeded period outcome stands
+in for actual billing in these worker/race tests.
 
 ## Coordination and PR
 
@@ -128,13 +148,14 @@ account switching. Coordinator creates/reviews/merges PRs using existing auth.
 Keep atomic active-work commits within 30 minutes, incorporate reviewed main at
 least hourly, and report ready slices sooner. Preserve both earlier feature branches.
 
-Title: Implement persisted subscription workflows and staff screens
+Title: Verify subscription lifecycle boundaries and billing integration
 Target: main
-Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-actions
+Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-integration
 
-Description: Persist templates, copied quotations, lifecycle/policy actions and
-safe customer service boundaries, connected to real staff screens. Preserve
-quoted terms, original calendar anchors, due-period guards and immutable billing
-inputs. Add PostgreSQL/API, real template-concurrency and browser evidence.
-Owned tests pass; shared broad-suite fixture/test corrections and joint financial
-worker/portal end-to-end gates remain explicit integration dependencies.
+Description: Verify lifecycle/renewal/availability guards, actual bounded worker
+catch-up and both PostgreSQL lock orders for billing versus edit/pause/close.
+Assert durable pause history, closure ordering, full final-cycle pricing, retained
+debt, immutable past invoices and future-only changes. All 314 backend tests and
+121 subtests pass on reviewed main 382fa2b plus this test-only slice; Ruff, pack
+and whitespace checks pass. Joint paid-invoice/customer-portal browser verification
+remains with the reporting/billing owners and does not block these scoped tests.
