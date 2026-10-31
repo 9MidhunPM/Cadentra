@@ -1,11 +1,34 @@
 # Subscription acceptance cases
 
-Status: CALENDAR AND BILLING-INPUT TESTS PASS; LIFECYCLE/API/UI WORK REMAINS.
+Status: CALENDAR, BILLING INPUTS, LIFECYCLE AND API TESTS PASS;
+ACTUAL WORKER/ACTION RACES AND JOINT PORTAL JOURNEY REMAIN IN INTEGRATION.
 
 Gate A was released on reviewed main 5b78567. Set DATABASE_URL and
 TEST_DATABASE_URL to this workspace's isolated databases before database tests.
 
-## Executable PostgreSQL billing-input tests
+## Executable PostgreSQL tests
+
+Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions -q` from the
+repository root, with DATABASE_URL and TEST_DATABASE_URL set to the same isolated
+PostgreSQL `*_test` database with reviewed migrations applied. The current owned
+suite passes 114 tests and 80 subtests on reviewed main 13f2fef plus the boundary
+coverage in this slice: 10 calendar, 25 billing-input, 52 workflow and 27 API tests.
+
+Workflow/API tests exercise real templates, copied defaults, quoted price and
+policy snapshots, required states, exclusive deadlines, activation dates,
+requested-start availability, pause/resume/close/renewal and edit permissions.
+They cover ownership and safe projections, identical missing/foreign errors,
+actual customer policy denials, and a two-connection template copy/edit lock race.
+Due-cycle tests reject line edits, pause and close without changing records or
+audits. Renewal rejects both overlapping terms and backdated expired gaps.
+
+Some lifecycle tests deliberately seed durable billing outcomes to isolate the
+subscription service. They do not establish actual recurring-worker issuance or
+billing/action concurrency. Record those separate integration results before
+marking T13/T33/T34 complete. Native staff-browser evidence and remaining joint
+T31 payment/customer-portal checks are recorded in handoffs/thanushree-suresh.md.
+
+### Billing-input tests
 
 Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions/test_billable_inputs.py -q`
 from the repository root. The 25 cases use the real shared models, catalog helper
@@ -14,10 +37,8 @@ cursor/state errors, pause intervals, future product-tax membership, deep
 immutability, independent JSON materialization and absence of commit/outcome writes.
 They do not prove billing concurrency or lifecycle/API/browser behavior.
 
-These assets test Thanushree Suresh's pure calendar module and prepare the
-persisted subscription acceptance cases without initializing another application.
-Calendar and billing-input tests execute the actual services; lifecycle scenarios
-still require implementation and bindings. They add no dependency or runner configuration.
+These tests use the shared application, models and test infrastructure. They add
+no competing application, dependency or runner configuration.
 
 ## Executable calendar tests
 
@@ -46,18 +67,18 @@ command does not call application services or execute the lifecycle scenarios.
 - `period_cases`: eligible cycle bounds with an exclusive subscription end and
   optional early-close cap. Every case starts before its effective end.
 
-After Gate A, parameterize the actual subscription calendar service tests with
-these cases using the agreed snapshot type. Reuse the canonical cases from
-`contracts/billing-vectors.json`; the extra cases cover leap restoration, year
-rollover and truncated periods. Do not use `scripts/check_pack.py`'s calendar
-function as the production implementation under test.
+The actual calendar service tests consume these cases using the agreed snapshot
+type and retain the canonical cases from `contracts/billing-vectors.json`. The
+extra cases cover leap restoration, year rollover and truncated periods. The
+planning checker is not the production implementation under test.
 
 ## Lifecycle scenarios
 
 `lifecycle.feature` expresses API/service and integrated-worker acceptance cases
-in Gherkin. The `@pending_gate_a` tag labels the entire feature. There are no step
-bindings or Gherkin runner in this planning baseline: do not count these scenarios
-as executed, skipped by an application runner, or passing.
+in Gherkin. The `@unbound_specification` tag labels the entire feature. There are
+no step bindings or Gherkin runner: do not count its 71 expanded scenarios as
+executed, skipped by an application runner, or passing. Pytest evidence is
+reported independently above.
 
 | Coverage | Acceptance |
 |---|---|
@@ -74,13 +95,13 @@ as executed, skipped by an application runner, or passing.
 Additional scenarios cover minimum product quantity, requested-start availability
 boundaries, template line overrides and the lifecycle-specific edit matrix.
 
-## Binding the tests after Gate A
+## Remaining integration verification
 
 Use the integrated backend's actor, clock, models, sessions and test database
-fixtures. Bind calendar assertions to `get_cycle_bounds`, lifecycle assertions to
-`apply_action`/`process_lifecycle`, and permission assertions to the real API and
-portal services. Keep the browser journey in the feature-owned browser tests
-using Sherin Saji's harness. No duplicate business logic belongs in test steps.
+fixtures. Actual worker checks must call the shared worker and finalized billing
+issuer. Permission checks must exercise the real portal service. Keep the joint
+browser journey in Sherin Saji's shared harness. No duplicate business logic
+belongs in test steps.
 
 Exercise persisted actions and worker catch-up against disposable PostgreSQL.
 For billing-versus-edit/pause/close races, use two independent connections and a
@@ -88,8 +109,7 @@ barrier, then assert durable outcomes and snapshots. A sequential simulation is
 not concurrency evidence. Coordinate period/invoice assertions with Noel Biju;
 the subscription feature must not issue invoices itself.
 
-The coordinator's Gate A contracts are recorded in docs/05 and the named handoff,
-including exclusive quotation dates, start-based plan availability, template
-line precedence and allowed edits by state. These agreements do not establish
-that all lifecycle scenarios have passed. Bind the remaining cases to actual exports; do not implement
-alternate shared types or business rules in step code.
+Frozen contracts in docs/05 and the named handoff define exclusive quotation
+dates, start-based plan availability, template line precedence and allowed edits
+by state. Agreements alone do not establish passing acceptance cases. Use actual
+exports; do not introduce alternate shared types or business rules in test code.

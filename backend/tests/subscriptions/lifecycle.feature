@@ -1,8 +1,8 @@
-# Prepared acceptance cases only: no runner or step bindings exist before Gate A.
-# Bind to real services/PostgreSQL and the shared browser harness after Gate A.
+# Acceptance specification only: this file has no runner or step bindings.
+# Executable PostgreSQL tests cover the services separately; see README.md.
 # Sources: docs/05-API-CONTRACT.md, docs/06-DOMAIN-RULES.md, docs/10-TEST-PLAN.md.
-# Edge cases below reflect the coordinator-agreed planning contract; runtime bindings remain pending.
-@pending_gate_a
+# Do not count these scenarios as executed merely because related pytest cases pass.
+@unbound_specification
 Feature: Persisted, authorized subscription workflows
   Background:
     Given an isolated PostgreSQL test database and the injected Asia/Kolkata business date "2027-02-10"
