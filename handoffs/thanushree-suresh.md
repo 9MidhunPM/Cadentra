@@ -56,6 +56,18 @@ get_billable_inputs, snapshot_to_json, get_subscription_for_actor, apply_action,
 and process_lifecycle. Query/action facades return a raw safe detail dictionary;
 HTTP wrappers add the data envelope.
 
+Stable signatures (the implementations use the shared Session, Actor and UUID types):
+
+```python
+get_cycle_bounds(snapshot: CycleSnapshot, cycle_index: int) -> tuple[date, date] | None
+get_billable_inputs(db: Session, subscription_id: UUID, cycle_index: int) -> BillableInputs
+snapshot_to_json(value: Any) -> Any
+get_subscription_for_actor(db: Session, actor: Actor, subscription_id: UUID) -> dict
+apply_action(db: Session, actor: Actor, subscription_id: UUID, action: str,
+             payload: dict | None = None) -> dict
+process_lifecycle(db: Session, as_of: date) -> dict
+```
+
 - Billing owns the subscription lock and transaction, reuses durable period
   outcomes first, and requests only next_cycle_index. Inputs contain one BASE
   line (quantity 1) and already-adjusted product prices, UUID tax-ID tuples and
@@ -87,6 +99,7 @@ Python 3.12.13; PostgreSQL 18.6; reviewed migrations 0001/0002. The current suit
 uses the separate cadentra_subscriptions_integration_test database. The original
 workstream test DB and earlier verification DB remain intact. Worker/race fixtures
 use independently migrated UUID schemas and remove only those newly created schemas.
+No additional shared model or migration changes are required or requested.
 
 - backend/.venv/bin/python -m pytest backend/tests -q:
   361 passed, 121 subtests passed in 75.56s on reviewed portal 09d4a62 plus main
