@@ -70,7 +70,7 @@ The cap race creates one 4970.16 invoice and one undiscounted 5522.40 invoice, w
 
 ## Native/browser and mail evidence
 
-Own Python 3.12.13 environment and isolated PostgreSQL 18.6 application/test databases are verified at migration 0002. Docker is absent in this shell.
+Own Python 3.12.13 environment and isolated PostgreSQL 18.6 application/test databases are verified at migration 0002. A container daemon is unavailable in this shell.
 
 Actual Chromium desktop/mobile billing flow passed against the API and persistent ACTIVE-subscription fixture: create 18% product tax and 10% discount, run due, confirm, record the canonical two payments, reload Paid/zero balance, queue email, print and verify staff read-only rules. No relevant console/page errors, framework overlays or page overflow were observed. This is billing from a prepared ACTIVE fixture, not a claim that the full catalog/lifecycle journey ran.
 
@@ -89,6 +89,8 @@ T30 preparation found that the initial invoice list ignored overdue/customer URL
 The actual invoice outbox dispatch reported processed=1, accepted_by_smtp=1, failed=0. The message appeared in the native local Mailpit web inbox with the correct invoice number, total, paid amount and balance. Only fictional recipients were used in visual fixtures. Evidence/scripts/screenshots stay under /tmp, outside the public repository.
 
 User explicitly deferred external delivery until a real SMTP provider is configured. Real SMTP remains environment-configurable with no committed credentials. Midhun P M owns Compose/Mailpit/standalone-outbox wiring and password-reset verification. Native capture is verified; Docker Compose execution is not claimed.
+
+Daemon-free Compose validation subsequently passed with the official [Docker Compose 5.6.1 release](https://github.com/docker/compose/releases/tag/v5.6.1), downloaded only to /tmp and verified against its publisher-provided SHA-256. A copied configuration was rendered with private dummy environment values and an isolated Docker configuration directory; no real environment or credentials were read. It verified the pinned Mailpit image, loopback-only SMTP/web ports, API and worker SMTP mailpit:1025 wiring, startup dependency and absent relay configuration. The sanitized [configuration proof](../backend/tests/billing/evidence/compose-config-2026-10-31.json) records the source/configuration hashes and explicitly states that no daemon or containers were started. This complements the actual native SMTP/web-inbox evidence.
 
 ## Stable interfaces
 

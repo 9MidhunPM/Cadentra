@@ -1,0 +1,39 @@
+{
+  "pass": true,
+  "tool": "official Docker Compose standalone CLI",
+  "version": "5.6.1",
+  "release": "https://github.com/docker/compose/releases/tag/v5.6.1",
+  "binary_sha256": "47737f4236e6d3ccea7291995203f8f018058783b4c3a9469119811a0b5db8c0",
+  "compose_sha256": "d60864abc2b45d12d479bfad9ec11ae47f7b5cfc596088b7d98f81b0f132c4b9",
+  "services": [
+    "api",
+    "db",
+    "mailpit",
+    "migrate",
+    "worker"
+  ],
+  "mailpit_image": "axllent/mailpit:v1.33.0",
+  "mailpit_ports": [
+    {
+      "mode": "ingress",
+      "host_ip": "127.0.0.1",
+      "target": 8025,
+      "published": "8025",
+      "protocol": "tcp"
+    },
+    {
+      "mode": "ingress",
+      "host_ip": "127.0.0.1",
+      "target": 1025,
+      "published": "1025",
+      "protocol": "tcp"
+    }
+  ],
+  "api_smtp_host": "mailpit",
+  "worker_smtp_host": "mailpit",
+  "smtp_port": 1025,
+  "credentials": "temporary dummy values; no real environment read or published",
+  "daemon_used": false,
+  "containers_started": false,
+  "scope": "Compose parsing, interpolation and Mailpit wiring; native SMTP inbox proof is separate"
+}

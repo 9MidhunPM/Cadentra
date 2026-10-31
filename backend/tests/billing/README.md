@@ -45,3 +45,5 @@ The shared money helper uses Decimal ROUND_HALF_UP; tax and percentage inputs su
 [billing.feature](billing.feature) remains a readable acceptance specification, not an installed BDD runner. [CONCURRENCY.md](CONCURRENCY.md) records the real PostgreSQL protocol and joint lifecycle evidence. Gherkin text or sequential duplicate calls are not race-test evidence.
 
 Mailpit invoice SMTP/web-inbox capture is verified locally. External delivery is explicitly deferred by the user until real SMTP is configured. Credentials and private recipients never belong in fixtures or public evidence.
+
+The official Compose 5.6.1 client also parsed and rendered the actual development configuration without a daemon, using an isolated temporary project and dummy environment. The [sanitized proof](evidence/compose-config-2026-10-31.json) verifies Mailpit image/loopback ports and API/worker SMTP wiring. It is configuration evidence, separate from native inbox capture and from unexecuted container runtime checks.
