@@ -1,6 +1,6 @@
 # Billing verification
 
-Status: persisted financial API and atomic recurring issuer implemented; corrected billing UI is in coordinator review. Joint lifecycle/worker checks pass; the complete browser journey and final billing-page performance remain integration gates.
+Status: persisted financial API, atomic recurring issuer and corrected billing UI integrated through PR #13. Joint lifecycle/worker checks pass; the complete browser journey and final billing-page performance remain integration gates.
 
 ## Commands
 
@@ -30,10 +30,10 @@ Committed issuance fixtures create a generated UUID PostgreSQL schema, migrate i
 
 A clean generated-schema combined backend run passed 329 tests and 121 subtests after reviewed main beedbbd, including the actual joint worker and subscription-action races. Exact commands, source commit and verification are recorded in [Noel's handoff](../../../handoffs/noel-biju.md).
 
-The billing UI has 27 billing/payment-command tests and three picker tests
+The billing UI has 38 billing/payment-command/picker tests
 covering server money/pagination, roles, field errors, durable scoped payment
 recovery across navigation/reload, uncertain replay failures, paid recovery,
-rule writes across pending navigation, and stale reads. These tests use UI
+rule writes across pending navigation, URL drilldown/history filters and stale reads. These tests use UI
 fixtures; the separate live browser check used real persistent billing data.
 
 ## Domain boundary
