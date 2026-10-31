@@ -6,14 +6,29 @@ from decimal import Decimal
 from threading import Barrier, Lock
 
 import pytest
-from sqlalchemy import create_engine, event, func, select
+from sqlalchemy import create_engine, delete, event, func, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from test_invoices import payload, seed_invoice
 
 from app.core.errors import DomainError
-from app.models import Invoice, Payment, Subscription
+from app.models import (
+    AuditEvent,
+    BillingPeriod,
+    Customer,
+    DiscountRedemption,
+    EmailOutbox,
+    Invoice,
+    InvoiceLine,
+    InvoiceLineTax,
+    Payment,
+    Plan,
+    Subscription,
+    SubscriptionLine,
+    SubscriptionPause,
+    User,
+)
 from app.modules.billing import invoices
 
 
@@ -38,11 +53,32 @@ def committed_invoice():
     try:
         yield iid, actor, factory, engine
     finally:
-        # Preserve committed financial history, but prevent retained fake
-        # subscriptions from becoming unrelated work for later due-run tests.
+        # Only this fixture's fake UUID graph in an explicitly disposable test DB
+        # is removed. Application services never delete financial history.
         with factory.begin() as db:
             invoice = db.get(Invoice, iid)
-            db.get(Subscription, invoice.subscription_id).state = "CLOSED"
+            subscription = db.get(Subscription, invoice.subscription_id)
+            sid, cid, plan_id, period_id = (
+                subscription.id,
+                invoice.customer_id,
+                subscription.plan_id,
+                invoice.billing_period_id,
+            )
+            line_ids = select(InvoiceLine.id).where(InvoiceLine.invoice_id == iid)
+            db.execute(delete(AuditEvent).where(AuditEvent.actor_user_id == actor.id))
+            db.execute(delete(EmailOutbox).where(EmailOutbox.aggregate_id == iid))
+            db.execute(delete(Payment).where(Payment.invoice_id == iid))
+            db.execute(delete(DiscountRedemption).where(DiscountRedemption.invoice_id == iid))
+            db.execute(delete(InvoiceLineTax).where(InvoiceLineTax.invoice_line_id.in_(line_ids)))
+            db.execute(delete(InvoiceLine).where(InvoiceLine.invoice_id == iid))
+            db.execute(delete(Invoice).where(Invoice.id == iid))
+            db.execute(delete(BillingPeriod).where(BillingPeriod.id == period_id))
+            db.execute(delete(SubscriptionLine).where(SubscriptionLine.subscription_id == sid))
+            db.execute(delete(SubscriptionPause).where(SubscriptionPause.subscription_id == sid))
+            db.execute(delete(Subscription).where(Subscription.id == sid))
+            db.execute(delete(Plan).where(Plan.id == plan_id))
+            db.execute(delete(User).where(User.id == actor.id))
+            db.execute(delete(Customer).where(Customer.id == cid))
         engine.dispose()
 
 
