@@ -4,7 +4,7 @@ Status: SUBSCRIPTION ROLE ACCEPTANCE VERIFIED
 
 Role: Subscription Workflows
 Branch: feature/subscription-completion
-Reviewed main incorporated: ff18b1fa75e72edd5f9b61ff7b2064ba7da4270d
+Reviewed main incorporated: 00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -101,11 +101,15 @@ use independently migrated UUID schemas and remove only those newly created sche
   actual PostgreSQL lock wait; cached template rows refresh coherently.
 - Policy tests cover disabled pause/close/renew for staff and an actual customer
   owner, asserting conflict/no mutation/no misleading action hint.
-- Final portal-combined frontend run: all 156 tests passed across 13 files in
-  4.49s after consuming Sherin Saji's test-only 41ef6df correction. It waits for
+- Final portal-combined frontend run: all 164 tests passed across 13 files in
+  4.45s on main 00ffa99 plus Sherin Saji's test-only 41ef6df correction. It waits for
   the actual focus effect while retaining the privacy/title/navigation checks.
   The initial 155/156 run and focused pass were reported before this correction;
   neither was used to claim a green full suite.
+  The later main invoice URL-filter change affects InvoiceList only; invoice
+  detail, payments and subscription code are unchanged. Its additional unit
+  cases are included in this 164-case run. Later backend changes are README-only,
+  so the executed backend application/test sources retain the 361-case proof.
 - npm run typecheck, npm run lint, npm run build: PASS.
   The shared bundle-size advisory remains a warning, not a performance claim.
 - backend/.venv/bin/ruff check backend scripts/smoke.py: PASS.
@@ -225,7 +229,7 @@ Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscri
 
 Description: Record the final subscription interfaces, actual PostgreSQL worker
 and lock-race checks, staff desktop/mobile action QA and inspected paid-invoice/
-customer-portal journey. All 361 backend tests/121 subtests and 156 frontend tests
+customer-portal journey. All 361 backend tests/121 subtests and 164 frontend tests
 pass; typecheck, lint, build, Ruff and pack checks pass. Only owned evidence docs
 change beyond the separately owner-reviewed test-only correction. Preserve the
 explicit isolated-fixture cleanup and release/performance limits above.
