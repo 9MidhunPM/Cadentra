@@ -97,6 +97,47 @@ def _safe_snapshot(value):
     return value
 
 
+def _public_address(value):
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, dict):
+        return {}
+    fields = {
+        "line1",
+        "line2",
+        "address_line1",
+        "address_line2",
+        "address_line_1",
+        "address_line_2",
+        "street",
+        "street2",
+        "street_address",
+        "city",
+        "district",
+        "state",
+        "province",
+        "region",
+        "postal_code",
+        "postcode",
+        "zip",
+        "zip_code",
+        "country",
+        "country_code",
+    }
+    return {key: item for key, item in value.items() if key in fields and type(item) in (str, int)}
+
+
+def _public_party(snapshot, *, seller=False):
+    if not isinstance(snapshot, dict):
+        return {}
+    names = ("name",) if seller else ("display_name", "email", "company_name")
+    result = {key: snapshot[key] for key in names if isinstance(snapshot.get(key), str)}
+    for key in ("address", "billing_address") if seller else ("billing_address",):
+        if key in snapshot:
+            result[key] = _public_address(snapshot[key])
+    return result
+
+
 def _summary(invoice, period, paid):
     balance = money(invoice.total - paid)
     overdue = (
@@ -114,7 +155,9 @@ def _summary(invoice, period, paid):
         "number": invoice.number,
         "subscription_id": str(invoice.subscription_id),
         "customer_id": str(invoice.customer_id),
-        "customer_snapshot": {"display_name": invoice.customer_snapshot.get("display_name", "")},
+        "customer_snapshot": {
+            "display_name": _public_party(invoice.customer_snapshot).get("display_name", "")
+        },
         "status": invoice.status,
         "collection_status": collection,
         "currency": invoice.currency,
@@ -136,16 +179,8 @@ def get_invoice_for_actor(db: Session, actor: Actor, invoice_id: UUID) -> dict:
     invoice = _invoice(db, actor, invoice_id)
     period = db.get(BillingPeriod, invoice.billing_period_id)
     result = _summary(invoice, period, _paid(db, invoice.id))
-    result["customer_snapshot"] = {
-        key: invoice.customer_snapshot[key]
-        for key in ("display_name", "email", "company_name", "billing_address")
-        if key in invoice.customer_snapshot
-    }
-    result["seller_snapshot"] = {
-        key: invoice.seller_snapshot[key]
-        for key in ("name", "address", "billing_address")
-        if key in invoice.seller_snapshot
-    }
+    result["customer_snapshot"] = _public_party(invoice.customer_snapshot)
+    result["seller_snapshot"] = _public_party(invoice.seller_snapshot, seller=True)
     lines = db.scalars(
         select(InvoiceLine)
         .where(InvoiceLine.invoice_id == invoice.id)
