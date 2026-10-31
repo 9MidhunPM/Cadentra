@@ -18,7 +18,9 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool
 from sqlalchemy.schema import CreateSchema, DropSchema
 
+from app.core.auth import Actor
 from app.core.errors import DomainError
+from app.core.security import hash_password
 from app.models import (
     AuditEvent,
     BillingPeriod,
@@ -39,8 +41,11 @@ from app.models import (
     TaxRevisionProduct,
     TaxRule,
     TaxRuleRevision,
+    User,
 )
+from app.modules.billing import invoices, rules
 from app.modules.billing import issuance as service
+from app.modules.billing.rule_schemas import TaxPatch
 from app.modules.catalog.service import get_plan_snapshot
 
 
@@ -287,8 +292,43 @@ def test_actual_issue_snapshot_replay_and_creation_dates(issuance_db, monkeypatc
         assert tax.rate_snapshot == Decimal("18.0000") and tax.amount == Decimal("758.16")
         assert tax.tax_rule_id is not None and tax.tax_rule_revision_id is not None
         snapshot = invoice.calculation_snapshot
+        tax_rule_id, original_tax_revision_id, tax_row_id = (
+            tax.tax_rule_id,
+            tax.tax_rule_revision_id,
+            tax.id,
+        )
+        operator = User(
+            id=uuid4(),
+            display_name="Snapshot operator",
+            normalized_email=f"{uuid4()}@example.invalid",
+            password_hash=hash_password("SnapshotTestAb!"),
+            role="ADMIN",
+            active=True,
+        )
+        db.add(operator)
+        actor = Actor(operator.id, "ADMIN")
         db.get(Product, data["product"]).sales_price = Decimal("9999.00")
         db.get(Customer, data["customer"]).display_name = "Changed later"
+    monkeypatch.setattr(rules, "get_clock", lambda: FixedClock(date(2026, 10, 31)))
+    with factory() as db:
+        revised = rules.write_rule(
+            db,
+            actor,
+            TaxPatch(effective_from=date(2026, 11, 1), rate_percent="21.0000", name="Later rate"),
+            True,
+            tax_rule_id,
+        )
+    assert UUID(revised["revision_id"]) != original_tax_revision_id
+    with factory() as db:
+        assert rules.get_applicable_taxes(db, (tax_rule_id,), date(2026, 11, 2))[
+            0
+        ].rate_percent == Decimal("21.0000")
+        assert db.get(TaxRuleRevision, original_tax_revision_id).effective_until == date(
+            2026, 11, 1
+        )
+    # Replay and confirmation occur after the later rate has become applicable.
+    monkeypatch.setattr(service, "get_clock", lambda: FixedClock(date(2026, 11, 2)))
+    monkeypatch.setattr(invoices, "get_clock", lambda: FixedClock(date(2026, 11, 2)))
     dto = service._inputs_service()
 
     def forbidden_getter(*args):
@@ -308,6 +348,85 @@ def test_actual_issue_snapshot_replay_and_creation_dates(issuance_db, monkeypatc
                 select(func.count())
                 .select_from(DiscountRedemption)
                 .where(DiscountRedemption.invoice_id == invoice.id)
+            )
+            == 1
+        )
+        stored_tax = db.get(InvoiceLineTax, tax_row_id)
+        assert stored_tax.tax_rule_revision_id == original_tax_revision_id
+        assert stored_tax.rate_snapshot == Decimal("18.0000")
+        assert stored_tax.amount == Decimal("758.16")
+    with factory() as db:
+        confirmed = invoices.confirm_invoice(db, actor, result.invoice_id)
+    assert confirmed["status"] == "CONFIRMED"
+    with factory() as db:
+        detail = invoices.get_invoice_for_actor(db, actor, result.invoice_id)
+        printable = invoices.render_invoice_for_actor(db, actor, result.invoice_id)
+        assert detail["invoice_date"] == "2026-10-31" and detail["due_date"] == "2026-11-07"
+        assert detail["total"] == "4970.16" and detail["tax_total"] == "758.16"
+        assert detail["calculation_snapshot"] == snapshot
+        product_line = next(
+            row for row in detail["lines"] if row["product_id"] == str(data["product"])
+        )
+        assert product_line["taxes"] == [
+            {"name": "Illustrative 18 percent", "rate_percent": "18.0000", "amount": "758.16"}
+        ]
+        assert "Issuance fixture" in printable and "Changed later" not in printable
+        assert "4970.16" in printable and "758.16" in printable
+        assert "2026-10-31" in printable and "2026-11-07" in printable
+        stored_tax = db.get(InvoiceLineTax, tax_row_id)
+        assert stored_tax.tax_rule_revision_id == original_tax_revision_id
+        assert stored_tax.rate_snapshot == Decimal("18.0000")
+
+
+def test_cancelled_issued_period_never_reinvoices_or_restores_discount(issuance_db):
+    factory, seed, _ = issuance_db
+    data = seed(cap=1)
+    issued = service.issue_due_period(factory, data["subscription"], 0, date(2026, 10, 31))
+    with factory.begin() as db:
+        operator = User(
+            id=uuid4(),
+            display_name="Cancellation operator",
+            normalized_email=f"{uuid4()}@example.invalid",
+            password_hash=hash_password("CancelTestAb!"),
+            role="ADMIN",
+            active=True,
+        )
+        db.add(operator)
+        actor = Actor(operator.id, "ADMIN")
+    with factory() as db:
+        cancelled = invoices.cancel_invoice(
+            db, actor, issued.invoice_id, "Customer requested closure"
+        )
+    assert cancelled["status"] == "CANCELLED"
+    replay = service.issue_due_period(factory, data["subscription"], 0, date(2026, 10, 31))
+    assert replay.disposition == "EXISTING"
+    assert (replay.period_id, replay.invoice_id) == (issued.period_id, issued.invoice_id)
+    assert service.run_due(factory, date(2026, 10, 31), 1).processed_periods == 0
+    with factory() as db:
+        assert db.get(Invoice, issued.invoice_id).status == "CANCELLED"
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(Invoice)
+                .where(Invoice.subscription_id == data["subscription"])
+            )
+            == 1
+        )
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(BillingPeriod)
+                .where(BillingPeriod.subscription_id == data["subscription"])
+            )
+            == 1
+        )
+        assert db.get(Subscription, data["subscription"]).next_cycle_index == 1
+        assert db.get(DiscountRule, data["rule"]).uses_count == 1
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(DiscountRedemption)
+                .where(DiscountRedemption.invoice_id == issued.invoice_id)
             )
             == 1
         )
