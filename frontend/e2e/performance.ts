@@ -6,6 +6,7 @@ import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { checkedOrigin, PERFORMANCE_INGRESS_HEADERS, digest, readManifest, runtimeInputs, tmpPath, type NativeEvidence } from './performance-server'
+import { anonymousSession401, confirmedAbort, requiredBrowserResponse, validateApiResponse, type ApiExpectation } from './performance-response'
 
 type Json = Record<string, unknown>
 type Storage = Awaited<ReturnType<BrowserContext['storageState']>>
@@ -36,6 +37,7 @@ const metadataPath = tmpPath(process.env.CADENTRA_PERFORMANCE_SERVER_METADATA, '
 const native: NativeEvidence = JSON.parse(readFileSync(metadataPath, 'utf8'))
 if (native.test_only !== true || native.serving !== 'native-nginx-static' || native.origin !== origin
   || native.api_origin !== 'http://127.0.0.1:8004' || native.database !== fixture.database || native.schema !== fixture.schema || native.dataset_run !== fixture.run
+  || native.api_readiness?.status !== 'ready' || native.api_readiness?.migration !== '0002'
   || native.production_config !== 'nginx.production.conf' || native.api_environment !== 'test'
   || native.ingress_fixture?.original_peer !== '10.0.1.20' || native.ingress_fixture?.native_peer !== '127.0.0.1'
   || native.ingress_fixture?.cf_connecting_ip !== PERFORMANCE_INGRESS_HEADERS['CF-Connecting-IP']
@@ -65,11 +67,11 @@ const report: Json = existing || {
   counts: fixture.counts, financial_reconciliation: fixture.financial_reconciliation,
   method: { warm: '20 document navigations/interactions in one context after one excluded route warmup',
     cold: '5 fresh browser contexts with empty browser cache; valid actor cookies reused; server/OS/PostgreSQL caches remain warm',
-    browser_ms: 'Navigation start through validated required API bodies, all observed API completion, exact visible data, fonts and two frames; includes initial navigation for filters/forms',
-    api_ms: 'Independent same-origin GET and complete response body after each browser sample; expected status retained per endpoint',
+    browser_ms: 'Navigation start through validated required business API bodies, observed API completion, exact visible data, fonts and two frames; anonymous session401 uses headers plus render readiness. Includes initial navigation for filters/forms; homepage scopes also decode their images and await finite visible-section animations.',
+    api_ms: 'Independent same-origin GET including complete response-body/status/payload validation after each browser sample; expected status retained per endpoint',
     percentiles: 'Nearest rank; fresh-context n=5 p95 is maximum; sequential local measurements, not concurrent load',
     authentication: 'One real login per fixture actor cached only inside its mode0600 manifest; public forms anonymous; no repeated login/reset mutations',
-    anonymous_401: 'Allowed only for /api/v1/auth/session on explicitly anonymous auth-form cases',
+    anonymous_401: 'Browser-only exception for same-origin GET /api/v1/auth/session401 on anonymous cases: validate status plus rendered page, because the session provider can abort its own401 body. The interrupted earlier run supports this cause from source, not an exact saved abort trace. Independent API GET still validates complete401 JSON. Other required response bodies remain strict.',
     reset: 'Public invalid sentinel renders form only; no real token or reset mutation',
     docker_verified: false },
   coverage_limits: [
@@ -77,12 +79,18 @@ const report: Json = existing || {
     'Only authentication setup creates sessions. No financial, lifecycle, catalog, rule or account mutation latency is measured.',
     'Reset uses a public invalid form sentinel; no real token, reset mutation or email delivery is verified.',
     'Catalog/configuration tables have their recorded small fixture counts; these are not5000-product stress tests.',
+    'Public homepage previews are explicitly illustrative. Only content/image/finite-animation readiness and tab interactions are measured; preview amounts are not persisted financial evidence.',
+    'CycleGuard EMAIL_FAILED coverage is empty-state only for this unchanged fixture; no failed-email record, resend, SMTP acceptance or delivery is tested.',
     'Strict production NGINX uses a native loopback trusted-peer adaptation and public fixture CF header; API remains APP_ENV=test. This does not verify real Traefik/Cloudflare, production API-peer enforcement, Docker or deployment.',
   ],
   routes: {}, gaps: [], captures: [],
 }
 const results = report.routes as Record<string, Json>
 const save = () => {
+  report.gaps = routes.filter(route => results[route.key]?.status !== 'measured').map(route => ({
+    key: route.key, status: results[route.key]?.status || 'not-started', samples: (results[route.key]?.samples as unknown[] | undefined)?.length ?? 0,
+  }))
+  report.mobile_capture_status = (report.captures as Json[]).length ? 'captured' : 'pending'
   writeFileSync(`${artifact}.tmp`, JSON.stringify(report, null, 2))
   renameSync(`${artifact}.tmp`, artifact)
 }
@@ -104,7 +112,7 @@ const amount = (key: string) => {
 // Formatting expected server decimal strings is presentation, never financial arithmetic.
 const money = (value: string) => `INR ${new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2 }).format(Number(value))}`
 const apiPath = (path: string) => `/api/v1${path}`
-type Api = { path: string; status?: number; html?: boolean; validate: (payload: Json | string) => void }
+type Api = ApiExpectation<Json | string>
 type Route = { key: string; actor: ActorKey; path: string; scope: string; apis: Api[]; rawDocument?: boolean;
   enter?: (page: Page) => Promise<void>; ready: (page: Page) => Promise<void> }
 const object = (value: Json | string) => {
@@ -246,8 +254,23 @@ const productDetail = detail(`/products/${fixture.refs.product.id}`, fixture.ref
 async function option(page: Page, label: string, id: string) {
   await expect(page.getByLabel(label, { exact: true }).locator(`option[value="${id}"]`)).toHaveCount(1)
 }
+const authRoutes: Route[] = []
+for (const auth of [
+  { key: 'signin', path: '/sign-in', heading: 'Welcome back.', labels: ['Email address', 'Password'], button: 'Sign in' },
+  { key: 'signup', path: '/sign-up', heading: 'Make yourself at home.', labels: ['Your name', 'Email address', 'Password'], button: 'Create account' },
+  { key: 'forgot', path: '/forgot-password', heading: 'Find your way back.', labels: ['Email address'], button: 'Request reset link' },
+  { key: 'reset', path: '/reset-password?token=fixture-form-only-invalid', heading: 'A fresh start.', labels: ['New password', 'Confirm new password'], button: 'Save new password' },
+]) {
+  authRoutes.push({ key: `auth-${auth.key}-form`, actor: 'anonymous', path: auth.path,
+    scope: 'Anonymous form-render performance only; normal session401 explicit; no login/signup/reset mutation or delivery claim',
+    apis: [], ready: async page => { await heading(page, auth.heading)
+      for (const label of auth.labels) await expect(page.getByLabel(label, { exact: true })).toBeVisible()
+      await expect(page.getByRole('button', { name: auth.button, exact: true })).toBeEnabled()
+    } })
+}
 const routes: Route[] = [
-  ...['/overview', '/'].map(path => ({ key: path === '/' ? 'staff-landing' : 'overview', actor: 'staff' as const, path,
+  ...authRoutes,
+  ...['/overview', '/app'].map(path => ({ key: path === '/app' ? 'staff-landing' : 'overview', actor: 'staff' as const, path,
     scope: 'Complete dashboard with summary/chart/five real overdue invoices', apis: [summary(), series(), overdue()], ready: (page: Page) => overview(page) })),
   ...[false, true].map(customer => ({ key: customer ? 'overview-customer-date-filter' : 'overview-date-filter', actor: 'staff' as const,
     path: '/overview', scope: 'Navigation plus visible date/customer filter completion; exact stored amounts and overdue table',
@@ -327,7 +350,7 @@ for (const pageNumber of [1, 2]) {
   }
 }
 routes.push(
-  { key: 'customer-landing', actor: 'customer_a', path: '/', scope: 'Real customer landing redirect to own subscriptions',
+  { key: 'customer-landing', actor: 'customer_a', path: '/app', scope: 'Real customer landing redirect to own subscriptions',
     apis: [list('/portal/subscriptions?page=1&page_size=25', count('customer_active'))], ready: async page => {
       await heading(page, 'My subscriptions'); await rows(page, 'My subscriptions', 25, count('customer_active'))
     } },
@@ -448,19 +471,6 @@ routes.push({ key: 'admin-staff-settings', actor: 'admin', path: '/settings/staf
     for (const label of ['Staff name', 'Staff email', 'Temporary password']) await expect(page.getByLabel(label, { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Create staff account', exact: true })).toBeEnabled()
   } })
-for (const auth of [
-  { key: 'signin', path: '/sign-in', heading: 'Welcome back.', labels: ['Email address', 'Password'], button: 'Sign in' },
-  { key: 'signup', path: '/sign-up', heading: 'Make yourself at home.', labels: ['Your name', 'Email address', 'Password'], button: 'Create account' },
-  { key: 'forgot', path: '/forgot-password', heading: 'Find your way back.', labels: ['Email address'], button: 'Request reset link' },
-  { key: 'reset', path: '/reset-password?token=fixture-form-only-invalid', heading: 'A fresh start.', labels: ['New password', 'Confirm new password'], button: 'Save new password' },
-]) {
-  routes.push({ key: `auth-${auth.key}-form`, actor: 'anonymous', path: auth.path,
-    scope: 'Anonymous form-render performance only; normal session401 explicit; no login/signup/reset mutation or delivery claim',
-    apis: [], ready: async page => { await heading(page, auth.heading)
-      for (const label of auth.labels) await expect(page.getByLabel(label, { exact: true })).toBeVisible()
-      await expect(page.getByRole('button', { name: auth.button, exact: true })).toBeEnabled()
-    } })
-}
 routes.push({ key: 'overview-customer-overdue-drilldown', actor: 'staff', path: '/overview',
   scope: 'Applied customer is preserved in the real dashboard overdue drilldown; current-state debt remains independent of range',
   apis: [list(`/invoices?page=1&page_size=25&overdue=true&customer_id=${fixture.customers[0]}`, count('customer_overdue')), customerList()],
@@ -477,6 +487,144 @@ routes.push({ key: 'overview-chart-data', actor: 'staff', path: '/overview',
   ready: async page => { await expect(page.getByRole('region', { name: 'Chart data', exact: true }).locator('tbody tr')).toHaveCount(2)
     await expect(page.getByRole('button', { name: 'Hide chart data', exact: true })).toBeVisible() } })
 
+async function decodedImage(page: Page, selector: string) {
+  await page.locator(selector).evaluate(async element => {
+    if (!(element instanceof HTMLImageElement)) throw new Error('Expected a real homepage image')
+    await element.decode()
+    if (!element.complete || element.naturalWidth === 0) throw new Error('Homepage image did not decode')
+  })
+}
+async function settledHomeSection(page: Page, selector: string) {
+  await page.locator(selector).evaluate(async element => {
+    await document.fonts.ready
+    // Let intersection-triggered reveals start before inspecting their animations.
+    for (let pass = 0; pass < 4; pass++) {
+      await new Promise<void>(done => requestAnimationFrame(() => requestAnimationFrame(() => done())))
+      const finite = element.getAnimations({ subtree: true }).filter(animation =>
+        animation.playState !== 'finished' && animation.playState !== 'idle'
+        && Number.isFinite(Number(animation.effect?.getComputedTiming().endTime ?? Infinity)))
+      if (!finite.length) return
+      await Promise.all(finite.map(animation => animation.finished))
+    }
+    throw new Error('Finite homepage animations did not settle')
+  })
+}
+routes.push({ key: 'public-home-hero', actor: 'anonymous', path: '/',
+  scope: 'Public hero with decoded responsive artwork and completed finite entrance animations; illustrative records are not financial evidence', apis: [],
+  ready: async page => {
+    await expect(page.getByRole('heading', { level: 1, name: /Every cycle\.\s*Under control\./ })).toBeVisible()
+    await expect(page.locator('.home-header').getByRole('link', { name: 'Open app', exact: true })).toHaveAttribute('href', '/app')
+    await expect(page.getByText('Illustrative workspace · INR', { exact: true })).toBeVisible()
+    await decodedImage(page, '.home-hero-art'); await settledHomeSection(page, '.home-hero')
+  } })
+routes.push({ key: 'public-home-workflow-tabs', actor: 'anonymous', path: '/',
+  scope: 'Navigation and all four illustrative workflow-tab states, including finite product-section reveal/transition completion; no saved-money assertions', apis: [],
+  enter: async page => {
+    await page.goto('/')
+    const tabs = page.getByRole('tablist', { name: 'Explore the subscription workflow' })
+    await tabs.scrollIntoViewIfNeeded()
+    for (const [label, title] of [['Plan', 'Set the terms. Keep the flexibility.'], ['Quote', 'Start with a clear agreement.'],
+      ['Bill', 'Make every amount explainable.'], ['Renew', 'Let the next chapter follow naturally.']]) {
+      const tab = tabs.getByRole('tab', { name: label, exact: true })
+      await tab.click(); await expect(tab).toHaveAttribute('aria-selected', 'true')
+      await heading(page, title)
+      await expect(page.getByRole('tabpanel', { name: label, exact: true })).toBeVisible()
+      await settledHomeSection(page, '.home-product')
+    }
+  }, ready: async page => {
+    await expect(page.getByRole('tabpanel', { name: 'Renew', exact: true })).toBeVisible()
+    await expect(page.getByText('Product previews use illustrative records.', { exact: false })).toBeVisible()
+  } })
+routes.push({ key: 'public-home-lazy-cycle-art', actor: 'anonymous', path: '/',
+  scope: 'Navigation/scroll to public CycleGuard preview, decoded lazy responsive cycle artwork, and finite section reveals; separate from hero readiness', apis: [],
+  enter: async page => { await page.goto('/'); await page.locator('.home-cycleguard').scrollIntoViewIfNeeded() },
+  ready: async page => {
+    await expect(page.getByRole('heading', { name: /Know what needs\s*your attention\./ })).toBeVisible()
+    await decodedImage(page, '.home-cycle-visual img'); await settledHomeSection(page, '.home-cycleguard')
+    await expect(page.getByText('Illustrative signals · open the app for actual records', { exact: true })).toBeVisible()
+  } })
+
+type QueueKind = 'OVERDUE' | 'BILLING_DUE' | 'EMAIL_FAILED'
+const queueLabels = { OVERDUE: 'Overdue invoices', BILLING_DUE: 'Billing due', EMAIL_FAILED: 'Invoice email failures' }
+function queueTotal(kind: QueueKind, customer = false) {
+  return kind === 'EMAIL_FAILED' ? 0 : count(kind === 'OVERDUE' ? customer ? 'customer_overdue' : 'overdue' : customer ? 'customer_active' : 'active')
+}
+function queueApi(kind: QueueKind, pageNumber = 1, customer = false): Api {
+  return { path: apiPath(`/reports/cycleguard?kind=${kind}&page=${pageNumber}&page_size=25${customer ? `&customer_id=${fixture.customers[0]}` : ''}`), validate: value => {
+    const queue = object(value), items = queue.items as Json[]
+    expect(queue.total).toBe(queueTotal(kind, customer)); expect(queue.page).toBe(pageNumber)
+    expect(queue.page_size).toBe(25); expect(queue.as_of).toBe('2026-11-02')
+    expect(Array.isArray(items)).toBe(true); expect(items.length).toBe(kind === 'EMAIL_FAILED' ? 0 : 25)
+    expect(new Set(items.map(item => item.id)).size).toBe(items.length)
+    for (const item of items) {
+      expect(item.kind).toBe(kind)
+      expect(item.record_id).toMatch(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/)
+      expect(item.id).toBe(`${kind}:${item.record_id}`)
+      expect(item.record_type).toBe(kind === 'OVERDUE' ? 'invoice' : 'subscription')
+      expect(typeof item.label).toBe('string'); expect(String(item.label).length).toBeGreaterThan(0)
+      expect(item.occurred_on).toMatch(/^2026-\d{2}-\d{2}$/)
+      expect(item.reason).toBe(kind === 'OVERDUE' ? 'Confirmed invoice has an unpaid balance after its due date.' : 'Scheduled billing period is due and has no recorded outcome.')
+      expect(item.amount).toBe(kind === 'OVERDUE' ? '50.00' : null)
+      expect(item.currency).toBe(kind === 'OVERDUE' ? 'INR' : null)
+    }
+  } }
+}
+async function queueReady(page: Page, kind: QueueKind, customer = false, pageNumber = 1) {
+  await heading(page, 'CycleGuard')
+  await expect(page.getByRole('tab', { name: queueLabels[kind], exact: true })).toHaveAttribute('aria-selected', 'true')
+  if (kind === 'EMAIL_FAILED') await heading(page, 'No invoice email failures found')
+  else {
+    await rows(page, queueLabels[kind], 25, queueTotal(kind, customer))
+    await expect(page.getByRole('navigation', { name: `${queueLabels[kind]} pagination`, exact: true })).toContainText(`Page ${pageNumber} of`)
+    await expect(table(page, queueLabels[kind]).locator('tbody tr').first()).toContainText(kind === 'OVERDUE' ? money('50.00') : 'Not applicable')
+  }
+}
+for (const kind of ['OVERDUE', 'BILLING_DUE'] as const) {
+  for (const pageNumber of [1, 2]) routes.push({ key: `cycleguard-${kind.toLowerCase()}-page-${pageNumber}`, actor: 'staff',
+    path: `/cycleguard?kind=${kind}&page=${pageNumber}`, scope: 'Real paginated list-envelope queue with exact fixed-fixture total and record reasons',
+    apis: [queueApi(kind, pageNumber)], ready: page => queueReady(page, kind, false, pageNumber) })
+  routes.push({ key: `cycleguard-${kind.toLowerCase()}-customer-filter`, actor: 'staff', path: `/cycleguard?kind=${kind}`,
+    scope: 'Visible searched-customer filter on the real current-state queue; no date or financial mutation',
+    apis: [queueApi(kind, 1, true), customerList(25, customerName)], enter: async page => {
+      await page.goto(`/cycleguard?kind=${kind}`); await queueReady(page, kind)
+      await page.getByRole('button', { name: 'All customers', exact: true }).click()
+      await page.getByRole('combobox', { name: 'Find a customer' }).fill(customerName)
+      await page.getByRole('option').filter({ hasText: customerName }).click()
+    }, ready: page => queueReady(page, kind, true) })
+  routes.push({ key: `cycleguard-${kind.toLowerCase()}-refresh`, actor: 'staff', path: `/cycleguard?kind=${kind}`,
+    scope: 'Explicit refresh must complete another full real queue response; no run-due or resend action', apis: [queueApi(kind)], enter: async page => {
+      await page.goto(`/cycleguard?kind=${kind}`); await queueReady(page, kind)
+      const refreshed = page.waitForResponse(response => requiredBrowserResponse(response, queueApi(kind), origin, false))
+      await page.getByRole('button', { name: 'Refresh queue', exact: true }).click(); await refreshed
+    }, ready: page => queueReady(page, kind) })
+  routes.push({ key: `cycleguard-${kind.toLowerCase()}-source-link`, actor: 'staff', path: `/cycleguard?kind=${kind}`,
+    scope: 'Navigate the first real returned source link and validate its full DTO/render; independent API timings cover session/queue, browser time also includes source detail',
+    apis: [queueApi(kind)], enter: async page => {
+      const loaded = page.waitForResponse(response => requiredBrowserResponse(response, queueApi(kind), origin, false))
+      await page.goto(`/cycleguard?kind=${kind}`)
+      const queue = await (await loaded).json() as { items: Json[] }
+      await queueReady(page, kind)
+      const source = queue.items[0], recordId = String(source.record_id)
+      const path = `/${kind === 'OVERDUE' ? 'invoices' : 'subscriptions'}/${recordId}`
+      const sourceApi = detail(path, recordId, row => {
+        expect(row.number).toBe(source.label)
+        expect((row.lines as Json[]).length).toBe(kind === 'OVERDUE' ? count('invoice_lines_count') : 1)
+        if (kind === 'OVERDUE') { expect(row.status).toBe('CONFIRMED'); expect(row.balance_due).toBe(source.amount); expect((row.payments as Json[]).length).toBe(1) }
+        else { expect(row.state).toBe('ACTIVE'); expect(row.recurring_subtotal).toBe('100.00'); expect((row.invoice_references as Json[]).length).toBe(4) }
+      })
+      const opened = page.waitForResponse(response => requiredBrowserResponse(response, sourceApi, origin, false))
+      const link = table(page, queueLabels[kind]).locator('tbody tr').first().getByRole('link')
+      await expect(link).toHaveAttribute('href', `${kind === 'OVERDUE' ? '/billing' : ''}${path}`)
+      await link.click(); await opened; await heading(page, String(source.label))
+      if (kind === 'OVERDUE') await expect(page.locator('.billing-totals').filter({ has: page.getByText('Balance due', { exact: true }) })).toContainText(money(String(source.amount)))
+    }, ready: page => heading(page, kind === 'OVERDUE' ? 'Stored invoice lines' : 'Agreed product lines') })
+}
+routes.push({ key: 'cycleguard-email-failed-empty', actor: 'staff', path: '/cycleguard?kind=EMAIL_FAILED',
+  scope: 'Actual EMAIL_FAILED list-envelope zero total and honest empty state in unchanged fixture; no fabricated failed messages or retry/delivery claim',
+  apis: [queueApi('EMAIL_FAILED')], ready: page => queueReady(page, 'EMAIL_FAILED') })
+
+if (routes.length !== 75 || new Set(routes.map(route => route.key)).size !== routes.length) throw new Error('Expected 75 unique final T30 route cases')
+
 async function contextFor(browser: Browser, actor: ActorKey, mobile = false) {
   const device = mobile ? devices['iPhone 13'] : { viewport: { width: 1497, height: 1049 } }
   const credentials = actor === 'anonymous' ? undefined : fixture.actors[actor]
@@ -492,7 +640,6 @@ async function contextFor(browser: Browser, actor: ActorKey, mobile = false) {
     return context
   } catch (error) { await context.close(); throw error }
 }
-function confirmedAbort(text: string) { return /ERR_ABORTED|cancelled|canceled|NS_BINDING_ABORTED/i.test(text) }
 async function frames(page: Page) {
   await page.evaluate(async () => {
     await document.fonts.ready
@@ -516,32 +663,23 @@ async function sample(context: BrowserContext, route: Route, capture?: string) {
         if (!confirmedAbort(failure)) protocolErrors.push(`${pathname}: ${failure}`)
         return
       }
+      // Anonymous state is established by these headers; the app can abort
+      // its session body. All other observed API responses still finish below.
+      if (anonymousSession401(response, route.actor === 'anonymous', origin)) return
       const failure = await response.finished()
       if (failure) {
         if (!confirmedAbort(request.failure()?.errorText || '')) protocolErrors.push(`${pathname}: incomplete response`)
         return
       }
-      const allowedAnonymous = route.actor === 'anonymous' && pathname === '/api/v1/auth/session' && response.status() === 401
-      if (response.status() !== 200 && !allowedAnonymous) protocolErrors.push(`${pathname}: HTTP${response.status()}`)
+      if (response.status() !== 200) protocolErrors.push(`${pathname}: HTTP${response.status()}`)
     })().catch(() => { protocolErrors.push(`${pathname}: protocol observation failed`) })
     pending.push(observed)
   })
   const apis = [...(route.rawDocument ? [] : [sessionApi(route.actor)]), ...route.apis]
   const start = performance.now()
   try {
-    const required = Promise.all(apis.map(api => page.waitForResponse(async response => {
-      const actual = new URL(response.url()), wanted = new URL(api.path, origin)
-      if (response.request().method() !== 'GET' || actual.pathname !== wanted.pathname
-        || ![...wanted.searchParams].every(([key, value]) => actual.searchParams.get(key) === value)) return false
-      const failure = await response.finished()
-      if (failure) {
-        if (confirmedAbort(response.request().failure()?.errorText || '')) return false
-        throw failure
-      }
-      expect(response.status(), `Required API ${wanted.pathname}`).toBe(api.status ?? 200)
-      api.validate(api.html ? await response.text() : await response.json())
-      return true
-    })))
+    const required = Promise.all(apis.map(api => page.waitForResponse(response =>
+      requiredBrowserResponse(response, api, origin, route.actor === 'anonymous'))))
     await Promise.all([required, route.enter ? route.enter(page) : page.goto(route.path)])
     await route.ready(page)
     await expect(page.locator('.ui-error, .feature-placeholder, vite-error-overlay')).toHaveCount(0)
@@ -562,10 +700,8 @@ async function sample(context: BrowserContext, route: Route, capture?: string) {
     for (const api of apis) {
       const before = performance.now()
       const response = await context.request.get(api.path, { headers: PERFORMANCE_INGRESS_HEADERS })
-      const value = api.html ? await response.text() : await response.json()
+      await validateApiResponse(response, api)
       const elapsed = performance.now() - before
-      expect(response.status()).toBe(api.status ?? 200)
-      api.validate(value)
       measurements[api.path] = { elapsed_ms: elapsed, status: response.status(), content_type: response.headers()['content-type'] || '' }
     }
     if (capture) {
@@ -591,7 +727,8 @@ async function sample(context: BrowserContext, route: Route, capture?: string) {
 
 test.beforeAll(async ({ browser }) => { report.browser = browser.version(); report.route_matrix = routes.map(route => ({
   key: route.key, path: route.path, actor: route.actor, scope: route.scope,
-  required_apis: [...(route.rawDocument ? [] : [sessionApi(route.actor)]), ...route.apis].map(api => ({ path: api.path, status: api.status ?? 200 })),
+  required_apis: [...(route.rawDocument ? [] : [sessionApi(route.actor)]), ...route.apis].map(api => ({ path: api.path, status: api.status ?? 200,
+    browser_validation: route.actor === 'anonymous' && api.path === apiPath('/auth/session') ? 'status-and-render' : 'complete-body', independent_api_validation: 'complete-body' })),
 })); save() })
 test.afterAll(() => {
   const after = runtimeInputs(repo)

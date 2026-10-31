@@ -16,6 +16,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
+  maxFailures: 1,
   reporter: 'list',
   use: { baseURL: checkedOrigin(), extraHTTPHeaders: PERFORMANCE_INGRESS_HEADERS, trace: 'off', screenshot: 'only-on-failure' },
   projects: [{ name: 'static-performance', use: { ...devices['Desktop Chrome'], viewport: { width: 1497, height: 1049 } } }],

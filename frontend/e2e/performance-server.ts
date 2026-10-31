@@ -43,19 +43,25 @@ function walk(root: string, directory: string, output: Record<string, string>) {
     else if (entry.isFile()) output[relative(root, path)] = digest(readFileSync(path))
   }
 }
-export function runtimeInputs(repo: string) {
+function sourceInputs(repo: string) {
   const source: Record<string, string> = {}
   walk(repo, join(repo, 'frontend/src'), source)
+  walk(repo, join(repo, 'frontend/public'), source)
   walk(repo, join(repo, 'backend/app'), source)
   for (const file of ['frontend/package.json', 'frontend/package-lock.json', 'frontend/vite.config.ts',
     'frontend/index.html', 'frontend/nginx.conf', 'frontend/nginx.production.conf', 'frontend/docker-entrypoint.sh',
     'frontend/Dockerfile', 'backend/pyproject.toml', 'backend/uv.lock']) {
     source[file] = digest(readFileSync(join(repo, file)))
   }
+  return source
+}
+export function runtimeInputs(repo: string) {
+  const source = sourceInputs(repo)
   const dist: Record<string, string> = {}
   walk(join(repo, 'frontend/dist'), join(repo, 'frontend/dist'), dist)
   const harness: Record<string, string> = {}
-  for (const file of ['frontend/e2e/performance.ts', 'frontend/e2e/performance-server.ts', 'frontend/playwright.performance.config.ts',
+  for (const file of ['frontend/e2e/performance.ts', 'frontend/e2e/performance-server.ts',
+    'frontend/e2e/performance-response.ts', 'frontend/e2e/performance-response.test.ts', 'frontend/playwright.performance.config.ts',
     'backend/tests/reporting/live_app.py', 'backend/tests/reporting/performance_fixture.py', 'backend/tests/reporting/fixture_database.py']) {
     harness[file] = digest(readFileSync(join(repo, file)))
   }
@@ -69,6 +75,7 @@ export type NativeEvidence = {
   native_versions: { nginx: string; node: string }; nginx_binary_sha256: string;
   server_files: { directory: string; wrapper: string; adapted_config: string; error_log: string };
   production_config: 'nginx.production.conf'; api_environment: 'test';
+  api_readiness: { status: 'ready'; migration: '0002' };
   ingress_fixture: { original_peer: '10.0.1.20'; native_peer: '127.0.0.1'; cf_connecting_ip: '198.51.100.77' };
   adaptations: string[]; docker_verified: false; traefik_verified: false; production_deployment_verified: false; server_stopped?: boolean;
 }
@@ -93,14 +100,10 @@ async function main() {
   }
   const frontend = dirname(dirname(fileURLToPath(import.meta.url)))
   const repo = dirname(frontend)
-  const sourceBefore: Record<string, string> = {}
-  walk(repo, join(repo, 'frontend/src'), sourceBefore)
-  walk(repo, join(repo, 'backend/app'), sourceBefore)
+  const sourceBefore = sourceInputs(repo)
   const build = spawnSync('npm', ['run', 'build'], { cwd: frontend, stdio: 'inherit' })
   if (build.status !== 0) throw new Error('Production asset build failed')
-  const sourceAfter: Record<string, string> = {}
-  walk(repo, join(repo, 'frontend/src'), sourceAfter)
-  walk(repo, join(repo, 'backend/app'), sourceAfter)
+  const sourceAfter = sourceInputs(repo)
   if (JSON.stringify(sourceBefore) !== JSON.stringify(sourceAfter)) throw new Error('Runtime source changed during build')
   // Preserve any existing port owner. No process discovery, shutdown or port takeover.
   await new Promise<void>((done, reject) => {
@@ -158,6 +161,13 @@ http {
         if (response.status !== 200 || digest(Buffer.from(await response.arrayBuffer())) !== indexHash) {
           throw new Error('Port8080 did not serve this exact production build')
         }
+        const health = await fetch(`${origin}/api/v1/health`, {
+          headers: PERFORMANCE_INGRESS_HEADERS, signal: AbortSignal.timeout(1000),
+        })
+        const readiness = await health.json()
+        if (health.status !== 200 || readiness.data?.status !== 'ready' || readiness.data?.migration !== '0002') {
+          throw new Error('The proxied API is not ready at the reviewed migration0002')
+        }
         break
       } catch (error) {
         if (Date.now() >= deadline) throw error
@@ -173,6 +183,7 @@ http {
       native_versions: { nginx: `${version.stdout}${version.stderr}`.trim(), node: process.version },
       nginx_binary_sha256: digest(readFileSync(binary)), docker_verified: false, traefik_verified: false, production_deployment_verified: false,
       production_config: 'nginx.production.conf', api_environment: 'test',
+      api_readiness: { status: 'ready', migration: '0002' },
       ingress_fixture: { original_peer: '10.0.1.20', native_peer: '127.0.0.1', cf_connecting_ip: '198.51.100.77' },
       server_files: { directory: temporary, wrapper: config, adapted_config: serverConfig, error_log: log },
       adaptations: ['Loads the strict nginx.production.conf, not the development default; static root points to this dist and listener is loopback8080.',
