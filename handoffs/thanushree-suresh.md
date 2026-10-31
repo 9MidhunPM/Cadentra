@@ -3,8 +3,10 @@
 Status: PURE CALENDAR IMPLEMENTED AND TESTED; PERSISTED WORKFLOWS PENDING
 
 Role: Subscription Workflows
-Branch: feature/subscription-workflows
-Baseline: 766cb2664ded48afcb1012001565cbbf65c68142
+Branch: feature/subscription-lifecycle
+Initial planning baseline: 766cb2664ded48afcb1012001565cbbf65c68142
+Current reviewed main: 6846b83 (calendar PR #1 and frontend PR #2 integrated)
+Carried audit regressions: 6db99a6 (original published commit dbbbeb0 retained on the previous branch)
 Setup commit: c4ea2e4abc22e59790afd51c395249bb7b343aa8 (pushed through gh-agent2)
 Preparation commit: 208adf0a0bdb2d384da15e4186e0d5e2be3afd2c
 Boundary-case commit: 487cabd28a3207eb31f05bdf47225f84a6db9c11
@@ -161,9 +163,13 @@ The coordinator is now implementing the backend foundation. A temporary native
 PostgreSQL runtime is planned but is not yet verified. Neither this plan nor
 available feature branches establishes integrated Gate A readiness.
 
-Latest reviewed origin/main: 766cb2664ded48afcb1012001565cbbf65c68142, fetched
-through gh-agent2 at the 04:48 UTC / 10:18 IST checkpoint on 31 October 2026.
-It is already an ancestor of this branch; no merge is needed at that checkpoint.
+Reviewed origin/main advanced to 6846b83 at the 04:53 UTC / 10:23 IST checkpoint
+on 31 October 2026. Calendar PR #1 through 67dc6a2 and frontend PR #2 are merged.
+Created feature/subscription-lifecycle from that baseline, carrying the later
+audit regressions without rewriting the original feature branch. Backend
+foundation b86e3a3 is published for review; combined Gate A remains pending.
+Coordinator has permission for a mechanical import/format-only calendar-test
+fix during foundation integration, with no behavior or ownership change.
 
 The connected GitHub API account is 9MidhunPM; SSH push authentication is the
 verified thanushreesuresh account. API account identity is not inferred from SSH.
@@ -183,18 +189,19 @@ this workstream or bypass checks to meet the checkpoint.
 
 ## Prepared PR
 
-Title: Implement anchored subscription calendar and prepare lifecycle acceptance cases
+Title: Add subscription pause and period-tax regression cases
 
 Target: main
 
-Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-workflows
+Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-lifecycle
 
-Description: Implement immutable scheduling inputs and original-anchor daily,
-weekly, monthly and yearly periods, with exclusive expiry/closure caps and safe
-exhaustion at large indices/date limits. Ten unit tests execute the actual helper.
-Also prepare 71 lifecycle acceptance cases for snapshots, policies, backlog-safe
-closure, customer isolation, quotation/availability boundaries, template overrides
-and the edit matrix. Persistent lifecycle/API/UI behavior awaits Gate A.
+Description: Extend the integrated calendar/test baseline with regression cases
+for cancelling a wholly unapplied pause, resuming after a durable PAUSED period,
+and selecting future product tax memberships without changing quoted prices.
+Record the agreed service contracts and remaining integration dependencies.
+The total prepared lifecycle inventory is 71 cases. Persistent lifecycle/API/UI
+behavior awaits Gate A; rewrite the PR description around the delivered behavior
+when the first persistent service slice is ready.
 
 Validation for PR: ten actual calendar unit tests, planning-pack check,
 prepared-calendar checker, Python compilation, whitespace check and independent
