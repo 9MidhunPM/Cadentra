@@ -4,8 +4,11 @@ Status: REQUIRED SUBSCRIPTION BEHAVIOR VERIFIED; CURRENT AUDIT FIXES READY FOR R
 
 Role: Subscription Workflows
 Branch: feature/subscription-current-audit
-Reviewed main incorporated: 56bd60bac347ece7b23442046e25b8e29d8fa21f
-Current runtime head: c4c0d05511e9702a1850a8a1ddab457880e7471e
+Reviewed integration main: ea9183623a11b1a91fc4e17eedd3d3889f373f33
+Runtime-fix commit (check source): c4c0d05511e9702a1850a8a1ddab457880e7471e
+Refreshed feature head: 20e271f75e192395dd79aa3a664c189eef5cc5cd;
+all owned paths are identical to tested/reviewed bc43dd7. The clean integration
+candidate is preserved on feature/subscription-audit-integration.
 
 ## Current audit, 31 October 2026
 
