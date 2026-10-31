@@ -1,8 +1,9 @@
 # Billing acceptance preparation
 
-Status: PRE-GATE A. No billing application, migration, API, browser or database
-test has run. These files prepare Noel Biju's assigned test coverage without
-creating competing application scaffolds or dependencies.
+Status: PURE PRICING IMPLEMENTED; INTEGRATED GATE A PENDING. The coordinator
+explicitly released the independent pricing calculator before Gate A. Its actual
+unit tests run; invoice persistence, migration, API, browser and database tests
+remain pending. No competing scaffold or dependencies are introduced.
 
 ## Executable now
 
@@ -11,6 +12,7 @@ From the repository root:
 ```sh
 python3 scripts/check_pack.py
 python3 backend/tests/billing/check_prepared_cases.py
+PYTHONPATH=backend python3 -m unittest discover -s backend/tests/billing -p test_pricing.py -v
 ```
 
 The second command uses only the Python standard library. It checks the six
@@ -19,6 +21,12 @@ against the existing planning reference calculator. It also verifies stable-key
 allocation under reordered lines, finite decimal text and fixture immutability.
 It does not import or exercise an application pricing function. Passing it is
 evidence of coherent prepared fixtures only.
+
+The third command tests the actual billing-owned calculator, including all 15
+vectors, independent caller precision/rounding, immutable Decimal inputs/results,
+per-tax cent rounding, stable-key allocation, invalid values and database money
+bounds. It uses no planning reference calculator. Its result is financial unit
+evidence, not PostgreSQL transaction or full-application evidence.
 
 Additional cases cover a base fee with multiple products, zero totals,
 half-cent tax rounding, product versus
