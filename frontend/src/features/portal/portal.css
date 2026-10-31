@@ -232,6 +232,8 @@
   }
   .portal-surface .ui-stepper {
     padding-bottom: 8px;
+    flex-wrap: wrap;
+    overflow: visible;
   }
   .portal-table-scroll td,
   .portal-table-scroll th {
