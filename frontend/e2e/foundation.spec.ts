@@ -10,6 +10,7 @@ async function session(page: Page, role: 'ADMIN' | 'STAFF' | 'CUSTOMER' = 'ADMIN
 }
 
 async function navigate(page: Page, label: string) {
+  await expect(page.locator('main h1')).toBeVisible()
   const opener = page.getByRole('button', { name: 'Open navigation' })
   if (await opener.isVisible()) await opener.click()
   await page.getByRole('navigation').getByRole('link', { name: label, exact: true }).click()
@@ -55,11 +56,14 @@ test('customer uses a separate portal and cannot open staff routes', async ({ pa
   await expect(page.getByRole('heading', { name: 'Access restricted' })).toBeVisible()
 })
 
-test('anonymous users reach identity placeholder instead of a fake session', async ({ page }) => {
+test('anonymous users reach the real sign-in form', async ({ page }) => {
   await page.route('**/api/v1/auth/session', route => route.fulfill({ status: 401, json: { error: { code: 'UNAUTHENTICATED', message: 'Sign in' } } }))
   await page.goto('/overview')
   await expect(page).toHaveURL(/\/sign-in$/)
-  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Welcome back.', exact: true })).toBeVisible()
+  await expect(page.getByLabel('Email address', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Password', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
 })
 
@@ -84,7 +88,8 @@ test('logout sends CSRF and clears the restored session', async ({ page }) => {
   })
   await page.goto('/')
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\/sign-in$/)
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
   expect(signedOut).toBe(true)
 })
 

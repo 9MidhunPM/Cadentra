@@ -1,9 +1,9 @@
-"""Read-only customer portal routes. Customer selection always comes from authentication."""
+"""Customer-scoped portal reads and delegated lifecycle actions."""
 
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Body, Depends, Query, Request, Response
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from app.core.errors import DomainError
 from app.db.session import get_session
 from app.modules.billing.service import get_invoice_for_actor, render_invoice_for_actor
 from app.modules.reporting import portal_service
+from app.modules.subscriptions.service import apply_action, get_subscription_for_actor
 
 
 def reject_customer_selection(request: Request) -> None:
@@ -44,8 +45,9 @@ def get_subscriptions(actor: CustomerActor, db: Database, page: Page = 1, page_s
 
 
 @router.get("/subscriptions/{subscription_id}")
-def get_subscription(subscription_id: UUID, actor: CustomerActor, db: Database):
-    return {"data": portal_service.subscription_detail(db, actor, subscription_id)}
+def get_subscription(subscription_id: UUID, actor: CustomerActor, db: Database, response: Response):
+    response.headers["Cache-Control"] = "private, no-store"
+    return {"data": get_subscription_for_actor(db, actor, subscription_id)}
 
 
 @router.get("/invoices")
@@ -69,3 +71,53 @@ def print_invoice(invoice_id: UUID, actor: CustomerActor, db: Database):
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+def _subscription_action(
+    db: Session, actor: Actor, subscription_id: UUID, action: str, payload: Any
+):
+    # The owner validates ownership before payload semantics and acquires the row
+    # lock. Begin before calling it: its first lookup starts the transaction.
+    with db.begin():
+        result = apply_action(db, actor, subscription_id, action, payload)
+    return {"data": result}
+
+
+@router.post("/subscriptions/{subscription_id}/pause")
+def pause_subscription(
+    subscription_id: UUID,
+    actor: CustomerActor,
+    db: Database,
+    payload: Annotated[Any, Body()] = None,
+):
+    return _subscription_action(db, actor, subscription_id, "pause", payload)
+
+
+@router.post("/subscriptions/{subscription_id}/resume")
+def resume_subscription(
+    subscription_id: UUID,
+    actor: CustomerActor,
+    db: Database,
+    payload: Annotated[Any, Body()] = None,
+):
+    return _subscription_action(db, actor, subscription_id, "resume", payload)
+
+
+@router.post("/subscriptions/{subscription_id}/close")
+def close_subscription(
+    subscription_id: UUID,
+    actor: CustomerActor,
+    db: Database,
+    payload: Annotated[Any, Body()] = None,
+):
+    return _subscription_action(db, actor, subscription_id, "close", payload)
+
+
+@router.post("/subscriptions/{subscription_id}/renew")
+def renew_subscription(
+    subscription_id: UUID,
+    actor: CustomerActor,
+    db: Database,
+    payload: Annotated[Any, Body()] = None,
+):
+    return _subscription_action(db, actor, subscription_id, "renew", payload)

@@ -54,12 +54,30 @@ def reporting_case(db_session, monkeypatch):
     )
     db_session.add_all([admin, plan])
     db_session.flush()
+    # Canonical portal reads require a valid frozen financial/scheduling snapshot.
+    # These records use the fixture plan's actual zero fee; reports still read
+    # stored invoice/payment amounts independently of this subscription metadata.
+    plan_snapshot = {
+        "schema_version": 1,
+        "plan_id": str(plan.id),
+        "name": plan.name,
+        "base_fee": "0.00",
+        "currency": "INR",
+        "cadence": plan.cadence,
+        "min_quantity": plan.min_quantity,
+        "allow_pause": plan.allow_pause,
+        "allow_early_close": plan.allow_early_close,
+        "allow_renew": plan.allow_renew,
+        "auto_close": plan.auto_close,
+        "tax_rule_ids": [],
+    }
     subscriptions = {}
     for entry in case["subscriptions"]:
         row = Subscription(
             customer_id=customers[entry["customer_key"]].id,
             plan_id=plan.id,
             state=entry["state"],
+            plan_snapshot=dict(plan_snapshot),
             start_date=date.fromisoformat(entry["start_date"]),
             end_date=date.fromisoformat(entry["end_date"]),
             close_effective_on=date.fromisoformat(entry["close_effective_on"])
@@ -84,6 +102,7 @@ def reporting_case(db_session, monkeypatch):
             customer_id=customers[entry["customer_key"]].id,
             plan_id=plan.id,
             state="CLOSED",
+            plan_snapshot=dict(plan_snapshot),
             start_date=invoice_date,
             end_date=invoice_date + timedelta(days=1),
         )

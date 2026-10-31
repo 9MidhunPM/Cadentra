@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { lstatSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
+import type { SubscriptionDetail } from '../src/features/portal/types'
 
 type Kind = 'products' | 'variants' | 'plans' | 'tax_rules' | 'discount_rules' | 'templates' | 'subscriptions' | 'invoices' | 'payments'
 type ActorKey = 'admin' | 'customer_a' | 'customer_b'
@@ -20,9 +21,10 @@ if (!isAbsolute(manifestPath) || dirname(manifestPath) !== '/tmp') throw new Err
 const metadata = lstatSync(manifestPath)
 if (!metadata.isFile() || (metadata.mode & 0o077) !== 0) throw new Error('T31 manifest must be a regular private mode-0600 file')
 const fixture = JSON.parse(readFileSync(manifestPath, 'utf8')) as Manifest
-if (!fixture.test_only || fixture.kind !== 'cadentra-complete-journey' || fixture.database !== 'cadentra_experience_test' || fixture.business_date !== '2026-11-02') {
+if (!fixture.test_only || fixture.kind !== 'cadentra-complete-journey' || fixture.database !== 'cadentra_experience_test' || fixture.business_date !== '2026-11-02' || fixture.service_end !== '2027-01-02') {
   throw new Error('Use the guarded T31 seed manifest with its fixed test-only business date')
 }
+const privateNote = `PRIVATE-T31-${fixture.run_id}`
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 function remember(kind: Kind, id: string) {
   if (!uuid.test(id)) throw new Error(`The ${kind} endpoint did not return a valid UUID`)
@@ -53,6 +55,35 @@ async function login(page: Page, key: ActorKey) {
   await page.getByLabel('Password', { exact: true }).fill(fixture.actors[key].password)
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page).toHaveURL(key === 'admin' ? /\/overview$/ : /\/portal\/subscriptions$/)
+}
+function assertPublicProjection(value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach(assertPublicProjection)
+  } else if (value !== null && typeof value === 'object') {
+    for (const [key, child] of Object.entries(value)) {
+      expect(/cost|^staff|^internal|^private|^audit|^(note|notes|created_by|request_key|request_payload_hash|external_reference|cancellation_reason|close_reason)$/.test(key.toLowerCase()), `Customer response must exclude internal field ${key}`).toBe(false)
+      assertPublicProjection(child)
+    }
+  } else if (typeof value === 'string') {
+    expect(value.includes(privateNote), 'Customer responses must omit private product/payment notes').toBe(false)
+    expect(value.includes(fixture.actors.admin.email), 'Customer responses must omit staff identity').toBe(false)
+  }
+}
+async function publicRead<T>(page: Page, path: string): Promise<T> {
+  const response = await page.request.get(`/api/v1${path}`)
+  expect(response.status()).toBe(200)
+  const payload = await response.json() as T
+  assertPublicProjection(payload)
+  return payload
+}
+async function portalAction(page: Page, id: string, action: string, trigger: string, title: string, confirm: string) {
+  await page.getByRole('button', { name: trigger, exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: title, exact: true })
+  await expect(dialog).toBeVisible()
+  const result = await mutation<SubscriptionDetail>(page, `/portal/subscriptions/${id}/${action}`, () => dialog.getByRole('button', { name: confirm, exact: true }).click(), action === 'renew' ? 'subscriptions' : undefined)
+  assertPublicProjection(result)
+  await expect(dialog).toHaveCount(0)
+  return result
 }
 async function readInvoice(page: Page, id: string): Promise<Invoice> {
   const result = await page.request.get(`/api/v1/invoices/${id}`)
@@ -95,6 +126,7 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
     await editor.getByLabel('Product name', { exact: true }).fill(productName)
     await editor.getByLabel('Sales price (INR)', { exact: true }).fill('1000.00')
     await editor.getByLabel('Internal cost (INR)', { exact: true }).fill('100.00')
+    await editor.getByLabel('Notes', { exact: true }).fill(privateNote)
     const product = await mutation<{ id: string }>(page, '/products', () => editor.getByRole('button', { name: 'Save changes', exact: true }).click(), 'products')
     await page.getByRole('button', { name: `Variants for ${productName}`, exact: true }).click()
     await page.getByRole('button', { name: 'Add variant', exact: true }).click()
@@ -132,6 +164,9 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
     await editor.getByLabel('Billing cadence', { exact: true }).selectOption('MONTHLY')
     await editor.getByLabel('Minimum product quantity', { exact: true }).fill('3')
     await editor.getByLabel('Available from', { exact: true }).fill(day)
+    await editor.getByLabel('Allow scheduled pause', { exact: true }).check()
+    await editor.getByLabel('Allow early closure', { exact: true }).check()
+    await editor.getByLabel('Allow renewal', { exact: true }).check()
     await mutation(page, '/plans', () => editor.getByRole('button', { name: 'Save changes', exact: true }).click(), 'plans')
     await page.goto('/subscriptions/templates/new')
     await page.getByLabel('Template name', { exact: true }).fill(templateName)
@@ -184,7 +219,7 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
     for (const [amount, balance] of [['2000.00', '2970.16'], ['2970.16', '0.00']]) {
       await page.getByLabel('Amount', { exact: true }).fill(amount)
       await page.getByLabel('Payment date', { exact: true }).fill(day)
-      await page.getByLabel('Payment note', { exact: true }).fill('T31 manual payment already received; fictional test data')
+      await page.getByLabel('Payment note', { exact: true }).fill(privateNote)
       await mutation(page, `/invoices/${invoiceId}/payments`, () => page.getByRole('button', { name: 'Record payment', exact: true }).click())
       await expect.poll(async () => (await readInvoice(page, invoiceId)).balance_due).toBe(balance)
       const record = await readInvoice(page, invoiceId)
@@ -227,14 +262,16 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
     foreign.on('pageerror', error => errors.push(error.message))
     await test.step('Two real customer contexts, persisted portal and authenticated printing', async () => {
       await login(owner, 'customer_a')
+      await publicRead(owner, '/portal/me')
+      await publicRead(owner, '/portal/subscriptions')
+      await publicRead(owner, '/portal/invoices')
       await expect(owner.getByRole('link', { name: subscriptionNumber, exact: true })).toBeVisible()
       await owner.goto('/portal/invoices')
       await owner.getByRole('link', { name: invoiceNumber, exact: true }).click()
       await owner.reload()
       await expect(owner.getByRole('heading', { name: invoiceNumber, exact: true })).toBeVisible()
-      const response = await owner.request.get(`/api/v1/portal/invoices/${invoiceId}`)
-      expect(response.status()).toBe(200)
-      expect((await response.json()).data).toMatchObject({ status: 'PAID', paid_amount: '4970.16', balance_due: '0.00' })
+      const invoice = await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)
+      expect(invoice.data).toMatchObject({ status: 'PAID', paid_amount: '4970.16', balance_due: '0.00' })
       await expect(owner.getByText('INR 2,000.00', { exact: true })).toBeVisible()
       await expect(owner.getByText('INR 2,970.16', { exact: true })).toBeVisible()
       const popupEvent = owner.waitForEvent('popup')
@@ -244,19 +281,76 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       await expect(print).toHaveURL(new RegExp(`/api/v1/portal/invoices/${invoiceId}/print$`))
       await expect(print.locator('body')).toContainText(invoiceNumber)
       await expect(print.locator('body')).toContainText('4970.16')
+      expect((await print.locator('body').textContent())?.includes(privateNote), 'Printable invoices must omit private notes').toBe(false)
+      expect((await print.locator('body').textContent())?.includes(fixture.actors.admin.email), 'Printable invoices must omit staff identity').toBe(false)
+      await expect(print.getByText(/internal cost|cost price|staff note/i)).toHaveCount(0)
       await print.emulateMedia({ media: 'print' })
       await print.screenshot({ path: testInfo.outputPath('T31-print-invoice.png'), fullPage: true })
       await print.close()
       await owner.setViewportSize({ width: 390, height: 844 })
       await expect.poll(() => owner.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
       await owner.screenshot({ path: testInfo.outputPath('T31-mobile-paid-invoice.png'), fullPage: true })
+    })
+    await test.step('Customer schedules pause, cancels it, schedules closure and creates a linked draft', async () => {
+      await owner.goto(`/portal/subscriptions/${subscriptionId}`)
+      const before = (await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data
+      expect(before).toMatchObject({ state: 'ACTIVE', end_date: '2027-01-02', next_billing_date: '2026-12-02' })
+      const paused = await portalAction(owner, subscriptionId, 'pause', 'Pause subscription', 'Pause subscription?', 'Confirm pause')
+      expect(paused).toMatchObject({ state: 'ACTIVE', paused: false, pause_effective_on: '2026-12-02', pause_interval: { starts_on: '2026-12-02', ends_on: null } })
+      await expect(owner.locator('.portal-notice')).toContainText('Pause scheduled for')
+      await expect(owner.locator('.portal-notice time')).toHaveAttribute('datetime', '2026-12-02')
+      await expect(owner.locator('.portal-notice')).toBeFocused()
+      await owner.reload()
+      expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data.pause_effective_on).toBe('2026-12-02')
+      await expect(owner.locator('.portal-facts > div').filter({ has: owner.getByText('Pause takes effect', { exact: true }) }).locator('time')).toHaveAttribute('datetime', '2026-12-02')
+      const resumed = await portalAction(owner, subscriptionId, 'resume', 'Cancel scheduled pause', 'Cancel scheduled pause?', 'Cancel scheduled pause')
+      expect(resumed).toMatchObject({ state: 'ACTIVE', pause_interval: null, pause_effective_on: null, resume_effective_on: null })
+      await expect(owner.locator('.portal-notice')).toHaveText('Your scheduled pause was cancelled.')
+      await expect(owner.locator('.portal-notice')).toBeFocused()
+      await owner.reload()
+      expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data.pause_interval).toBeNull()
+      await expect(owner.getByText('Pause takes effect', { exact: true })).toHaveCount(0)
+      const closed = await portalAction(owner, subscriptionId, 'close', 'Close subscription', 'Close subscription?', 'Confirm close')
+      expect(closed).toMatchObject({ state: 'ACTIVE', close_effective_on: '2026-12-02', end_date: '2027-01-02' })
+      await expect(owner.locator('.portal-notice')).toContainText('Closure takes effect on')
+      await expect(owner.locator('.portal-notice time')).toHaveAttribute('datetime', '2026-12-02')
+      await expect(owner.locator('.portal-notice')).toBeFocused()
+      await owner.reload()
+      expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data.close_effective_on).toBe('2026-12-02')
+      await expect(owner.locator('.portal-facts > div').filter({ has: owner.getByText('Closure takes effect', { exact: true }) }).locator('time')).toHaveAttribute('datetime', '2026-12-02')
+      expect((await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)).data).toMatchObject({ status: 'PAID', total: '4970.16', paid_amount: '4970.16', balance_due: '0.00' })
+      await owner.getByLabel('Renewal start date', { exact: true }).fill('2026-12-02')
+      await owner.getByLabel('Renewal ends before', { exact: true }).fill('2027-01-02')
+      const renewal = await portalAction(owner, subscriptionId, 'renew', 'Create renewal draft', 'Create a renewal draft?', 'Create draft')
+      expect(renewal).toMatchObject({ state: 'DRAFT', prior_subscription_id: subscriptionId, start_date: '2026-12-02', end_date: '2027-01-02' })
+      expect(renewal.id).not.toBe(subscriptionId)
+      await expect(owner).toHaveURL(new RegExp(`/portal/subscriptions/${renewal.id}$`))
+      await expect(owner.locator('.portal-notice')).toHaveText('Your linked renewal draft was created. Brightloop staff will review and confirm it.')
+      await expect(owner.getByRole('link', { name: 'View previous subscription', exact: true })).toHaveAttribute('href', `/portal/subscriptions/${subscriptionId}`)
+      await owner.reload()
+      expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${renewal.id}`)).data).toMatchObject({ state: 'DRAFT', prior_subscription_id: subscriptionId })
+      const invoices = await publicRead<{ items: Invoice[]; total: number }>(owner, '/portal/invoices')
+      expect(invoices.total).toBe(1)
+      expect(invoices.items[0].id).toBe(invoiceId)
+      expect((await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)).data.payments).toHaveLength(2)
+      await owner.screenshot({ path: testInfo.outputPath('T31-customer-renewal-draft.png'), fullPage: true })
+    })
+    await test.step('Foreign customer cannot read or mutate the original lifecycle records', async () => {
+      const before = (await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data
       await login(foreign, 'customer_b')
+      await publicRead(foreign, '/portal/me')
+      const foreignSubscriptions = await publicRead<{ total: number }>(foreign, '/portal/subscriptions')
+      const foreignInvoices = await publicRead<{ total: number }>(foreign, '/portal/invoices')
+      expect(foreignSubscriptions.total).toBe(0)
+      expect(foreignInvoices.total).toBe(0)
       await expect(foreign.getByRole('link', { name: subscriptionNumber, exact: true })).toHaveCount(0)
       await foreign.goto('/portal/invoices')
       await expect(foreign.getByRole('heading', { name: 'My invoices', exact: true })).toBeVisible()
       await expect(foreign.getByRole('link', { name: invoiceNumber, exact: true })).toHaveCount(0)
       for (const path of [`/portal/subscriptions/${subscriptionId}`, `/portal/invoices/${invoiceId}`, `/portal/invoices/${invoiceId}/print`]) {
-        expect((await foreign.request.get(`/api/v1${path}`)).status()).toBe(404)
+        const response = await foreign.request.get(`/api/v1${path}`)
+        expect(response.status()).toBe(404)
+        assertPublicProjection(await response.json())
       }
       const session = await foreign.request.get('/api/v1/auth/session')
       expect(session.status()).toBe(200)
@@ -267,11 +361,14 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
           data: action === 'renew' ? { start_date: '2026-12-02', end_date: '2027-01-02' } : {},
         })
         expect(result.status()).toBe(404)
+        assertPublicProjection(await result.json())
       }
-      const unchanged = await page.request.get(`/api/v1/subscriptions/${subscriptionId}`)
-      expect(unchanged.status()).toBe(200)
-      expect((await unchanged.json()).data.state).toBe('ACTIVE')
-      expect((await readInvoice(page, invoiceId)).payments).toHaveLength(2)
+      const unchanged = (await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data
+      expect(unchanged).toMatchObject({ state: 'ACTIVE', revision: before.revision, close_effective_on: '2026-12-02', pause_interval: null })
+      const invoice = (await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)).data
+      expect(invoice.payments).toHaveLength(2)
+      expect(invoice).toMatchObject({ total: '4970.16', paid_amount: '4970.16', balance_due: '0.00' })
+      expect((await publicRead<{ total: number }>(owner, '/portal/invoices')).total).toBe(1)
     })
   } finally {
     await ownerContext.close()
