@@ -1,0 +1,131 @@
+.catalog-editor {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.catalog-editor > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.catalog-editor h2 {
+  font-size: 20px;
+  letter-spacing: -0.3px;
+}
+.catalog-editor fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.catalog-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.catalog-fields textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+.catalog-fields input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+}
+.catalog-form-actions,
+.catalog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.catalog-form-actions {
+  margin-top: 24px;
+}
+.catalog-note,
+.catalog-subtitle {
+  display: block;
+  font-size: 12px;
+  color: var(--color-muted);
+  line-height: 1.7;
+  margin-top: 4px;
+}
+.catalog-search {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+.catalog-search label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.catalog-search input {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: 11px 14px;
+  border-radius: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+.catalog-variant-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.catalog-variant-list li {
+  padding: 16px 0;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.catalog-variant-list li > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+@media (max-width: 700px) {
+  .catalog-editor {
+    padding: 18px;
+  }
+  .catalog-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .catalog-actions {
+    align-items: stretch;
+  }
+}
+
+.catalog-editor .catalog-tax-picker {
+  border-top: 1px solid var(--color-border);
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.catalog-tax-picker legend {
+  font-size: 14px;
+  font-weight: 600;
+}
+.catalog-tax-option {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 13px;
+}
+.catalog-tax-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
