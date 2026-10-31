@@ -1,12 +1,33 @@
 # Sherin Saji: handoff
 
-Status: FRONTEND FOUNDATION IMPLEMENTED AND TESTED; GATE A PENDING
+Status: SHARED EXPERIENCE IMPLEMENTED AND TESTED; REPORTING/PORTAL AWAIT GATE A
 
 Role: Experience & Reporting
-Branch: feature/frontend-foundation
+Branch: feature/interface-experience
+Current UI commit: 2856d70
+Client/session correction: be18f95
+Route recovery/accessibility: 368fe19
+Reviewed main incorporated: 6846b833f87e36e2eb9a36475b5e44dbeb917961
+Previous foundation: feature/frontend-foundation (PR 2 integrated)
 Setup commit: c4194af
 Implementation commit: 158525d56aeddcf41f47ce55ce736f28234c8380
 Baseline: 766cb2664ded48afcb1012001565cbbf65c68142
+
+## Current slice: Graphite Mint / Sage Commerce
+
+The user explicitly rejected the initial navy/teal mockups and selected Graphite Mint as the primary dark mode and Sage Commerce as light mode. Both approved image references and the design/motion contract are in frontend/design/. Default is dark, with a persistent user preference and theme applied before first paint. The shared semantic tokens cover forms, tables, dialogs, error/loading states and notifications.
+
+The shell now provides real role-filtered Ctrl/Cmd K page search, keyboard result selection, animated active navigation, a spring mobile drawer, tactile controls, theme switching and reduced-motion support. Page search cannot compete with an open mobile drawer; keyboard selection scrolls into view. App errors render a safe recovery page; destination headings receive focus and descriptive document titles. API list envelopes are validated, client serialization failures are distinguished from network errors, and refresh cannot restore an actor during logout.
+
+Current checks: npm run typecheck/lint/test/build PASS; 71 unit/component tests; 24 desktop/mobile browser cases PASS, two platform-specific instances intentionally skipped. Browser tests still use test-only session fixtures. npm install reported zero known vulnerabilities after adding Motion. Lazy-loaded animation features keep the main bundle at about 431 kB minified/138 kB gzip, with a separate 95 kB animation feature chunk. These are build sizes, not T30 page-performance evidence.
+
+Compared both selected concepts and current screenshots using view_image: 1497x1049 desktop, 390px mobile CSS width. Checked palettes, nav hierarchy, typography, control geometry, focus, clipping and spacing. The theme and shell implement the approved visual system; the real overview metric/chart/table composition is still pending reporting implementation. No claim of complete mockup fidelity or completed business functionality is made.
+
+New public shared exports: ThemeProvider/useTheme in app/theme.tsx (theme, toggleTheme); existing feature route, API and UI component interfaces remain compatible. Motion is lazily loaded and honours user reduced-motion preferences. Do not hard-code white/navy UI colours in feature screens; consume the semantic tokens/shared controls.
+
+Publishing: deliver feature/interface-experience through the same coordinator-created PR fallback. Suggested title: Add Graphite Mint and Sage experience themes. Description: Implements the user-selected dark/light visual system, saved preference, accessible page search and spring navigation, plus session/route robustness fixes. 71 unit/component and 24 fixture-backed browser cases pass; lint/typecheck/build/pack pass. Database-backed reporting/portal and integrated Gate A remain pending. Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/interface-experience
+
+The coordinator approved the exact proposed revenue-series keys/cadences/range below. Persistent reporting/portal work begins once the integrated Gate A release is verified. Isolated experience databases have been allocated; they have not been used by this frontend slice.
 
 ## Delivered slice
 
@@ -81,7 +102,7 @@ This is frontend evidence with mocked session responses. Real PostgreSQL, backen
 
 Midhun P M integrates this foundation with the backend baseline, confirms real session/error envelopes and verifies migration/import/proxy startup before marking Gate A passed. Record the resolved frontend versions below in the coordinator-controlled decision register. No model or migration changes requested in this slice.
 
-Proposed later revenue-series interface, not implemented/frozen yet: {data:{range_from,range_to,currency,cadence,buckets:[{period_start,period_end,invoiced_gross,cash_received}]}}; DAILY/MONTHLY calendar buckets, at most 366-day query range, decimal-string amounts, [from,to), default month-to-date. Coordinator should lock this before reporting implementation. Current-state metrics stay independent of the chosen range. Retained effective-dated tax/discount revisions do not require a shared-client change; reporting will use stored invoice dates/amounts.
+Coordinator-approved later revenue-series interface, not implemented yet: {data:{range_from,range_to,currency,cadence,buckets:[{period_start,period_end,invoiced_gross,cash_received}]}}; DAILY/MONTHLY calendar buckets, at most 366-day query range, decimal-string amounts, [from,to), default month-to-date. Coordinator should lock this before reporting implementation. Current-state metrics stay independent of the chosen range. Retained effective-dated tax/discount revisions do not require a shared-client change; reporting will use stored invoice dates/amounts.
 
 ## Resolved frontend baseline
 
@@ -101,4 +122,4 @@ Atomic commits are required at least every 30 minutes during active work; setup 
 
 ## Next slice
 
-Deliver this foundation for review and Gate A integration. After it is integrated and verified, start feature/reporting-portal from reviewed origin/main. Reporting/portal business logic and optional CycleGuard have not started.
+Deliver the interface-experience PR while the backend foundation completes Gate A integration. After it is integrated and verified, start feature/reporting-portal from reviewed origin/main. Reporting/portal business logic and optional CycleGuard have not started.
