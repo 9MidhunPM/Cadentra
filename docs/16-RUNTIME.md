@@ -77,3 +77,23 @@ The Dockerfile pins Python 3.12.13 and uv 0.12.9; PostgreSQL is pinned to 18.6-b
 With the frontend proxy and API running against an explicitly disposable local demo database, run `node scripts/check_gate_a.mjs`. Install Playwright Chromium first, or set PLAYWRIGHT_CHROMIUM_EXECUTABLE to a compatible installed Chromium. The check only accepts localhost/127.0.0.1 HTTP origins (GATE_A_ORIGIN defaults to http://localhost:5171), creates one fictional customer, verifies real cookie/CSRF/role/session behavior through the proxy and checks customer navigation. Set GATE_A_SCREENSHOT for a local evidence image. It does not prove the full subscription/payment workflow.
 
 The full `make test` requires TEST_DATABASE_URL and refuses to report a complete suite with the PostgreSQL tests silently omitted. Native Gate A was verified with PostgreSQL18.6, migrations0001 and0002, real browser proxy requests and locked frontend build/tests. Docker execution and external SMTP delivery remain unverified.
+
+## Mail capture and real SMTP configuration
+
+Compose includes pinned `axllent/mailpit:v1.33.0` for development captures of reset and invoice emails. `make dev` starts it with the API; `make mail-up` starts only capture. Its inbox binds `127.0.0.1:${MAILPIT_WEB_PORT:-8025}` and SMTP binds `127.0.0.1:${MAILPIT_SMTP_PORT:-1025}`. Neither listener is public. No external relay/forwarding is configured. The development inbox contains sensitive reset links; keep it local and out of shared screenshots.
+
+Native applications default to SMTP_HOST=localhost and SMTP_PORT=1025. Compose overrides SMTP_HOST using COMPOSE_SMTP_HOST, default mailpit; port/user/password/from/TLS use the configured SMTP environment. A real provider can be selected with COMPOSE_SMTP_HOST (Compose) or SMTP_HOST (native), SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM and SMTP_STARTTLS. Supply credentials locally. No real provider or external delivery is assumed by this capture setup.
+
+After a reset/invoice operation queues a message, dispatch one actual batch:
+
+```sh
+make outbox-native
+# Compose equivalent:
+make outbox
+```
+
+The explicit `python -m app.core.outbox --once [--limit N]` command commits one caller-owned transaction and prints processed, accepted_by_smtp and failed counts only. SMTP acceptance is not external delivery. Dispatch returns nonzero if the batch contains failed deliveries; retry scheduling remains recorded by the dispatcher. The complete lifecycle worker is not required for this mail-only operation.
+
+Open the inbox at http://127.0.0.1:8025 (or MAILPIT_WEB_PORT). Verify the intended fictional recipient, subject, content and actual reset/invoice action. Capture evidence must distinguish composition, SMTP acceptance, web inbox visibility, and external delivery. External delivery remains skipped until a real provider is configured and tested.
+
+For systems without Docker, the official native release can run from a task-owned temporary directory after verifying its published SHA-256 digest. Bind both listeners explicitly to loopback, set a task-owned database, and disable version checks/reverse DNS. Stop the native server before using Compose on the same ports. The native launch used for this integration was `/tmp/cadentra-mailpit-1.33.0/mailpit --database /tmp/cadentra-mailpit-1.33.0/mailpit.db --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025 --disable-version-check --smtp-disable-rdns`. The pinned version and binary checksum came from the [official release](https://github.com/axllent/mailpit/releases/tag/v1.33.0); container tag conventions and ports follow the [official Docker guide](https://mailpit.axllent.org/docs/install/docker/). This does not verify a Docker build or external email delivery.

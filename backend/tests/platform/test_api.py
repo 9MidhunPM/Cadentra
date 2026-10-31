@@ -6,17 +6,14 @@ from app.core.auth import Actor, Role, require_customer_ownership
 from app.core.errors import DomainError
 
 
-def test_health_and_unimplemented_feature(client):
+def test_health_and_error_envelope(client):
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.json()["data"]["status"] == "ready"
-    response = client.get("/api/v1/subscriptions")
-    assert response.status_code == 501
-    assert response.json()["error"]["code"] == "NOT_IMPLEMENTED"
-    assert response.json()["error"]["request_id"]
     response = client.get("/not-a-route")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "NOT_FOUND"
+    assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
 
 
 def test_customer_ownership_hides_other_record():
