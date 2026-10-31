@@ -1,5 +1,35 @@
 # Thanushree Suresh: handoff
 
+## Targeted demo-history adapter (31 October 2026)
+
+Branch `feature/subscription-demo-history`, based on `ef3097d71d591a52d12e3c6b18089d470b98308b`.
+The owned adapter is `backend/app/modules/subscriptions/demo_import.py`.
+`create_or_resume(factory, actor, scenario, created_on=..., at_date=...)` creates
+only a marked DRAFT or resumes that exact subscription. `apply_targeted_action`
+applies one dated lifecycle action to a marked row; the root importer sequences
+events and calls billing for only that subscription. Renewal can attach a second
+stable scenario marker to the linked draft in the same transaction.
+
+The marker stores the canonical full intent and SHA-256. Reordered equivalent
+lines compare canonically; changed terms, line quantities or scenario targets fail
+closed. A transaction-scoped advisory key lock prevents duplicate scenario
+creation. Each lifecycle action stores a stable event key and payload hash in the
+same transaction, so replay resumes without applying the action twice. The adapter
+does not run a global lifecycle scan, billing batch, worker or email outbox.
+
+Four focused PostgreSQL tests passed against the disposable
+`cadentra_subscriptions_integration_test` database:
+`APP_ENV=test DATABASE_URL=postgresql+psycopg://cadentra@127.0.0.1:55431/cadentra_subscriptions_integration_test TEST_DATABASE_URL=postgresql+psycopg://cadentra@127.0.0.1:55431/cadentra_subscriptions_integration_test backend/.venv/bin/python -m pytest backend/tests/subscriptions/test_demo_import.py -q`.
+They cover canonical intent/resume, changed-intent rejection, idempotent quote and
+confirmation, linked renewal replay, real targeted invoice and PAUSED outcome,
+and expiry closure. Ruff passes for the adapter and its tests. The caller-provided
+`at_date` context is the coordinator-owned historical clock; this adapter does
+not change the global clock. No public demo data has been written; the catalog,
+customers, target mix, source attribution and root runner remain Midhun P M's
+orchestration scope.
+
+Current runtime/API/tests/handoff are uncommitted on this branch pending review.
+
 Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
 
 Role: Subscription Workflows
