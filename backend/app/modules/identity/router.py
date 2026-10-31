@@ -28,7 +28,7 @@ Admin = Annotated[Actor, Depends(require_role("ADMIN"))]
 
 def public_write(request: Request, category: str, account: str = "") -> None:
     require_origin(request)
-    address = request.client.host if request.client else "unknown"
+    address = request.state.client_ip
     check_rate_limit(f"{category}:ip:{address}")
     if account:
         check_rate_limit(f"{category}:account:{hash_token(normalize_email(account))}", limit=10)
