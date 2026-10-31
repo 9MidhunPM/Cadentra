@@ -1,5 +1,7 @@
 """Environment contract. Secrets are consumed here, never logged."""
 
+import base64
+import binascii
 import re
 from email import policy
 from email.errors import HeaderParseError
@@ -48,6 +50,19 @@ class Settings(BaseSettings):
 
     demo_admin_email: str = "admin@example.com"
     demo_admin_password: str = Field(default="", repr=False)
+
+    @field_validator("dev_password_hash", mode="before")
+    @classmethod
+    def decode_private_hash(cls, value):
+        # Avoid Compose treating Argon2's dollar delimiters as env references.
+        if isinstance(value, str) and value.startswith("base64:"):
+            try:
+                value = base64.b64decode(value[7:], validate=True).decode("ascii")
+            except (ValueError, UnicodeError, binascii.Error) as error:
+                raise ValueError("Invalid encoded developer password hash") from error
+            if not value.startswith("$argon2"):
+                raise ValueError("An Argon2 developer password hash is required")
+        return value
 
     @field_validator("allowed_origins", mode="before")
     @classmethod
