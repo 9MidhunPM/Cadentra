@@ -2,11 +2,11 @@
 
 **Every subscription. Every cycle. Accounted for.**
 
-Cadentra is a proposed unified subscription management platform for the **Subscription Management System** hackathon challenge. The demonstration business is **Brightloop Software**.
+Cadentra is a subscription management platform for the **Subscription Management System** hackathon challenge. The demonstration business is **Brightloop Software**.
 
 ## Status
 
-The backend foundation implements persistent identity/customer/catalog APIs, shared ORM models, Alembic migrations, explicit worker wiring and an SMTP outbox. The shared frontend foundation is reviewed and integrated; identity/catalog screens persist real data; subscription/billing/reporting work continues in reviewed feature slices. Integrated Gate A verification is recorded in the release handoff before domain implementation is declared ready.
+Persistent identity/catalog, subscription workflows, recurring invoicing, payment/rule APIs, reporting and customer-owned portal reads are integrated. Real PostgreSQL, concurrency, worker restart, browser and fresh-clone checks are recorded against exact commits in [release evidence](handoffs/RELEASE.md). Billing UI recovery fixes, portal actions and the complete final browser/performance checks are still in progress. Native SMTP capture passes; external delivery is deferred until configured. No public deployment is claimed.
 
 ## Product scope
 
@@ -21,7 +21,7 @@ The backend foundation implements persistent identity/customer/catalog APIs, sha
 
 Start with [START_HERE.md](START_HERE.md). The approved stack is React + Vite + TypeScript, FastAPI, PostgreSQL and Docker Compose. This is an intentional simplification of the earlier Next.js suggestion: one client application and one backend own all business logic. The user approved this baseline; Midhun P M coordinates changes and the Gate A freeze.
 
-Dependency versions are not fabricated here. Resolve mutually compatible maintained versions once during bootstrap, pin them in lockfiles and record them in `docs/14-DECISIONS.md`.
+Use Python3.12, uv, Node>=22.12 and PostgreSQL18.6. Install committed dependency locks with `make sync` and `npm --prefix frontend ci`; exact resolved versions are recorded in [runtime instructions](docs/16-RUNTIME.md) and `docs/14-DECISIONS.md`.
 
 ## Team and collaboration
 
@@ -32,7 +32,7 @@ Dependency versions are not fabricated here. Resolve mutually compatible maintai
 | Noel Biju | Billing & Payments | `prompts/03-BILLING.md` |
 | Sherin Saji | Experience & Reporting | `prompts/04-EXPERIENCE.md` |
 
-Use independent clones and feature-named branches. Open a PR to `main` after checks, or prepare the PR details and ask Midhun P M to create it. The team is implementing its feature slices; consult the latest release and contributor handoffs for Gate A evidence. See [START_HERE.md](START_HERE.md) for what each person can begin now.
+Use independent clones and feature-named branches. Push tested feature branches with each contributor's own SSH key and send prepared PR metadata through Codex TUI; Midhun P M creates/reviews/merges PRs using the existing coordinator account. Participants need no gh login. The team is implementing its feature slices; consult the latest release and contributor handoffs for Gate A evidence. See [START_HERE.md](START_HERE.md) for what each person can begin now.
 
 ## Required implementation commands
 

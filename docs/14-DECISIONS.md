@@ -71,3 +71,7 @@ Container tags/digests: python:3.12.13-slim-bookworm, postgres:18.6-bookworm, uv
 2026-10-31 user clarification: participants remain SSH-key-only and do not log into gh. Coordinator creates/reviews/merges prepared PRs with the existing 9MidhunPM API account; do not claim that PR author is the SSH account. Original participant commit metadata is preserved. All three workstreams received this correction through Codex TUI.
 
 Experience update: Sherin Saji's user-selected Graphite Mint default dark / Sage Commerce light baseline is integrated through PR5, with shared semantic tokens and accessible motion/navigation. Root identity/catalog screens use these exports.
+
+2026-10-31 integration clarification: the template role's CRUD shorthand is satisfied by the frozen create/read/update API. No DELETE/archive endpoint is implied by that shorthand; preserve quotation history. Thanushree Suresh received this decision through Codex TUI.
+
+2026-10-31 SSH feasibility check: all three teammate GitHub accounts have write access and main is unprotected. Their authorized owner keys can push locally merged branches without coordinator credentials. The user asked whether this is possible; the selected reviewed-PR workflow remains in effect until explicitly changed. No branch/authentication settings were modified.
