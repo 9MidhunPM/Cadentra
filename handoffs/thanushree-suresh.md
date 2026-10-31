@@ -1,8 +1,48 @@
 # Thanushree Suresh: handoff
 
-## Targeted demo-history adapter (31 October 2026)
+Status: REQUIRED SUBSCRIPTION BEHAVIOR VERIFIED; THREE AUDIT FIXES REFRESHED FOR REVIEW
 
-Branch `feature/subscription-demo-history`, based on `ef3097d71d591a52d12e3c6b18089d470b98308b`.
+Role: Subscription Workflows
+Current candidate branch: `feature/subscription-threefix-refresh`
+Reviewed integration baseline: `71af9f6` (demo-history adapter is already integrated)
+Current three-fix source commit: `7de8c0e`
+
+## Three subscription fixes refreshed on current main (31 October 2026)
+
+The refreshed branch contains only six owned runtime/test paths plus this handoff
+and `backend/tests/subscriptions/README.md`. The six runtime/test files are
+byte-identical to the previously reviewed `5324c16` source/tests; root's later
+demo clock, importer, UI and deployment updates remain intact. This candidate is
+based on `71af9f6`, not the older `ef3097d` approval window.
+
+- Variant lookup has an explicit in-place retry that preserves the product,
+  variant, quantity and other draft form inputs.
+- Applied subscription filters now follow browser Back/Forward, while page
+  navigation and retries preserve unapplied input edits.
+- Payment terms are rejected before draft creation/edit/renewal and quotation
+  confirmation when their due dates exceed the supported calendar range. The
+  check uses the coordinator-approved `max(today, end_date)` horizon; billing
+  still validates the actual issue date for later catch-up.
+
+Checks actually rerun on the refreshed runtime tree, using the disposable
+`cadentra_subscriptions_integration_test` database:
+
+- Backend `tests/subscriptions/test_workflows.py`: 62 passed in 5.42s.
+- Frontend `forms.test.tsx` and `subscriptions.test.tsx`: 18 passed.
+- Ruff on the changed workflow/tests and `git diff --check`: pass.
+- No full backend/frontend suite was rerun for this refreshed candidate. The
+  source/test files are unchanged from the previously reviewed slice.
+
+Exact pre-docs refreshed runtime commits are `81f1082` (variant retry), `1934fdb`
+(history filters), and `7de8c0e` (payment-term guard). Main publication is held
+for the coordinator's fresh candidate review and direct-user approval; do not
+reuse the previous `5324c16` approval window.
+
+## Targeted demo-history adapter (integrated 31 October 2026)
+
+The owned adapter was developed on `feature/subscription-demo-history`, based on
+`ef3097d71d591a52d12e3c6b18089d470b98308b`, and integrated into main at
+`6984150fea882b54998c751ee92202d3d7fee48e`.
 The owned adapter is `backend/app/modules/subscriptions/demo_import.py`.
 `create_or_resume(factory, actor, scenario, created_on=..., at_date=...)` creates
 only a marked DRAFT or resumes that exact subscription. `apply_targeted_action`
@@ -24,17 +64,10 @@ They cover canonical intent/resume, changed-intent rejection, idempotent quote a
 confirmation, linked renewal replay, real targeted invoice and PAUSED outcome,
 and expiry closure. Ruff passes for the adapter and its tests. The caller-provided
 `at_date` context is the coordinator-owned historical clock; this adapter does
-not change the global clock. No public demo data has been written; the catalog,
-customers, target mix, source attribution and root runner remain Midhun P M's
-orchestration scope.
+not change the global clock. The catalog, customers, target mix, source
+attribution and root CLI orchestration remain Midhun P M's scope.
 
-Current runtime/API/tests/handoff are uncommitted on this branch pending review.
-
-Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
-
-Role: Subscription Workflows
-Branch: feature/subscription-acceptance
-Reviewed main incorporated: beedbbdda87774ac6813d3c3e8036db5df465ca3 (PRs #14/#15 merged)
+Historical implementation references (already integrated):
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -169,7 +202,7 @@ inspected. Private temporary scripts, report.json, close-desktop.png,
 close-light-desktop.png, mobile.png and mobile-light.png are under
 /tmp/cadentra-agent2-lifecycle-qa. They are not submission fixtures or credentials.
 
-## Remaining integration gates and honest limits
+## Historical integration diagnosis and evidence limits
 
 The historical broad backend run after billing PR #7 reported 176 passed/8 failed:
 the obsolete coordinator-owned subscriptions501 assertion, committed financial
@@ -179,12 +212,14 @@ suite now passes 124 cases within the green full 314-case run in a separate DB.
 Root/Noel corrected the shared tests/fixture isolation.
 No global truncate, financial-data deletion or database drop was performed.
 
-T09-T13/T33/T34 now have actual service/API/worker/concurrency evidence. PR #14
-merged at 209fef8a35d880133f6c011ab6357b5c7ea02502. The remaining full-role
-verification is joint T31 through invoice creation/payment/customer-portal reload,
-plus live portal ownership isolation. Native staff QA proves the staff portion,
-including post-ACTIVE actions, but does not substitute for the joint paid journey.
-No deployment, external email delivery or hardware/performance claim is made.
+T09-T13/T33/T34 have actual service/API/worker/concurrency evidence. PR #14
+merged at 209fef8a35d880133f6c011ab6357b5c7ea02502. The former T31 integration
+gap was subsequently closed by the retained owner-run evidence at
+`backend/tests/reporting/evidence/t31-2026-10-31.json`; it records the clean
+41ef6df source and paid invoice/reload, reporting, portal lifecycle and ownership
+checks. It is retained evidence, not a rerun on the refreshed three-fix candidate.
+Deployment, external delivery and hardware/performance claims remain with their
+respective owners and are not inferred from this subscription work.
 
 Actual integrated evidence: four real worker cases and six real billing/action
 lock-order cases pass against reviewed main 382fa2b plus this owned test slice.
