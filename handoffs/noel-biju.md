@@ -1,6 +1,102 @@
 # Noel Biju: handoff
 
-Status: BILLING CORE INTEGRATED; URL DRILLDOWN CORRECTION READY; FINAL T31/T30 CHECKS OPEN
+Status: BILLING CORE, SEND RECOVERY AND PRODUCT LABELS INTEGRATED; INVOICE LAYOUT READY FOR REVIEW
+
+## Current checkpoint: 31 October 2026
+
+Active branch: `feature/billing-mobile-density`, based on reviewed main
+`ea9183623a11b1a91fc4e17eedd3d3889f373f33`. The earlier closeout and verification
+branches are preserved. Effective local author remains `noel-ult`; Git network
+operations use the assigned `gh-agent3` SSH key without global identity changes.
+
+The invoice URL correction was integrated in `00ffa99`. Main now also includes the
+coordinator's cinematic release (`97b4c9f`, integrated in `5895b04`), including
+actor/invoice-scoped durable invoice-send recovery and status-aware acknowledgements.
+Independent read-only standards/specification reviews found no concrete defect in
+that recovery implementation. Its focused UI/store command,
+`npm test -- --run src/features/billing/sendCommands.test.tsx`, passed all nine tests
+at `dd1fafc` in this checkout. This is mocked recovery evidence, not external email
+delivery or a real lost-acknowledgement browser/API test.
+
+The selected-product label slice, implemented in
+`6c231caec1d978045bf36af20ad5dcec3117e07d`: resolve retained rule-product names through
+the existing `/products/{id}` endpoint when they are absent from the current page.
+Preserve archived/off-page selections and submitted IDs, provide loading/error/retry
+states, and keep late lookup responses from restoring removed selections. It was
+reviewed and integrated in main `ea9183623a11b1a91fc4e17eedd3d3889f373f33`, preserving
+feature head `89f1826c424038d1d5af0310331973201ef05a5f`. The merged tree matched that
+reviewed head exactly; five focused tests, typecheck, file lint and whitespace
+checks passed again before Noel's normal owner-key push. Remote main was verified
+and the serialized window released. No shared API, transport or schema changed.
+
+Executed label-slice checks:
+
+- Existing picker baseline passed three tests. The added off-page/archived-name
+  regression failed before the fix (two passed, one failed), reproducing the bug.
+- `npm --prefix frontend test -- src/features/billing/picker.test.tsx --reporter=dot`
+  passed one file / five tests after the fix. They cover names without page visits,
+  preserved IDs after explicit retry, removal during an outstanding lookup, and
+  the existing page/search/scope behavior. These are mocked catalog UI fixtures.
+- `npm run typecheck` from `frontend/` passed after the completed code/test edits.
+- `./node_modules/.bin/eslint src/features/billing/rules.tsx src/features/billing/picker.test.tsx --max-warnings 0`
+  from `frontend/` passed. `git diff --check` passed.
+- Independent standards and specification reviews found no actionable issue in
+  the scoped code/tests. No broad suite, backend mutation, transport test or live
+  browser claim is added for this bounded frontend fix.
+
+### Invoice-list layout: current review slice
+
+Implementation: `7e53847db970854416452af3b1f118c564b18d69`. Only `invoices.tsx`,
+`billing.css` and this handoff change relative to reviewed main `ea91836`.
+The six filters remain visible in two, three or six columns by available content
+width. Existing labels, query handlers and pagination are unchanged. Invoice IDs,
+dates, statuses and money remain unbroken inside the shared horizontal table
+region; customer names can wrap. Empty results fit the viewport. At 320px, equal
+date-label tracks and narrower inline padding align the native date controls
+without reducing their text size or touch targets.
+
+- `npm test -- src/features/billing/billing.test.tsx --reporter=dot` passed the
+  existing 31 focused cases. No tests were added or expanded for this layout slice.
+- `npm run build` passed TypeScript and the production Vite build after the final
+  CSS adjustment. File-only ESLint and `git diff --check` passed.
+- Actual project Playwright QA at `http://127.0.0.1:5173` passed 1440x1000,
+  1024x900, 390x844 and 320x800 viewports, with six/three/two/two columns. All
+  six filter controls were 46px high and each row had zero vertical/height mismatch.
+  Populated tables scroll within their region; empty titles are fully visible
+  without horizontal overflow. Status/overdue filters and Back/Forward preserve
+  both URL and controls. One real local UI sign-in, zero business writes, zero
+  page errors and zero post-sign-in console issues were recorded. The expected
+  pre-sign-in `/auth/session` 401 is identified separately.
+- Parent inspected desktop, mobile and empty screenshots. Independent source
+  review found the initial wide-empty-table issue; it was corrected and checked
+  in the browser. Final specification review found no remaining issue.
+- Sanitized local metrics: `/tmp/cadentra-billing-mobile-density-qa-result.json`;
+  screenshots: `/tmp/cadentra-billing-density-{desktop,medium,mobile,small}{,-empty}.png`.
+  This proves current frontend behavior against the older already-running native
+  API, not the full current backend, production deployment or T30 performance.
+  No shared UI, backend, transport, dependency or routing file was edited.
+
+T31's complete persistent browser journey passed; sanitized proof is committed in
+`backend/tests/reporting/evidence/t31-2026-10-31.json` (source `471808e`). The final
+all-page T30 remains incomplete: the coordinator records 55 scenario passes followed
+by an authentication-page timeout, and its owner task is paused. Invoice/rule samples
+that passed do not establish the global gate. Production Resend transport is
+integrated, but private credentials/sender are not configured and external delivery
+remains unverified. Native local invoice/password-reset Mailpit captures are separate
+evidence. No provider secrets or real recipient were added to fixtures.
+
+Separate send-contract tests are ready at `c4633ebe073d3d3b05c2538ed490ea67d02e48c9`
+on `feature/billing-send-contracts`; 25 actual invoice tests passed, but that branch
+has no main clearance and is excluded from this UI slice. The user prioritizes UI
+polish and fewer tests, so further send-runtime preparation stopped before any
+browser/API execution. The real lost-response/reload send probe remains unverified.
+No main-push window for the invoice-layout slice is authorized yet; send its exact
+tested head to Midhun P M for review and separate serialized clearance.
+
+## Historical implementation and evidence
+
+The checkpoints below retain their original source, test counts and limitations;
+their pending-integration statements are superseded by the current checkpoint.
 
 Role: Billing & Payments
 Branch: feature/billing-integration-proof

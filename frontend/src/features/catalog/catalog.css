@@ -129,3 +129,8 @@
   height: 18px;
   accent-color: var(--color-primary);
 }
+
+.catalog-search input { min-height:40px; padding:8px 12px; font-size:14px; }
+.catalog-search { gap:10px; margin:20px 0; }
+.catalog-actions { gap:8px; }
+@media (pointer:coarse), (max-width:760px){ .catalog-search input { min-height:44px; } }
