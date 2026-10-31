@@ -1,12 +1,12 @@
 # Noel Biju: handoff
 
-Status: BILLING CORE AND SEND RECOVERY INTEGRATED; SELECTED-PRODUCT LABEL FIX READY FOR REVIEW
+Status: BILLING CORE, SEND RECOVERY AND PRODUCT LABELS INTEGRATED; SEND-CONTRACT TESTS READY FOR REVIEW
 
 ## Current checkpoint: 31 October 2026
 
-Active branch: `feature/billing-product-labels`, based on reviewed main
-`56bd60bac347ece7b23442046e25b8e29d8fa21f`. The earlier closeout and verification
-branches are preserved. Effective local author remains `noel-ult`; Git network
+Active branch: `feature/billing-send-contracts`, incorporating reviewed main
+`ea9183623a11b1a91fc4e17eedd3d3889f373f33`. The earlier closeout, verification and
+product-label branches are preserved. Effective local author remains `noel-ult`; Git network
 operations use the assigned `gh-agent3` SSH key without global identity changes.
 
 The invoice URL correction was integrated in `00ffa99`. Main now also includes the
@@ -18,13 +18,17 @@ that recovery implementation. Its focused UI/store command,
 at `dd1fafc` in this checkout. This is mocked recovery evidence, not external email
 delivery or a real lost-acknowledgement browser/API test.
 
-Current coordinator-assigned slice, implemented in
+The coordinator-assigned product-label slice, implemented in
 `6c231caec1d978045bf36af20ad5dcec3117e07d`: resolve retained rule-product names through
 the existing `/products/{id}` endpoint when they are absent from the current page.
 Preserve archived/off-page selections and submitted IDs, provide loading/error/retry
 states, and keep late lookup responses from restoring removed selections. Changes
-are limited to `rules.tsx`, `picker.test.tsx`, and this named handoff. No shared API,
-transport, schema, dependency or routing change is requested.
+were limited to `rules.tsx`, `picker.test.tsx`, and this named handoff. After exact
+review and serialized clearance, Noel merged and normally pushed only that slice
+to main `ea9183623a11b1a91fc4e17eedd3d3889f373f33`. The merge tree exactly matched
+reviewed feature head `89f1826c424038d1d5af0310331973201ef05a5f`; focused five-test,
+typecheck, file-lint and whitespace checks passed again before publication. The
+post-push remote SHA was verified and the coordinator's window released.
 
 Executed label-slice checks:
 
@@ -41,6 +45,39 @@ Executed label-slice checks:
   the scoped code/tests. No broad suite, backend mutation, transport test or live
   browser claim is added for this bounded frontend fix.
 
+### Separate invoice-send contract verification
+
+Test implementation: `a044bbde299a2a0e0c3050b276e649036d5624ad`, originally based
+on `56bd60b`, then merged with reviewed main `ea91836` without rewriting history.
+The backend tree is unchanged by that main merge. This follow-up changes only
+`backend/tests/billing/test_invoices.py` and this handoff; it changes no production
+code, API contract, model, migration, transport or dependency.
+
+- Added 14 expanded cases: replay of SENDING/SENT/FAILED after a legitimate
+  balance-changing payment, normalized/128-character request keys, and nine invalid
+  HTTP bodies. Fresh-session snapshots deep-copy the original envelope and verify
+  unchanged recipient/payload/attempts/backoff/error/creation time, queue audits,
+  invoice and payment rows. SENDING is represented only to verify billing replay;
+  these tests do not establish worker crash recovery or external delivery.
+- Actual baseline: 11 invoice tests passed in 1.33 seconds. With the new cases,
+  `python -m pytest backend/tests/billing/test_invoices.py -q`
+  passed all 25 tests in 3.92 seconds using the existing Python 3.12 environment.
+  Execution was from the isolated worktree with its backend on PYTHONPATH and
+  explicit test-mode settings, against Noel's `cadentra_billing_test` PostgreSQL
+  database on loopback port 55431 at migration 0002. The fixtures own an outer
+  rollback transaction, so service commits release savepoints only.
+  The exact local runner was
+  `/home/midhun/Coading/Cadentra/agent3/backend/.venv/bin/python /tmp/cadentra-agent3-send-contract-check.py final`;
+  it supplies the isolated environment, invokes pytest and compares row counts.
+- Before/after counts matched exactly for users, customers, plans, subscriptions,
+  periods, invoices, payments, outbox and audit records. No database/schema was
+  dropped, existing data removed or integrity trigger disabled. No SMTP dispatch
+  or external delivery was attempted. Local logs/count receipts are under
+  `/tmp/cadentra-agent3-send-contract-{baseline,final}.{log,json}`.
+- Targeted Ruff lint/format, compilation and whitespace checks passed. Independent
+  test-contract and standards reviews found no actionable issue. No broad suite
+  repeat is claimed.
+
 T31's complete persistent browser journey passed; sanitized proof is committed in
 `backend/tests/reporting/evidence/t31-2026-10-31.json` (source `471808e`). The final
 all-page T30 remains incomplete: the coordinator records 55 scenario passes followed
@@ -50,11 +87,11 @@ integrated, but private credentials/sender are not configured and external deliv
 remains unverified. Native local invoice/password-reset Mailpit captures are separate
 evidence. No provider secrets or real recipient were added to fixtures.
 
-Remaining follow-up outside this label slice: connect actual committed invoice-send
-recovery to a browser lost-response/navigation/reload probe, and add focused backend
-replay-state/input-normalization coverage. These are not claimed complete by the
-nine mocked recovery tests. No main-push window is authorized yet; send the exact
-tested slice to Midhun P M for review and serialized clearance.
+Remaining follow-up: connect actual committed invoice-send recovery to a browser
+lost-response/navigation/reload probe. The nine mocked recovery tests and new
+backend contracts do not establish that combined browser/API path. No main-push
+window for the tests-only follow-up is authorized yet; send its exact tested head
+to Midhun P M for review and separate serialized clearance.
 
 ## Historical implementation and evidence
 
