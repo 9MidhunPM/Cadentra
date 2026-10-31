@@ -1,6 +1,6 @@
 # Billing verification
 
-Status: persisted financial API, atomic recurring issuer and corrected billing UI integrated through PR #13. Joint lifecycle/worker checks pass; the complete browser journey and final billing-page performance remain integration gates.
+Status: financial API, recurring issuer, corrected billing UI and URL drilldowns integrated through main 00ffa99. Joint lifecycle/worker checks and the full T31 functional browser journey pass. Final billing-page performance remains an integration gate.
 
 ## Commands
 

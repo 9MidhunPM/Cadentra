@@ -1,10 +1,10 @@
 # Noel Biju: handoff
 
-Status: BILLING CORE INTEGRATED; URL DRILLDOWN CORRECTION READY; FINAL T31/T30 CHECKS OPEN
+Status: BILLING INTEGRATED; FULL T31 FUNCTIONAL JOURNEY PASSED; FINAL T30 OPEN
 
 Role: Billing & Payments
-Branch: feature/billing-integration-proof
-Reviewed main incorporated: 6cd8b7467698520f8fb1fddb22c353e827dc8082 (corrected billing UI PR #13, issuer, subscription actions, joint worker/race tests, catalog search and local mail wiring)
+Branch: feature/billing-closeout
+Reviewed main incorporated: 00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd (invoice URL correction, portal lifecycle, production frontend package and durable owner-SSH workflow)
 Issuer implementation: 41dffac6a826930198e53242ed3b5e0e94cd619e
 Published issuer review head: 96b2a85b19207bf3772574b9c11bdecab577ad74
 Controlled invoice-race extension: 45c7465 (preserved from 7ca967f on the prior branch)
@@ -14,7 +14,7 @@ Historical invoice/cancellation proof: 1a7314e
 Paginated product picker: 6da4116
 Payment recovery correction: d18c3e121c61d1662e680117147b0f4def6d4fb1
 Final UI review head: 5037de083b7da163e12571c749941d75c92ab3a6 (merged through PR #13)
-Invoice URL drilldown correction: 695c67de08d2a380c3ba356d8987e9d049a46f0e (reviewed baseline 18e88ff)
+Invoice URL drilldown correction: 695c67de08d2a380c3ba356d8987e9d049a46f0e, reviewed head 67c72bc20d081de321bb718004636a5cb1420fab, integrated by Noel's verified owner-SSH main push 00ffa99
 
 ## Delivered and integrated
 
@@ -55,7 +55,7 @@ No shared models, migrations, dependency manifests, central frontend routes or o
 - Final combined backend: 329 tests and 121 subtests passed in 64.74 seconds at source HEAD deecddb, including reviewed main beedbbd, on 2026-10-31. A fresh outer generated UUID schema migrated to 0002 and was removed after workers joined; pre-existing public user/customer/period/invoice/payment counts remained exactly unchanged. Per-test issuance schemas are likewise generated and removed. No public truncation, database drops or disabled integrity triggers.
 - Eight controlled invoice races passed: both acquisition orders for payment capacity, matching payment replay, payment versus cancellation, and matching sends. A third physical connection proves the loser waits on PostgreSQL's actual row lock before the winner is released.
 - Billing UI: 38 owned billing/payment-command/picker cases pass, including eight URL-filter regressions. Independent reviews cleared payment navigation/reload retention, failed replay uncertainty, paid-invoice recovery, late outcomes, stale read reconciliation, route state, zero usage caps, product pagination and invoice query state. Fixture tests are separate from the live persistent browser evidence below.
-- Full frontend: 151 tests in 13 files, typecheck, lint, production build and whitespace checks passed after the URL correction. The existing bundle-size warning remains nonblocking; no new dependency was added.
+- Full frontend: 151 tests passed on the initial URL-fix baseline; after integrating reviewed portal main ff18b1f privately, all 164 tests in 13 files, typecheck, lint and production build passed at candidate 45fae877. Frontend source/manifests in the approved 00ffa99 integration are identical to that candidate. The required 31 billing tests, pack and whitespace checks passed again before the normal SSH main push. The existing bundle-size warning remains nonblocking; no new dependency was added.
 - Run-due HTTP tests verify real role/CSRF guards, strict empty payloads and server-owned clock/batch size.
 - Ruff, Python compilation and whitespace checks passed for the reviewed backend slices. Independent standards/specification review findings on batch limits and starvation were corrected before the issuer commit.
 
@@ -73,6 +73,8 @@ The cap race creates one 4970.16 invoice and one undiscounted 5522.40 invoice, w
 Own Python 3.12.13 environment and isolated PostgreSQL 18.6 application/test databases are verified at migration 0002. Docker is absent in this shell.
 
 Actual Chromium desktop/mobile billing flow passed against the API and persistent ACTIVE-subscription fixture: create 18% product tax and 10% discount, run due, confirm, record the canonical two payments, reload Paid/zero balance, queue email, print and verify staff read-only rules. No relevant console/page errors, framework overlays or page overflow were observed. This is billing from a prepared ACTIVE fixture, not a claim that the full catalog/lifecycle journey ran.
+
+The separate full T31 journey subsequently passed 1/1 in 16.6 seconds at clean test source 41ef6df0521d853348803cd71471d5852b7bc313, running the reviewed ff18b1f application. Direct inspection of the saved T31-evidence.json and Playwright last-run result confirms product 1000.00 + variant 560.00 x quantity 3, plan/template/quotation/activation, one 4970.16 invoice and zero new invoices on retry, confirmation, payments 2000.00 and 2970.16, PAID/zero balance after reload, reconciled reports, authenticated portal/print and foreign-customer 404s with unchanged records. It also exercised customer pause/cancel-pause/close/linked-draft renewal, preserved settled history and recorded zero page errors. The JSON and print were preserved under /tmp/cadentra-billing-t31-proof; the JSON SHA-256 is bf5fe6e9e700e95921ed00fc1be83b4539c1764d213263a898213204367b57bf. The mobile PNG was flagged to its owner for a settled-navigation recapture; the functional evidence is distinct from that screenshot.
 
 The corrected payment recovery probe committed one fictional local manual ledger entry for 2000.00, deliberately lost its HTTP acknowledgement, navigated away/back, reloaded and retried the same body/key. Actual API history held exactly one payment and balance 2970.16. No gateway, bank or funds transfer was involved. Retention is scoped by actor and invoice, saved before POST in sessionStorage, and cleared only after matching fresh payment history. Failed uncertain replays retain their key even after authentication/validation errors. Paid invoices expose recovery without accepting new payments.
 
@@ -102,7 +104,7 @@ Issuer PR #12 is integrated. Joint T13/T33/T34 verification is integrated throug
 
 The completion audit's three own-scope evidence gaps are closed by the focused PostgreSQL tests above. Coordinator review of the initial UI found payment command loss across navigation and an unreachable product-picker page. Both were corrected and independently re-reviewed before the final UI head.
 
-The payment/picker UI is integrated through PR #13. The URL drilldown correction is ready for coordinator review and serialized integration; it must be included before final overdue-page measurements. Sherin Saji owns the full persisted T31 browser journey and actual billing-page T30 measurements. The earlier performance benchmark explicitly excluded placeholder staff billing surfaces; it does not count as those measurements. Resolve any further billing defects these gates reveal before marking the workstream complete.
+The payment/picker UI and URL correction are integrated, and the full functional T31 journey passed. Remaining: Sherin Saji's final actual billing-page T30 measurements on the corrected main and a fresh isolated namespace. The earlier benchmark explicitly excluded placeholder staff billing surfaces; it does not count as those measurements. Preserve immutable rule history during fixture handling and resolve any billing defects exposed by the final run before marking the workstream complete.
 
 Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. The coordinator's latest workflow instruction is owner SSH integration after code review and an explicit serialized go-ahead, with no new GitHub API/PR merge operations. Preserve historical PR records and original authorship; never force-push.
 
