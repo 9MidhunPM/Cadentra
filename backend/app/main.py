@@ -16,6 +16,7 @@ from app.core.errors import DomainError
 from app.db.session import get_session
 
 logger = logging.getLogger(__name__)
+EXPECTED_SCHEMA_REVISION = "0002"
 
 
 def create_app() -> FastAPI:
@@ -80,14 +81,14 @@ def create_app() -> FastAPI:
     def health(db: Annotated[Session, Depends(get_session)]):
         try:
             db.execute(text("SELECT 1"))
-            revision = db.scalar(text("SELECT version_num FROM alembic_version"))
-            if revision is None:
+            revisions = db.scalars(text("SELECT version_num FROM alembic_version")).all()
+            if revisions != [EXPECTED_SCHEMA_REVISION]:
                 raise DomainError("NOT_READY", "Database migration is required.", 503)
         except SQLAlchemyError as exc:
             raise DomainError(
                 "NOT_READY", "Database is unavailable or requires migration.", 503
             ) from exc
-        return {"data": {"status": "ready", "migration": revision}}
+        return {"data": {"status": "ready", "migration": EXPECTED_SCHEMA_REVISION}}
 
     from app.modules.billing.router import router as billing_router
     from app.modules.catalog.router import router as catalog_router

@@ -11,6 +11,7 @@ from app.core.auth import Actor, require_customer_ownership
 from app.core.clock import get_clock
 from app.core.errors import DomainError
 from app.core.money import money_string
+from app.core.pagination import safe_offset
 from app.models import (
     Customer,
     Invoice,
@@ -89,10 +90,7 @@ def safe_plan_projection(snapshot) -> dict:
 
 
 def _pagination(page, page_size):
-    if type(page) is not int or page < 1 or type(page_size) is not int or not 1 <= page_size <= 100:
-        raise DomainError(
-            "INVALID_PAGINATION", "Use page >= 1 and page_size between 1 and 100.", 422
-        )
+    return safe_offset(page, page_size)
 
 
 def _authorize(actor: Actor, row: Subscription) -> None:
@@ -281,7 +279,7 @@ def get_subscription_for_actor(db: Session, actor: Actor, subscription_id: UUID)
 def list_subscriptions(
     db: Session, actor: Actor, page=1, page_size=25, customer_id=None, state=None, q=None
 ) -> dict:
-    _pagination(page, page_size)
+    offset = _pagination(page, page_size)
     if actor.role not in {"ADMIN", "STAFF", "CUSTOMER"}:
         raise DomainError("FORBIDDEN", "Your role cannot read subscriptions.", 403)
     filters = []
@@ -308,7 +306,7 @@ def list_subscriptions(
     total = db.scalar(select(func.count()).select_from(base.subquery()))
     rows = db.execute(
         base.order_by(Subscription.created_at.desc(), Subscription.id.desc())
-        .offset((page - 1) * page_size)
+        .offset(offset)
         .limit(page_size)
     ).all()
     ids = [row.id for row, _ in rows]
@@ -347,13 +345,13 @@ def list_subscriptions(
 
 
 def list_templates(db: Session, actor: Actor, page=1, page_size=25) -> dict:
-    _pagination(page, page_size)
+    offset = _pagination(page, page_size)
     if actor.role not in {"ADMIN", "STAFF"}:
         raise DomainError("FORBIDDEN", "Only operators can read quotation templates.", 403)
     rows = db.scalars(
         select(QuotationTemplate)
         .order_by(QuotationTemplate.created_at.desc(), QuotationTemplate.id.desc())
-        .offset((page - 1) * page_size)
+        .offset(offset)
         .limit(page_size)
     ).all()
     ids = [row.id for row in rows]

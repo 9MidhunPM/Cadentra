@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { apiClient, getErrorMessage, type ListResponse, type ResourceResponse } from '../../lib';
+import { apiClient, getErrorMessage, useSession, type ListResponse, type ResourceResponse } from '../../lib';
 import { Button, ConfirmDialog, DataTable, DateLabel, ErrorPanel, FormField, LoadingSkeleton, Money, PageHeader, StatusBadge } from '../../components/ui';
 import { fieldError, useResource } from './resource';
 import type { BillingRun, Invoice } from './types';
 import { PaymentForm } from './payments';
+import { sendCommands, useSendCommand, describeEmailStatus } from './sendCommands';
 export { PaymentForm };
 
 export function InvoiceList() {
@@ -71,27 +72,39 @@ export function InvoiceList() {
 
 export function InvoiceDetail() {
   const { id = '' } = useParams();
-  return <InvoiceRecord key={id} id={id} />;
+  const { actor } = useSession();
+  if (!actor) return <p>Sign in to view this invoice.</p>;
+  return <InvoiceRecord key={`${actor.id}:${id}`} id={id} actorId={actor.id} />;
 }
 
-function InvoiceRecord({ id }: { id: string }) {
+function InvoiceRecord({ id, actorId }: { id: string; actorId: string }) {
   const resource = useResource<ResourceResponse<Invoice>>(`/invoices/${encodeURIComponent(id)}`);
   const [pending, setPending] = useState(false);
   const lock = useRef(false);
-  const sendKey = useRef<string | null>(null);
+  const sendScope = { actor: actorId, invoice: id };
+  const send = useSendCommand(sendScope);
   const [message, setMessage] = useState('');
   const [error, setError] = useState<unknown>(null);
   const [reason, setReason] = useState('');
-  async function action(name: 'confirm' | 'cancel' | 'send') {
+  async function action(name: 'confirm' | 'cancel') {
     if (lock.current) return;
     lock.current = true; setPending(true); setError(null); setMessage('');
-    if (name === 'send' && !sendKey.current) sendKey.current = crypto.randomUUID();
     try {
-      await apiClient.request(`/invoices/${id}/${name}`, { method: 'POST', json: name === 'cancel' ? { reason } : name === 'send' ? { request_key: sendKey.current } : undefined });
-      setMessage(name === 'send' ? 'Invoice email queued. SMTP acceptance and external delivery are separate checks.' : `Invoice ${name === 'confirm' ? 'confirmed' : 'cancelled'}.`);
-      if (name === 'send') sendKey.current = null;
+      await apiClient.request(`/invoices/${id}/${name}`, { method: 'POST', json: name === 'cancel' ? { reason } : undefined });
+      setMessage(`Invoice ${name === 'confirm' ? 'confirmed' : 'cancelled'}.`);
       resource.reload();
     } catch (failure) { setError(failure); throw failure; }
+    finally { lock.current = false; setPending(false); }
+  }
+  async function sendInvoice() {
+    if (lock.current) return;
+    const requestKey = sendCommands.begin(sendScope, crypto.randomUUID());
+    if (!requestKey) return;
+    lock.current = true; setPending(true);
+    try {
+      const { data } = await apiClient.request<ResourceResponse<unknown>>(`/invoices/${encodeURIComponent(id)}/send`, { method: 'POST', json: { request_key: requestKey } });
+      if (sendCommands.acknowledge(sendScope, requestKey, data)) resource.reload();
+    } catch (failure) { sendCommands.uncertain(sendScope, requestKey, failure); }
     finally { lock.current = false; setPending(false); }
   }
   const invoice = resource.data?.data;
@@ -100,8 +113,13 @@ function InvoiceRecord({ id }: { id: string }) {
     {invoice && <>
       <div className="billing-card"><div className="ui-actions"><StatusBadge status={invoice.status} />{invoice.collection_status !== invoice.status && <StatusBadge status={invoice.collection_status} />}{invoice.overdue && <StatusBadge status="OVERDUE" />}</div><p>{invoice.customer_snapshot?.display_name ?? invoice.customer_id}</p><p>Service: <DateLabel value={invoice.period_start} /> to <DateLabel value={invoice.period_end} /> (end excluded)</p><p>Issued <DateLabel value={invoice.invoice_date} /> · Due <DateLabel value={invoice.due_date} /></p><p>Email: {invoice.email_status === 'SENT' ? <span>Accepted by SMTP (external delivery unverified)</span> : <StatusBadge status={invoice.email_status ?? 'NOT_REQUESTED'} />}</p>
       <div className="ui-actions">{invoice.status === 'DRAFT' && <ConfirmDialog title="Confirm this invoice?" description="Confirming makes this stored invoice payable." trigger={<Button disabled={pending}>Confirm invoice</Button>} onConfirm={() => action('confirm')} />}
-      {['CONFIRMED', 'PAID'].includes(invoice.status) && <Button variant="secondary" pending={pending} onClick={() => void action('send').catch(() => undefined)}>Queue invoice email</Button>}
+      {(['CONFIRMED', 'PAID'].includes(invoice.status) || send.requestKey) && <Button variant="secondary" pending={pending} disabled={send.phase === 'storage_error' || send.phase === 'pending'} onClick={() => void sendInvoice()}>{send.requestKey ? 'Retry same invoice email request' : send.phase === 'acknowledged' ? 'Queue another invoice email' : 'Queue invoice email'}</Button>}
       <a className="ui-button ui-button--secondary" href={`/api/v1/invoices/${encodeURIComponent(invoice.id)}/print`} target="_blank" rel="noopener noreferrer">Print invoice</a></div></div>
+      {send.phase === 'pending' && <p role="status">This retained email request is in progress.</p>}
+      {send.phase === 'uncertain' && <p role="status">The email request result is uncertain. Its request key is retained across reload. Retry the same request to check its recorded status; no email is sent automatically.</p>}
+      {send.receipt && <p role="status">Last send acknowledgement: {describeEmailStatus(send.receipt.email_status)}</p>}
+      {send.error != null && <ErrorPanel message={getErrorMessage(send.error)} />}
+      {send.phase === 'storage_error' && <p role="alert">Invoice email recovery storage is unavailable or invalid. Sending is blocked. Restore session storage and reload before retrying.</p>}
       <h2>Stored invoice lines</h2><p className="ui-muted billing-scroll-hint">Scroll the line table horizontally to view every charge.</p><div className="ui-table-panel"><div className="ui-table-scroll" role="region" aria-label="Stored invoice lines" tabIndex={0}><table className="ui-table billing-invoice-lines"><caption className="ui-sr-only">Stored invoice lines</caption><thead><tr><th>Description</th><th>Quantity</th><th>Unit price</th><th>Discount</th><th>Tax</th><th>Total</th></tr></thead><tbody>{invoice.lines?.map(line => <tr key={line.id}><td>{line.description}{line.taxes?.map((tax, index) => <small className="billing-tax" key={index}>{tax.name} ({tax.rate_percent}%): <Money amount={tax.amount} currency={invoice.currency} /></small>)}</td><td>{line.quantity}</td><td><Money amount={line.unit_price} currency={invoice.currency} /></td><td><Money amount={line.discount} currency={invoice.currency} /></td><td><Money amount={line.tax_total} currency={invoice.currency} /></td><td><Money amount={line.total} currency={invoice.currency} /></td></tr>)}</tbody></table></div></div>
       <dl className="billing-totals">{([['Subtotal', invoice.subtotal], ['Discount', invoice.discount_total], ['Tax', invoice.tax_total], ['Total', invoice.total], ['Paid', invoice.paid_amount], ['Balance due', invoice.balance_due]] as const).map(([label, amount]) => <div key={label}><dt>{label}</dt><dd><Money amount={amount} currency={invoice.currency} /></dd></div>)}</dl>
       <h2>Payment history</h2><DataTable rows={invoice.payments ?? []} columns={[{ key: 'date', header: 'Paid on', render: row => <DateLabel value={row.paid_on} /> }, { key: 'method', header: 'Method', render: row => row.method }, { key: 'amount', header: 'Amount', render: row => <Money amount={row.amount} currency={invoice.currency} /> }]} getRowKey={row => row.id} page={1} pageSize={Math.max(1, invoice.payments?.length ?? 0)} total={invoice.payments?.length ?? 0} onPageChange={() => undefined} caption="Payments" emptyTitle="No payments recorded" />

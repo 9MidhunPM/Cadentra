@@ -1,3 +1,21 @@
+# Cinematic release candidate — 31 October 2026
+
+Primary coordinator: Midhun P M. Base main b662117. The candidate adds the approved cinematic public homepage, a guarded /app entry, operational route chunks, live CycleGuard reporting, invoice-send recovery, subscription form recovery, exact migration readiness, bounded pagination, and production Resend SMTP with startup-secret redaction.
+
+The existing public demo passed HTTPS readiness at migration0002. This candidate is implemented and independently reviewed; deployment verification is pending. The user confirmed Resend credentials are not yet configured. Production targets smtp.resend.com:587 with certificate-verified STARTTLS; missing key/sender keeps HTTP available and records SMTPNotConfigured before any connection. Development Mailpit is unchanged. SMTP acceptance does not establish inbox delivery.
+
+Focused evidence:64 SMTP/outbox/proxy tests,33 readiness/pagination/API tests,53 CycleGuard/report regressions,16 subscription form tests,9 invoice-send recovery tests,3 CycleGuard frontend tests and12 identity/route tests passed in their recorded scopes. Build/typecheck and source reviews completed; final integrated lint/build is recorded by the coordinator. No whole-suite repeat is claimed. Existing393 backend/164 frontend/T31/public11-step evidence remains historical baseline evidence.
+
+Browser/IAB rendered1440px and390px views with loaded assets and no overflow or page exceptions. The anonymous session check correctly returns401. Visual review compared approved concepts with desktop/mobile screenshots for typography, copy, palette, composition, asset blending and responsive geometry. Product previews are labelled illustrative HTML, not live business metrics. Generated stills ship; optional video prompt is frontend/design/HERO_VIDEO_PROMPT.md. No video is yet integrated.
+
+Final all-page T30 remains incomplete:55 scenarios logged pass, followed by auth-signin timeout; its owner task is paused. External reset/invoice delivery and event obligations remain open. No old dataset, financial history, Mailpit volume or credentials were deleted.
+
+---
+
+## Historical checkpoints below
+
+Earlier statements below describe their original checkpoint; they are not the current implementation or deployment status.
+
 # Release evidence
 
 Status: CORE PRODUCT JOURNEY VERIFIED LOCALLY; PRODUCTION INGRESS AND DEPLOYMENT ACCEPTANCE CONTINUE.

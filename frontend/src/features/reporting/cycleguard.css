@@ -1,0 +1,204 @@
+.cycle-guard {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.cycle-guard-intro {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+.cycle-guard-mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.cycle-guard-intro h2 {
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
+}
+.cycle-guard-intro p {
+  max-width: 670px;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.cycle-guard-readonly {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--color-muted);
+  font-size: 11px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+}
+.cycle-guard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cycle-guard-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 5px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+.cycle-guard-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.cycle-guard-tabs button:hover {
+  background: var(--color-neutral-bg);
+  color: var(--color-ink);
+}
+.cycle-guard-tabs button[aria-selected="true"] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.cycle-guard-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+.cycle-guard-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+}
+.cycle-guard-panel-header h2 {
+  font-size: 18px;
+  letter-spacing: -0.3px;
+}
+.cycle-guard-panel-header p {
+  font-size: 12px;
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.cycle-guard-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.cycle-guard-count strong {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -1.5px;
+  color: var(--color-primary);
+}
+.cycle-guard-count span {
+  max-width: 130px;
+  font-size: 11px;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+.cycle-guard-panel .ui-table-panel {
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+.cycle-guard-panel > .ui-error,
+.cycle-guard-panel > .ui-loading {
+  margin: 0 24px 24px;
+}
+.cycle-guard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-underline-offset: 4px;
+  white-space: nowrap;
+}
+.cycle-guard-reason {
+  min-width: 200px;
+  max-width: 510px;
+  line-height: 1.65;
+}
+.cycle-guard-secondary {
+  display: block;
+  color: var(--color-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.cycle-guard-footnote {
+  font-size: 11px;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+@media (max-width: 800px) {
+  .cycle-guard-intro {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .cycle-guard-readonly {
+    margin-left: 70px;
+  }
+  .cycle-guard-panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .cycle-guard-count span {
+    max-width: none;
+  }
+  .cycle-guard-toolbar {
+    align-items: stretch;
+  }
+  .cycle-guard-tabs {
+    width: 100%;
+  }
+  .cycle-guard-tabs button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+@media (max-width: 480px) {
+  .cycle-guard-intro {
+    padding: 18px;
+  }
+  .cycle-guard-intro > div {
+    flex: 1;
+    min-width: 180px;
+  }
+  .cycle-guard-readonly {
+    margin-left: 0;
+  }
+  .cycle-guard-tabs button {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+  }
+  .cycle-guard-panel-header {
+    padding: 20px;
+  }
+}

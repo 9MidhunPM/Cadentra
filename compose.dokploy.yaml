@@ -11,12 +11,12 @@ x-backend-environment: &backend-environment
   BUSINESS_CURRENCY: INR
   SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-86400}
   RESET_TOKEN_TTL_SECONDS: ${RESET_TOKEN_TTL_SECONDS:-1800}
-  SMTP_HOST: ${COMPOSE_SMTP_HOST:-mailpit}
-  SMTP_PORT: ${SMTP_PORT:-1025}
-  SMTP_USER: ${SMTP_USER:-}
+  SMTP_HOST: ${COMPOSE_SMTP_HOST:-smtp.resend.com}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-resend}
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-  SMTP_FROM: ${SMTP_FROM:-noreply@example.invalid}
-  SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+  SMTP_FROM: ${SMTP_FROM:-}
+  SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
   WORKER_POLL_SECONDS: ${WORKER_POLL_SECONDS:-30}
   WORKER_BATCH_SIZE: ${WORKER_BATCH_SIZE:-100}
 
@@ -42,17 +42,6 @@ services:
       timeout: 5s
       retries: 12
     restart: unless-stopped
-
-  mailpit:
-    image: axllent/mailpit:v1.33.0
-    environment:
-      MP_DATABASE: /data/mailpit.db
-      MP_DISABLE_VERSION_CHECK: "true"
-      MP_SMTP_DISABLE_RDNS: "true"
-    volumes:
-      - mailcapture:/data
-    restart: unless-stopped
-    # Private capture only. No ports, relay, public domain or shared Traefik network.
 
   migrate:
     <<: *backend
@@ -86,8 +75,6 @@ services:
     depends_on:
       bootstrap:
         condition: service_completed_successfully
-      mailpit:
-        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/v1/health', timeout=3)"]
       interval: 10s
@@ -101,8 +88,6 @@ services:
     depends_on:
       bootstrap:
         condition: service_completed_successfully
-      mailpit:
-        condition: service_started
     restart: unless-stopped
     # Exactly one service instance; do not add a second native worker.
 
@@ -140,6 +125,7 @@ services:
 
 volumes:
   database:
+  # Retain historical capture data; removal of the service must not delete this volume.
   mailcapture:
 
 networks:

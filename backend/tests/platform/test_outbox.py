@@ -129,3 +129,17 @@ def test_transport_has_timeout_tls_auth_and_recipient_refusal(monkeypatch):
         "ehlo",
         "authenticated",
     ]
+
+
+def test_unconfigured_resend_is_a_sanitized_retriable_failure_without_connection(db_session, monkeypatch):
+    row = queue(db_session)
+    settings = outbox.get_settings().model_copy(update={
+        "smtp_host": "smtp.resend.com", "smtp_port": 587, "smtp_user": "resend",
+        "smtp_password": "", "smtp_from": "", "smtp_starttls": True,
+    })
+    monkeypatch.setattr(outbox, "get_settings", lambda: settings)
+    monkeypatch.setattr(outbox.smtplib, "SMTP", lambda *args, **kwargs: pytest.fail("Unconfigured SMTP must not connect"))
+    result = outbox.dispatch_pending(db_session)
+    assert result == {"processed": 1, "accepted_by_smtp": 0, "failed": 1}
+    assert row.status == "FAILED" and row.last_error == "SMTPNotConfigured"
+    assert row.attempts == 1 and row.next_attempt_at > get_clock().now()

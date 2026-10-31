@@ -1,10 +1,11 @@
-import { CircleUserRound, CreditCard, FileText, Home, Layers3, Package, PanelsTopLeft, Percent, Settings2, Users } from 'lucide-react'
+import { CircleAlert, CircleUserRound, CreditCard, FileText, Home, Layers3, Package, PanelsTopLeft, Percent, Settings2, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Role } from '../lib'
 
 export type NavigationItem = { label: string; to: string; icon: LucideIcon; roles?: readonly Role[] }
 const staffNavigation: NavigationItem[] = [
   { label: 'Overview', to: '/overview', icon: Home },
+  { label: 'CycleGuard', to: '/cycleguard', icon: CircleAlert },
   { label: 'Customers', to: '/customers', icon: Users },
   { label: 'Products', to: '/catalog/products', icon: Package },
   { label: 'Plans', to: '/catalog/plans', icon: Layers3 },

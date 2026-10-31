@@ -1,3 +1,15 @@
+# Current coordinator checkpoint — cinematic release
+
+Midhun P M remains primary. Seven bounded helper tasks implemented the approved release in this checkout; helper work is not attributed as new human participation. Root owns review, integration, asset generation, public / routing, auth return destinations, deployment and the single status page.
+
+Approved cinematic concepts were translated into text-free generated glass/titanium artwork and real HTML controls/previews. Assets are responsive WebP, about122KB hero/90KB supporting image, with smaller variants. Optional external video brief is frontend/design/HERO_VIDEO_PROMPT.md.
+
+Security and correctness reviews cleared SMTP, CycleGuard authorization/projections, readiness/pagination, routing and send recovery. A mixed slash return-target issue found during review was fixed before publication. Root ran focused SMTP/proxy64 and identity/route12 tests, plus build/lint. Earlier full gates remain separately scoped. Final deployment checks follow publication; SMTP key/from still missing by user confirmation.
+
+---
+
+## Historical handoffs
+
 # Midhun P M: handoff
 
 Status: CORE JOURNEY VERIFIED LOCALLY; PRODUCTION INGRESS HARDENING AND DEPLOYMENT CHECKS IN PROGRESS

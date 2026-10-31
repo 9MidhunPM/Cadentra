@@ -12,6 +12,7 @@ from app.core.auth import Actor, require_actor, require_origin, require_role
 from app.core.clock import get_clock
 from app.core.config import get_settings
 from app.core.errors import DomainError
+from app.core.pagination import safe_offset
 from app.core.security import hash_password, hash_token, normalize_email
 from app.db.session import get_session
 from app.models import Customer, SessionRecord, User
@@ -152,6 +153,7 @@ def list_customers(
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
     q: Annotated[str | None, Query(max_length=200)] = None,
 ):
+    offset = safe_offset(page, page_size)
     filters = []
     if q:
         # Escape wildcard characters: search text cannot turn into an unbounded wildcard query.
@@ -167,7 +169,7 @@ def list_customers(
         select(Customer)
         .where(*filters)
         .order_by(Customer.created_at.desc(), Customer.id.desc())
-        .offset((page - 1) * page_size)
+        .offset(offset)
         .limit(page_size)
     ).all()
     return {

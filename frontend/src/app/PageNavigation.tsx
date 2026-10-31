@@ -8,10 +8,10 @@ export function PageNavigation() {
   const { status } = useSession()
 
   useEffect(() => {
-    if (status === 'loading') return
+    if (status === 'loading' && pathname !== '/') return
     const frame = window.requestAnimationFrame(() => {
       const heading = document.querySelector<HTMLElement>('h1')
-      document.title = heading?.textContent ? `${heading.textContent} · Cadentra` : 'Cadentra'
+      document.title = pathname === '/' ? 'Cadentra — Every cycle. Under control.' : heading?.textContent ? `${heading.textContent} · Cadentra` : 'Cadentra'
       const target = heading || document.querySelector<HTMLElement>('main')
       if (target) {
         target.setAttribute('tabindex', '-1')

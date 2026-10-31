@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { apiClient, ApiError, getErrorMessage, isAbortError, type ResourceResponse } from '../../lib';
 import { Button, ErrorPanel, FormField, LoadingSkeleton, PageHeader } from '../../components/ui';
@@ -9,6 +9,8 @@ interface Catalog { customers: Customer[]; plans: Plan[]; products: Product[]; t
 export function useCatalog() {
   const [data, setData] = useState<Catalog>();
   const [error, setError] = useState<unknown>();
+  const [revision, setRevision] = useState(0);
+  const reload = useCallback(() => { setError(undefined); setRevision(current => current + 1); }, []);
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([
@@ -18,15 +20,20 @@ export function useCatalog() {
       if (!controller.signal.aborted) setData({ customers, plans, products, templates });
     }).catch((caught: unknown) => { if (!controller.signal.aborted && !isAbortError(caught)) setError(caught); });
     return () => controller.abort();
-  }, []);
-  return { data, error };
+  }, [revision]);
+  return { data, error, reload };
 }
 
 export function fieldError(error: unknown, field: string): string | undefined {
   if (!(error instanceof ApiError)) return undefined;
-  const value = error.fields[field];
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value)) return value.filter(item => typeof item === 'string').join(', ');
+  for (const key of [field, `body.${field}`]) {
+    const value = error.fields[key];
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+      const messages = value.filter(item => typeof item === 'string');
+      if (messages.length) return messages.join(', ');
+    }
+  }
   return undefined;
 }
 
@@ -85,7 +92,7 @@ export function SubscriptionForm({ initial, onSaved, onCancel }: { initial?: Sub
     } catch (caught) { setError(caught); } finally { setPending(false); }
   }
   return <form className="subscription-stack subscription-panel" onSubmit={event => void submit(event)}>
-    {catalog.error !== undefined && <ErrorPanel message={getErrorMessage(catalog.error)} />}
+    {catalog.error !== undefined && <ErrorPanel message={getErrorMessage(catalog.error)} onRetry={catalog.reload} />}
     {!catalog.data && catalog.error === undefined && <LoadingSkeleton label="Loading subscription options" />}
     {error !== undefined && <ErrorPanel message={getErrorMessage(error)} />}
     {catalog.data && <><fieldset disabled={pending}><div className="subscription-grid">
@@ -126,7 +133,7 @@ export function TemplateEditor() {
   }
   const unavailable = id && catalog.data && !catalog.data.templates.some(item => item.id === id);
   return <div className="subscription-stack"><PageHeader title={id ? 'Edit quotation template' : 'New quotation template'} description="Templates copy a plan and product selections into a draft. Existing quotations remain unchanged." actions={<Link className="subscription-link" to="/subscriptions/templates">All templates</Link>} />
-    {catalog.error !== undefined && <ErrorPanel message={getErrorMessage(catalog.error)} />}{!catalog.data && catalog.error === undefined && <LoadingSkeleton label="Loading template options" />}
+    {catalog.error !== undefined && <ErrorPanel message={getErrorMessage(catalog.error)} onRetry={catalog.reload} />}{!catalog.data && catalog.error === undefined && <LoadingSkeleton label="Loading template options" />}
     {unavailable && <ErrorPanel message="This template is unavailable." />}
     {catalog.data && !unavailable && <form onSubmit={event => void submit(event)} className="subscription-panel subscription-stack">
       {error !== undefined && <ErrorPanel message={getErrorMessage(error)} />}

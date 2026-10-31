@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import Actor, Role, require_role
 from app.core.clock import get_clock
 from app.db.session import get_session
-from app.modules.reporting import service
+from app.modules.reporting import cycleguard, service
 from app.modules.reporting.portal import router as portal_router
 
 router = APIRouter(tags=["reporting"])
@@ -46,6 +46,18 @@ def revenue_series(
 ):
     start, end = report_range(range_from, range_to)
     return {"data": service.revenue_series(db, actor, start, end, cadence, customer_id)}
+
+
+@router.get("/reports/cycleguard")
+def cycle_guard(
+    db: Database,
+    actor: Staff,
+    kind: cycleguard.AlertKind = "OVERDUE",
+    customer_id: UUID | None = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+):
+    return cycleguard.list_alerts(db, actor, kind, customer_id, page, page_size)
 
 
 router.include_router(portal_router)

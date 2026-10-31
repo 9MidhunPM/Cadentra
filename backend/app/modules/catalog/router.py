@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import Actor, require_role
 from app.core.errors import DomainError
+from app.core.pagination import safe_offset
 from app.db.session import get_session
 from app.models import Plan, PlanTax, Product, ProductVariant
 
@@ -22,11 +23,12 @@ Admin = Annotated[Actor, Depends(require_role("ADMIN"))]
 
 
 def paginated(db, model, page, page_size, serialize, *, conditions=()):
+    offset = safe_offset(page, page_size)
     rows = db.scalars(
         select(model)
         .where(*conditions)
         .order_by(model.created_at.desc(), model.id.desc())
-        .offset((page - 1) * page_size)
+        .offset(offset)
         .limit(page_size)
     ).all()
     return {
@@ -149,10 +151,11 @@ def plans(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
 ):
+    offset = safe_offset(page, page_size)
     rows = db.scalars(
         select(Plan)
         .order_by(Plan.created_at.desc(), Plan.id.desc())
-        .offset((page - 1) * page_size)
+        .offset(offset)
         .limit(page_size)
     ).all()
     selected = {row.id: [] for row in rows}

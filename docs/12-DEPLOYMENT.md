@@ -1,3 +1,32 @@
+# Current production email and homepage deployment
+
+The existing Cadentra demo is hosted at https://cadentra.midhunpm.in. The cinematic release makes / public and /app the authenticated role landing; existing operational URLs are retained. HTTPS and exact proxy trust remain required.
+
+Production now uses Resend SMTP instead of Mailpit. Configure these six values privately in Dokploy:
+
+```text
+COMPOSE_SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASSWORD=<private Resend API key>
+SMTP_FROM=<address on your verified sending domain>
+SMTP_STARTTLS=true
+```
+
+Never paste the key into Git or a frontend variable. The user has not yet configured SMTP_PASSWORD/SMTP_FROM. Empty values permit HTTP startup, but the transport rejects delivery before opening a connection, records SMTPNotConfigured and schedules a sanitized retry. There is no production Mailpit fallback. The old capture volume is retained. Development compose.yaml and .env.example are unchanged.
+
+Both API and worker inherit the same backend environment; COMPOSE_SMTP_HOST maps to SMTP_HOST. APP_ORIGIN and ALLOWED_ORIGINS must be https://cadentra.midhunpm.in. Reset URLs are built from APP_ORIGIN and the dispatcher validates their origin/path. Port587 requires certificate-verified STARTTLS before authentication.
+
+Private container check: `python -m app.smtp_check` validates configuration without connection or email; `python -m app.smtp_check --connect` verifies TLS/authentication without sending. Both return sanitized errors and nonzero status on failure. After configuration, verify a reset and invoice using an authorized controlled inbox; SMTP acceptance is separate from actual received mail.
+
+Resend-Idempotency-Key, Message-ID, message date and MIME boundary remain stable for each persisted outbox intent. Provider deduplication lasts24hours; SMTP remains at-least-once across lost acknowledgement/database commit. Financial records are never recreated by email retries.
+
+---
+
+## Historical deployment preparation and ingress evidence
+
+Statements below retain the facts and limitations of their original checkpoint. The production Mailpit defaults they describe are historical.
+
 # Deployment and runtime checklist
 
 Proposed single-host deployment using Docker Compose, compatible with an existing reverse-proxy platform such as the user's Dokploy/Traefik environment. The user has authorized the demo: a separate Cadentra Dokploy project andcadentra.midhunpm.in domain are prepared; actual deployment/live verification is pending. No unrelated service or wildcard routing was changed. Do not modify live wildcard routing or other services without explicit approval.
