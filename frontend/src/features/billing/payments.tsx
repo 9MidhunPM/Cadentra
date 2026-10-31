@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { apiClient, ApiError, getErrorMessage, useSession, type ResourceResponse } from '../../lib';
 import { Button, ErrorPanel, FormField, Money } from '../../components/ui';
 import { paymentCommands, usePaymentCommand, type PaymentCommand, type PaymentScope } from './paymentCommands';
+import { paymentMethods } from './paymentMethods';
 import { fieldError } from './resource';
 import type { Invoice } from './types';
 interface Draft { method: string; amount: string; paid_on: string; note: string; external_reference: string }
@@ -62,7 +63,7 @@ function ScopedPaymentForm({ scope, invoice, onSaved }: { scope: PaymentScope; i
   if (invoice.status !== 'CONFIRMED' && command.phase === 'idle') return null;
   return <form className="billing-card" onSubmit={event => void submit(event)}><h2>{invoice.status === 'CONFIRMED' ? 'Record a manual payment' : 'Recover a retained payment'}</h2><p className="ui-muted">Remaining balance: <Money amount={invoice.balance_due} currency={invoice.currency} />. This records a payment already received.</p>
     <fieldset disabled={blocked} className="billing-form-grid">
-      <FormField error={fieldError(command.error, 'method')} id="payment-method" label="Payment method"><select value={shown.method} onChange={event => setDraft({ ...draft, method: event.target.value })}>{['MANUAL', 'BANK_TRANSFER', 'UPI', 'CASH', 'CARD_EXTERNAL', 'OTHER'].map(method => <option key={method}>{method}</option>)}</select></FormField>
+      <FormField error={fieldError(command.error, 'method')} id="payment-method" label="Payment method"><select value={shown.method} onChange={event => setDraft({ ...draft, method: event.target.value })}>{paymentMethods.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}</select></FormField>
       <FormField error={fieldError(command.error, 'amount')} id="payment-amount" label="Amount" hint={`Enter ${invoice.currency} as a decimal amount.`}><input inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required value={shown.amount} onChange={event => setDraft({ ...draft, amount: event.target.value })} /></FormField>
       <FormField error={fieldError(command.error, 'paid_on')} id="payment-date" label="Payment date"><input type="date" required value={shown.paid_on} onChange={event => setDraft({ ...draft, paid_on: event.target.value })} /></FormField>
       <FormField error={fieldError(command.error, 'external_reference')} id="payment-reference" label="External reference (optional)"><input value={shown.external_reference} onChange={event => setDraft({ ...draft, external_reference: event.target.value })} /></FormField>

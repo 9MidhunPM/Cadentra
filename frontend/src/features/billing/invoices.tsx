@@ -5,6 +5,7 @@ import { Button, ConfirmDialog, DataTable, DateLabel, ErrorPanel, FormField, Loa
 import { fieldError, useResource } from './resource';
 import type { BillingRun, Invoice } from './types';
 import { PaymentForm } from './payments';
+import { paymentMethodLabel } from './paymentMethods';
 import { sendCommands, useSendCommand, describeEmailStatus } from './sendCommands';
 export { PaymentForm };
 
@@ -84,6 +85,7 @@ function InvoiceRecord({ id, actorId }: { id: string; actorId: string }) {
   const sendScope = { actor: actorId, invoice: id };
   const send = useSendCommand(sendScope);
   const [message, setMessage] = useState('');
+  const successNotice = useRef<HTMLParagraphElement>(null);
   const [error, setError] = useState<unknown>(null);
   const [reason, setReason] = useState('');
   async function action(name: 'confirm' | 'cancel') {
@@ -108,11 +110,18 @@ function InvoiceRecord({ id, actorId }: { id: string; actorId: string }) {
     finally { lock.current = false; setPending(false); }
   }
   const invoice = resource.data?.data;
+  const notPayable = invoice?.status === 'DRAFT' || invoice?.status === 'CANCELLED';
   return <section><PageHeader eyebrow="Billing" title={invoice?.number ?? 'Invoice details'} description="Immutable charges and recorded payments." actions={<Link to="/billing/invoices">All invoices</Link>} />
-    {resource.loading && <LoadingSkeleton label="Loading invoice" />}{resource.error != null && <ErrorPanel message={getErrorMessage(resource.error)} onRetry={resource.reload} />}{message && <p role="status">{message}</p>}{error != null && <ErrorPanel message={getErrorMessage(error)} />}
+    <p className="billing-action-notice" ref={successNotice} role="status" aria-live="polite" aria-atomic="true" tabIndex={-1}>{message}</p>
+    {resource.loading && <LoadingSkeleton label="Loading invoice" />}{resource.error != null && <ErrorPanel message={getErrorMessage(resource.error)} onRetry={resource.reload} />}
     {invoice && <>
+      <dl className="billing-invoice-summary" aria-label="Invoice summary">
+        <div><dt>Total</dt><dd><Money amount={invoice.total} currency={invoice.currency} /></dd></div>
+        <div><dt>Paid</dt><dd><Money amount={invoice.paid_amount} currency={invoice.currency} /></dd></div>
+        <div className="billing-invoice-balance"><dt>{notPayable ? <>Stored balance<span className="billing-summary-note">Not payable</span></> : 'Balance due'}</dt><dd><Money amount={invoice.balance_due} currency={invoice.currency} /></dd></div>
+      </dl>
       <div className="billing-card"><div className="ui-actions"><StatusBadge status={invoice.status} />{invoice.collection_status !== invoice.status && <StatusBadge status={invoice.collection_status} />}{invoice.overdue && <StatusBadge status="OVERDUE" />}</div><p>{invoice.customer_snapshot?.display_name ?? invoice.customer_id}</p><p>Service: <DateLabel value={invoice.period_start} /> to <DateLabel value={invoice.period_end} /> (end excluded)</p><p>Issued <DateLabel value={invoice.invoice_date} /> · Due <DateLabel value={invoice.due_date} /></p><p>Email: {invoice.email_status === 'SENT' ? <span>Accepted by SMTP (external delivery unverified)</span> : <StatusBadge status={invoice.email_status ?? 'NOT_REQUESTED'} />}</p>
-      <div className="ui-actions">{invoice.status === 'DRAFT' && <ConfirmDialog title="Confirm this invoice?" description="Confirming makes this stored invoice payable." trigger={<Button disabled={pending}>Confirm invoice</Button>} onConfirm={() => action('confirm')} />}
+      <div className="ui-actions">{invoice.status === 'DRAFT' && <ConfirmDialog title="Confirm this invoice?" description="Confirming makes this stored invoice payable." trigger={<Button disabled={pending}>Confirm invoice</Button>} onConfirm={() => action('confirm')} returnFocusRef={successNotice} />}
       {(['CONFIRMED', 'PAID'].includes(invoice.status) || send.requestKey) && <Button variant="secondary" pending={pending} disabled={send.phase === 'storage_error' || send.phase === 'pending'} onClick={() => void sendInvoice()}>{send.requestKey ? 'Retry same invoice email request' : send.phase === 'acknowledged' ? 'Queue another invoice email' : 'Queue invoice email'}</Button>}
       <a className="ui-button ui-button--secondary" href={`/api/v1/invoices/${encodeURIComponent(invoice.id)}/print`} target="_blank" rel="noopener noreferrer">Print invoice</a></div></div>
       {send.phase === 'pending' && <p role="status">This retained email request is in progress.</p>}
@@ -121,10 +130,10 @@ function InvoiceRecord({ id, actorId }: { id: string; actorId: string }) {
       {send.error != null && <ErrorPanel message={getErrorMessage(send.error)} />}
       {send.phase === 'storage_error' && <p role="alert">Invoice email recovery storage is unavailable or invalid. Sending is blocked. Restore session storage and reload before retrying.</p>}
       <h2>Stored invoice lines</h2><p className="ui-muted billing-scroll-hint">Scroll the line table horizontally to view every charge.</p><div className="ui-table-panel"><div className="ui-table-scroll" role="region" aria-label="Stored invoice lines" tabIndex={0}><table className="ui-table billing-invoice-lines"><caption className="ui-sr-only">Stored invoice lines</caption><thead><tr><th>Description</th><th>Quantity</th><th>Unit price</th><th>Discount</th><th>Tax</th><th>Total</th></tr></thead><tbody>{invoice.lines?.map(line => <tr key={line.id}><td>{line.description}{line.taxes?.map((tax, index) => <small className="billing-tax" key={index}>{tax.name} ({tax.rate_percent}%): <Money amount={tax.amount} currency={invoice.currency} /></small>)}</td><td>{line.quantity}</td><td><Money amount={line.unit_price} currency={invoice.currency} /></td><td><Money amount={line.discount} currency={invoice.currency} /></td><td><Money amount={line.tax_total} currency={invoice.currency} /></td><td><Money amount={line.total} currency={invoice.currency} /></td></tr>)}</tbody></table></div></div>
-      <dl className="billing-totals">{([['Subtotal', invoice.subtotal], ['Discount', invoice.discount_total], ['Tax', invoice.tax_total], ['Total', invoice.total], ['Paid', invoice.paid_amount], ['Balance due', invoice.balance_due]] as const).map(([label, amount]) => <div key={label}><dt>{label}</dt><dd><Money amount={amount} currency={invoice.currency} /></dd></div>)}</dl>
-      <h2>Payment history</h2><DataTable rows={invoice.payments ?? []} columns={[{ key: 'date', header: 'Paid on', render: row => <DateLabel value={row.paid_on} /> }, { key: 'method', header: 'Method', render: row => row.method }, { key: 'amount', header: 'Amount', render: row => <Money amount={row.amount} currency={invoice.currency} /> }]} getRowKey={row => row.id} page={1} pageSize={Math.max(1, invoice.payments?.length ?? 0)} total={invoice.payments?.length ?? 0} onPageChange={() => undefined} caption="Payments" emptyTitle="No payments recorded" />
+      <dl className="billing-totals">{([['Subtotal', invoice.subtotal], ['Discount', invoice.discount_total], ['Tax', invoice.tax_total], ['Total', invoice.total], ['Paid', invoice.paid_amount], [notPayable ? 'Stored balance' : 'Balance due', invoice.balance_due]] as const).map(([label, amount]) => <div key={label}><dt>{label}</dt><dd><Money amount={amount} currency={invoice.currency} /></dd></div>)}</dl>
+      <h2>Payment history</h2><DataTable rows={invoice.payments ?? []} columns={[{ key: 'date', header: 'Paid on', render: row => <DateLabel value={row.paid_on} /> }, { key: 'method', header: 'Method', render: row => paymentMethodLabel(row.method) }, { key: 'amount', header: 'Amount', render: row => <Money amount={row.amount} currency={invoice.currency} /> }]} getRowKey={row => row.id} page={1} pageSize={Math.max(1, invoice.payments?.length ?? 0)} total={invoice.payments?.length ?? 0} onPageChange={() => undefined} caption="Payments" emptyTitle="No payments recorded" />
       {['CONFIRMED', 'PAID'].includes(invoice.status) && <PaymentForm invoice={invoice} onSaved={detail => resource.replace({ data: detail })} />}
-      {['DRAFT', 'CONFIRMED'].includes(invoice.status) && (invoice.payments?.length ?? 0) === 0 && <div className="billing-card"><h2>Cancel invoice</h2><FormField error={fieldError(error, 'reason')} id="cancel-reason" label="Cancellation reason"><textarea value={reason} onChange={event => setReason(event.target.value)} /></FormField><ConfirmDialog title="Cancel this invoice?" description="This preserves the period and discount history. It cannot be automatically invoiced again." trigger={<Button variant="danger" disabled={pending || !reason.trim()}>Cancel invoice</Button>} onConfirm={() => action('cancel')} /></div>}
+      {['DRAFT', 'CONFIRMED'].includes(invoice.status) && (invoice.payments?.length ?? 0) === 0 && <div className="billing-card"><h2>Cancel invoice</h2><FormField error={fieldError(error, 'reason')} id="cancel-reason" label="Cancellation reason"><textarea value={reason} onChange={event => setReason(event.target.value)} /></FormField><ConfirmDialog title="Cancel this invoice?" description="This preserves the period and discount history. It cannot be automatically invoiced again." trigger={<Button variant="danger" disabled={pending || !reason.trim()}>Cancel invoice</Button>} onConfirm={() => action('cancel')} returnFocusRef={successNotice} /></div>}
     </>}
   </section>;
 }
