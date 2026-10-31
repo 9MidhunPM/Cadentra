@@ -1,4 +1,4 @@
-import { cloneElement, createContext, useContext, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from 'react';
+import { cloneElement, createContext, useContext, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode, type RefObject } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getErrorMessage } from '../../lib/api';
 import './ui.css';
@@ -44,12 +44,13 @@ export function FormField({ id, label, error, hint, children }: { id: string; la
   return <div className="ui-field"><label htmlFor={id}>{label}</label>{cloneElement(children, { id, 'aria-describedby': describedBy || undefined, 'aria-invalid': error ? true : children.props['aria-invalid'] })}{hint && <p id={`${id}-hint`} className="ui-field-hint">{hint}</p>}{error && <p id={`${id}-error`} className="ui-field-error" role="alert">{error}</p>}</div>;
 }
 
-export function ConfirmDialog({ trigger, title, description, confirmLabel = 'Confirm', onConfirm }: { trigger?: ReactElement; title: string; description: string; confirmLabel?: string; onConfirm: () => void | Promise<void> }) {
+export function ConfirmDialog({ trigger, title, description, confirmLabel = 'Confirm', onConfirm, returnFocusRef }: { trigger?: ReactElement; title: string; description: string; confirmLabel?: string; onConfirm: () => void | Promise<void>; returnFocusRef?: RefObject<HTMLElement | null> }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inFlight = useRef(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   async function confirm() {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -59,7 +60,14 @@ export function ConfirmDialog({ trigger, title, description, confirmLabel = 'Con
     catch (error) { setError(getErrorMessage(error)); }
     finally { inFlight.current = false; setPending(false); }
   }
-  return <Dialog.Root open={open} onOpenChange={next => { if (!inFlight.current) { setOpen(next); setError(null); } }}><Dialog.Trigger asChild>{trigger ?? <Button variant="secondary">Continue</Button>}</Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="ui-dialog-overlay" /><Dialog.Content className="ui-dialog" onOpenAutoFocus={event => { event.preventDefault(); cancelRef.current?.focus(); }} onEscapeKeyDown={event => { if (pending) event.preventDefault(); }} onPointerDownOutside={event => { if (pending) event.preventDefault(); }}><Dialog.Title>{title}</Dialog.Title><Dialog.Description className="ui-muted">{description}</Dialog.Description>{error && <ErrorPanel message={error} />}<div className="ui-dialog-actions"><Dialog.Close asChild><button className="ui-button ui-button--secondary" type="button" disabled={pending} ref={cancelRef}>Cancel</button></Dialog.Close><Button pending={pending} onClick={() => void confirm()}>{confirmLabel}</Button></div></Dialog.Content></Dialog.Portal></Dialog.Root>;
+  return <Dialog.Root open={open} onOpenChange={next => { if (!inFlight.current) { setOpen(next); setError(null); } }}><Dialog.Trigger asChild ref={triggerRef}>{trigger ?? <Button variant="secondary">Continue</Button>}</Dialog.Trigger><Dialog.Portal><Dialog.Overlay className="ui-dialog-overlay" /><Dialog.Content className="ui-dialog" onCloseAutoFocus={event => {
+    // Lifecycle refreshes can remove the action and its dialog together. A caller
+    // may supply a stable, focusable success notice without changing normal focus.
+    if (!triggerRef.current?.isConnected && returnFocusRef?.current?.isConnected) {
+      event.preventDefault();
+      returnFocusRef.current.focus();
+    }
+  }} onOpenAutoFocus={event => { event.preventDefault(); cancelRef.current?.focus(); }} onEscapeKeyDown={event => { if (pending) event.preventDefault(); }} onPointerDownOutside={event => { if (pending) event.preventDefault(); }}><Dialog.Title>{title}</Dialog.Title><Dialog.Description className="ui-muted">{description}</Dialog.Description>{error && <ErrorPanel message={error} />}<div className="ui-dialog-actions"><Dialog.Close asChild><button className="ui-button ui-button--secondary" type="button" disabled={pending} ref={cancelRef}>Cancel</button></Dialog.Close><Button pending={pending} onClick={() => void confirm()}>{confirmLabel}</Button></div></Dialog.Content></Dialog.Portal></Dialog.Root>;
 }
 
 export function EmptyState({ title, description }: { title: string; description?: string }) {

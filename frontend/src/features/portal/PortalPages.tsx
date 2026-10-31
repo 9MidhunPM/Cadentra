@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import {
   Link,
   useLocation,
@@ -35,6 +35,7 @@ import type {
   InvoiceRecord,
   SubscriptionDetail,
   SubscriptionRecord,
+  TaxMetadata,
 } from "./types";
 import "./portal.css";
 
@@ -255,6 +256,17 @@ export function SubscriptionDetailPage() {
     `/portal/subscriptions/${encodeURIComponent(id)}`,
   );
   const location = useLocation();
+  const noticeRef = useRef<HTMLParagraphElement>(null);
+  const [notice, setNotice] = useState<{
+    key: string;
+    message: ReactNode;
+  } | null>(null);
+  const message =
+    notice?.key === location.key
+      ? notice.message
+      : location.state?.renewalCreated
+        ? "Your linked renewal draft was created. Brightloop staff will review and confirm it."
+        : null;
   return (
     <section className="portal-page">
       <Link className="portal-back" to="/portal/subscriptions">
@@ -268,18 +280,24 @@ export function SubscriptionDetailPage() {
           "Your service dates and available actions."
         }
       />
-      {location.state?.renewalCreated && (
-        <p className="portal-notice" role="status">
-          Your renewal draft was created. Brightloop staff will review and
-          confirm it.
-        </p>
-      )}
+      <p
+        ref={noticeRef}
+        tabIndex={-1}
+        className={message ? "portal-notice" : "portal-announcement"}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {message}
+      </p>
       <PortalState {...result}>
         {result.data && (
           <SubscriptionContent
             key={id}
             subscription={result.data.data}
-            reload={result.reload}
+            prepareUpdate={result.prepareUpdate}
+            announce={(message) => setNotice({ key: location.key, message })}
+            returnFocusRef={noticeRef}
           />
         )}
       </PortalState>
@@ -287,12 +305,62 @@ export function SubscriptionDetailPage() {
   );
 }
 
+function TaxRates({ taxes }: { taxes: TaxMetadata[] }) {
+  return taxes.length ? (
+    <span>
+      {taxes.map((tax) => `${tax.name} (${tax.rate_percent}%)`).join(", ")}
+    </span>
+  ) : (
+    <span>No applicable tax rules</span>
+  );
+}
+
+function ActionNotice({
+  row,
+  action,
+  cancelledPause,
+}: {
+  row: SubscriptionDetail;
+  action: string;
+  cancelledPause: boolean;
+}) {
+  if (action === "pause" && row.pause_interval)
+    return (
+      <>
+        {row.paused ? "Service paused from" : "Pause scheduled for"}{" "}
+        <DateLabel value={row.pause_interval.starts_on} />.
+      </>
+    );
+  if (action === "resume" && row.resume_effective_on)
+    return (
+      <>
+        Service resumes on <DateLabel value={row.resume_effective_on} />.
+      </>
+    );
+  if (action === "resume" && cancelledPause && !row.pause_interval)
+    return <>Your scheduled pause was cancelled.</>;
+  if (action === "close" && row.close_effective_on)
+    return (
+      <>
+        Closure takes effect on <DateLabel value={row.close_effective_on} />.
+      </>
+    );
+  return <>Service schedule updated. Review the current dates below.</>;
+}
+
 function SubscriptionContent({
   subscription: row,
-  reload,
+  prepareUpdate,
+  announce,
+  returnFocusRef,
 }: {
   subscription: SubscriptionDetail;
-  reload: () => void;
+  prepareUpdate: () => {
+    isCurrent: () => boolean;
+    apply: (response: ResourceResponse<SubscriptionDetail>) => boolean;
+  };
+  announce: (message: ReactNode) => void;
+  returnFocusRef: RefObject<HTMLParagraphElement | null>;
 }) {
   const navigate = useNavigate();
   const [reason, setReason] = useState("");
@@ -301,7 +369,9 @@ function SubscriptionContent({
   const actions = (row.allowed_actions || [])
     .map((action) => action.toLowerCase())
     .filter((action) => ["pause", "resume", "close", "renew"].includes(action));
+  const cancellingPause = Boolean(row.pause_effective_on);
   async function act(action: string) {
+    const update = prepareUpdate();
     const payload =
       action === "renew"
         ? { start_date: renewStart, end_date: renewEnd }
@@ -314,12 +384,22 @@ function SubscriptionContent({
       method: "POST",
       json: payload,
     });
+    if (!update.isCurrent()) return;
     if (action === "renew")
       navigate(
         `/portal/subscriptions/${encodeURIComponent(response.data.id)}`,
         { state: { renewalCreated: true } },
       );
-    else reload();
+    else if (update.apply(response)) {
+      setReason("");
+      announce(
+        <ActionNotice
+          row={response.data}
+          action={action}
+          cancelledPause={cancellingPause}
+        />,
+      );
+    }
   }
   return (
     <div className="portal-detail-layout">
@@ -331,6 +411,18 @@ function SubscriptionContent({
           </div>
           <SubscriptionStepper state={row.state} />
           <dl className="portal-facts">
+            {row.prior_subscription_id && (
+              <div>
+                <dt>Renewed from</dt>
+                <dd>
+                  <Link
+                    to={`/portal/subscriptions/${encodeURIComponent(row.prior_subscription_id)}`}
+                  >
+                    View previous subscription
+                  </Link>
+                </dd>
+              </div>
+            )}
             <div>
               <dt>Service starts</dt>
               <dd>
@@ -364,6 +456,44 @@ function SubscriptionContent({
                 </dd>
               </div>
             )}
+            <div>
+              <dt>Recurring subtotal per cycle</dt>
+              <dd>
+                <Money
+                  amount={row.recurring_subtotal}
+                  currency={row.currency}
+                />
+                <p className="portal-muted">{row.recurring_subtotal_basis}</p>
+              </dd>
+            </div>
+            <div>
+              <dt>Plan fee tax rules</dt>
+              <dd>
+                <TaxRates taxes={row.base_fee_taxes} />
+              </dd>
+            </div>
+            {row.expired && (
+              <div>
+                <dt>Service condition</dt>
+                <dd>Service period ended</dd>
+              </div>
+            )}
+            {row.pause_effective_on && (
+              <div>
+                <dt>Pause takes effect</dt>
+                <dd>
+                  <DateLabel value={row.pause_effective_on} />
+                </dd>
+              </div>
+            )}
+            {row.resume_effective_on && (
+              <div>
+                <dt>Service resumes</dt>
+                <dd>
+                  <DateLabel value={row.resume_effective_on} />
+                </dd>
+              </div>
+            )}
             {row.next_billing_date && (
               <div>
                 <dt>Next billing date</dt>
@@ -392,6 +522,10 @@ function SubscriptionContent({
         </div>
         <div className="portal-surface">
           <h2>Agreed product lines</h2>
+          <p className="portal-muted">
+            Tax preview for <DateLabel value={row.tax_preview_on} />.{" "}
+            {row.tax_preview_basis}.
+          </p>
           {row.lines.length ? (
             <div className="portal-table-scroll">
               <table>
@@ -400,6 +534,8 @@ function SubscriptionContent({
                     <th>Description</th>
                     <th>Quantity</th>
                     <th>Unit price</th>
+                    <th>Line subtotal</th>
+                    <th>Tax rules</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -413,6 +549,15 @@ function SubscriptionContent({
                           currency={row.currency}
                         />
                       </td>
+                      <td>
+                        <Money
+                          amount={line.line_total}
+                          currency={row.currency}
+                        />
+                      </td>
+                      <td>
+                        <TaxRates taxes={line.taxes} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -422,39 +567,43 @@ function SubscriptionContent({
             <EmptyState title="No product lines" />
           )}
         </div>
-        {(row.pause_intervals || []).length > 0 && (
+        {row.pause_interval && (
           <div className="portal-surface">
-            <h2>Pause schedule</h2>
-            <ul className="portal-schedule">
-              {row.pause_intervals?.map((pause) => (
-                <li key={pause.starts_on}>
-                  <DateLabel value={pause.starts_on} />
-                  <span>
-                    until{" "}
-                    {pause.ends_on ? (
-                      <DateLabel value={pause.ends_on} />
-                    ) : (
-                      "resumed"
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <h2>{row.paused ? "Current pause" : "Scheduled pause"}</h2>
+            <dl className="portal-facts">
+              <div>
+                <dt>Pause starts</dt>
+                <dd>
+                  <DateLabel value={row.pause_interval.starts_on} />
+                </dd>
+              </div>
+              <div>
+                <dt>Pause ends</dt>
+                <dd>
+                  {row.pause_interval.ends_on ? (
+                    <DateLabel value={row.pause_interval.ends_on} />
+                  ) : (
+                    "No resume date scheduled"
+                  )}
+                </dd>
+              </div>
+            </dl>
           </div>
         )}
       </div>
       <aside className="portal-detail-aside">
         <div className="portal-surface">
           <h2>Subscription invoices</h2>
-          {row.invoices.length ? (
+          {row.invoice_references.length ? (
             <ul className="portal-document-list">
-              {row.invoices.map((invoice) => (
+              {row.invoice_references.map((invoice) => (
                 <li key={invoice.id}>
                   <Link
                     to={`/portal/invoices/${encodeURIComponent(invoice.id)}`}
                   >
                     <FileText size={16} aria-hidden="true" />
                     {invoice.number}
+                    <StatusBadge status={invoice.status} />
                     <ArrowUpRight size={13} aria-hidden="true" />
                   </Link>
                 </li>
@@ -488,14 +637,29 @@ function SubscriptionContent({
                 .map((action) => (
                   <ConfirmDialog
                     key={action}
-                    title={`${action[0].toUpperCase()}${action.slice(1)} subscription?`}
-                    description="This changes your service schedule. Previously issued invoices remain unchanged. The resulting effective date will appear in your subscription."
-                    confirmLabel={`Confirm ${action}`}
+                    returnFocusRef={returnFocusRef}
+                    title={
+                      action === "resume" && cancellingPause
+                        ? "Cancel scheduled pause?"
+                        : `${action[0].toUpperCase()}${action.slice(1)} subscription?`
+                    }
+                    description={
+                      action === "resume" && cancellingPause
+                        ? "Cancel the scheduled pause request. Your updated service schedule will appear after the server confirms the change."
+                        : "This changes your service schedule. Previously issued invoices remain unchanged. The resulting effective date will appear in your subscription."
+                    }
+                    confirmLabel={
+                      action === "resume" && cancellingPause
+                        ? "Cancel scheduled pause"
+                        : `Confirm ${action}`
+                    }
                     trigger={
                       <Button
                         variant={action === "close" ? "danger" : "secondary"}
                       >
-                        {action[0].toUpperCase() + action.slice(1)} subscription
+                        {action === "resume" && cancellingPause
+                          ? "Cancel scheduled pause"
+                          : `${action[0].toUpperCase() + action.slice(1)} subscription`}
                       </Button>
                     }
                     onConfirm={() => act(action)}
@@ -532,6 +696,7 @@ function SubscriptionContent({
                   />
                 </FormField>
                 <ConfirmDialog
+                  returnFocusRef={returnFocusRef}
                   title="Create a renewal draft?"
                   description="Brightloop staff will review and confirm the new subscription. Your current term and invoices remain unchanged."
                   confirmLabel="Create draft"

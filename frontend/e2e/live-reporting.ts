@@ -17,6 +17,7 @@ async function login(page: Page, actor: string) {
   expect(response.status()).toBe(200)
 }
 async function navigation(page: Page, label: string) {
+  await expect(page.locator('main h1')).toBeVisible()
   const menu = page.getByRole('button', { name: 'Open navigation' })
   if (await menu.isVisible()) await menu.click()
   await page.getByRole('navigation').getByRole('link', { name: label, exact: true }).click()
@@ -65,6 +66,14 @@ test('real customer portal owns records and rejects another customer', async ({ 
   expect((await page.request.get(`/api/v1/portal/subscriptions/${own.id}`)).status()).toBe(200)
   expect((await page.request.get(`/api/v1/portal/subscriptions/${foreign.id}`)).status()).toBe(404)
   await expect(page.getByRole('link', { name: foreign.number, exact: true })).toHaveCount(0)
+  await page.getByRole('link', { name: own.number, exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'My subscription', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Reporting fixture', exact: true })).toBeVisible()
+  for (const step of await page.getByRole('list', { name: 'Subscription lifecycle' }).getByRole('listitem').all()) {
+    await expect(step).toBeInViewport({ ratio: 1 })
+  }
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Reporting fixture', exact: true })).toBeVisible()
   await navigation(page, 'My invoices')
   const foreignInvoice = Object.values(fixture.invoices).find(row => row.customer_id === fixture.customers.B)!
   await expect(page.getByRole('heading', { name: 'My invoices', exact: true })).toBeVisible()

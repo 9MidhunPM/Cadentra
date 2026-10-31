@@ -1,19 +1,23 @@
 # Sherin Saji: handoff
 
-Status: REPORTING AND PORTAL READ SLICE GREEN; LIFECYCLE DELEGATION AND FULL JOURNEY IN PROGRESS
+Status: CUSTOMER LIFECYCLE SLICE GREEN; FULL BILLING JOURNEY AND FINAL BENCHMARK PENDING
 
 Role: Experience & Reporting
-Branch: feature/reporting-portal
-Reviewed main: 0b257c8 (Gate A, financial APIs, invoice privacy fix and scoped race-fixture cleanup)
+Branch: feature/portal-lifecycle
+Reviewed main: 382fa2b (subscription workflow, safe projections and invoice-period runtime)
+Shared dialog focus recovery: 47195fe (coordinator-approved optional returnFocusRef)
+Customer action delegation: e918b0c
+Canonical lifecycle UI: 10eb6ef
+Integrated sign-in/mobile progress verification: cbc7b6b
 Reporting/portal backend: 2f33f9a
 Reporting/portal frontend: 9edb851
 Real browser harness: fcdfb7c
 Delegated invoice detail/print: 53fd86b
 Large-data measurement harness: 5bbdfd7
-Latest reviewed-main merge: 2120602
+Latest reviewed-main merge: 3604b87
 Performance evidence and reliable capture: 6ec57bb
-Prepared full-journey harness: 1b03ec4 (source checks only; browser execution pending)
-Previous foundation PR 2 and interface-experience PR 5 are integrated.
+Prepared full-journey harness: 776a780 (source checks only; browser execution pending)
+Previous foundation PR2, themes PR5 and reporting/portal reads PR10 are integrated.
 Setup verification commit: c4194af
 
 ## Delivered behavior
@@ -24,22 +28,24 @@ Reports read committed PostgreSQL data with Decimal totals serialized as strings
 
 Overview now fetches real summary/series/overdue invoices, supports applied date/customer filters, exact accessible chart data, refresh and the owner's run-due endpoint. Displayed financial values remain server decimal strings. Numeric conversion is limited to approximate chart coordinates/axis labels. The mobile chart measures its container so labels retain readable size. Errors in independent resources remain visible.
 
-Portal reads derive ownership from the authenticated CUSTOMER actor. Profile, paginated subscriptions/invoices and subscription detail are implemented. Foreign subscription detail returns 404; customer_id overrides are rejected. Invoice list balances come from grouped recorded payments, with separate collection_status and overdue values. Profile, temporary subscription and delegated invoice projections omit internal costs, audit details and staff notes, including nested address metadata. Pagination rejects offsets exceeding PostgreSQL bigint limits.
+Portal reads derive ownership from the authenticated CUSTOMER actor. Profile and paginated lists are scoped by that actor. Canonical subscription detail delegates to Thanushree Suresh; the temporary detail serializer was removed. Foreign detail returns404 and customer_id overrides are rejected. Invoice balances use grouped recorded payments, with separate collection_status and overdue values. Owner projections omit private fields, including nested metadata. Pagination rejects offsets exceeding PostgreSQL bigint limits.
 
-Portal frontend provides account, own subscription/invoice lists, subscription detail and stored invoice detail/print. Invoice detail and escaped HTML printing delegate to Noel Biju's services, with private/no-store responses and matching print security headers. Actions are displayed only when returned in allowed_actions; the UI does not infer plan policy. Lifecycle delegation to Thanushree Suresh remains pending; renewal will create a draft for staff review.
+Four explicit customer POST routes delegate pause/resume/close/renew to the subscription owner. The facade owns with db.begin(); ownership precedes semantic payload validation, including JSON arrays/scalars. No billing/policy/date logic is duplicated. Renewal returns a linked DRAFT requiring staff review. Invoice detail/escaped print remain delegated to Noel Biju with private/no-store and matching print headers.
+
+The UI uses invoice_references, pause_interval, server effective dates, stored line totals, recurring subtotal/basis and tax previews. Only allowed_actions enables controls. Complete successful DTOs replace data with path/unmount guards; failures retain form inputs, late responses cannot redirect a later page, and removed action triggers return focus to a stable announced notice. Pending pause cancellation has explicit wording. Mobile lifecycle steps wrap so all five remain visible.
 
 ## Checks actually run
 
 31 October 2026:
 
-- Full backend at **2120602: 209 tests and 121 subtests pass**, real PostgreSQL at 127.0.0.1:55431, cadentra_experience_test. This includes 17 reporting service, 19 report HTTP and 38 portal cases. Each ordinary test rolls back its outer transaction; the committed financial race fixtures now clean only their own UUID graph. A subsequent read-only check confirmed zero subscriptions, invoices, payments, users, customers, plans and products remain.
+- Full backend on this slice and reviewed issuer baseline: **323 tests and 121 subtests pass**, real PostgreSQL at127.0.0.1:55431, cadentra_experience_test. Reporting includes17 service,19 report HTTP and70 portal cases. Ordinary tests roll back their outer transaction; committed race fixtures clean their own UUID graph.
 - Reporting/backend Ruff: pass. Source fixtures exercise real login, cookie/session auth, roles, range/cadence validation, Decimal reconciliation, owner isolation, safe projections and PostgreSQL pagination bounds.
-- Frontend full lint/test/build after invoice DTO alignment and the keyboard regression: **84 tests pass**, typecheck/build pass. Customer-search Enter cannot submit filters while loading or empty. Invoice lines display stored discounts/taxes/totals and safe address fields.
+- Frontend full lint/test/build: **126 tests pass**, including15 portal and15 shared UI cases. Covers canonical dates/amounts, pause cancellation, conflict retention, linked-draft navigation, removed-trigger focus and late responses after navigation/unmount.
 - Fixture browser suite: **24 desktop/mobile cases pass, two platform-specific skips**. This suite explicitly mocks session/business reads and proves shell/keyboard/theme/reduced-motion behavior, not database correctness.
-- Separate live browser suite after invoice integration: **six desktop/mobile cases pass, no skips**, real HTTP/cookies/PostgreSQL, no route interception, zero page errors. It verifies totals, filters, reload persistence, own lists/profile, foreign-subscription404, customer/report403 and own/foreign invoice detail/print200/404.
-- Delegated portal PostgreSQL tests: **38 pass**. The original nested-address privacy regression failed before Noel's scalar whitelist fix (73cdbcc), then passed after the reviewed PR8 merge. Other cases verify foreign404, staff403, anonymous401, forbidden query422, escaped print, headers and read-only SQL. The portal delegates unchanged to the billing owner; no duplicate sanitizer was introduced.
-- Final live screenshots inspected at 1497x1049 desktop and 390px mobile in both approved themes. The responsive chart is readable and the actual overdue table now renders via billing PR7. Artifacts remain local under /tmp/cadentra-agent4-live-final-evidence/.
-- Frontend production build about 471 kB minified /148 kB gzip plus a separate95 kB Motion feature chunk; these are sizes, not page timings. No unmeasured <2s assertion.
+- Separate live suite: **six desktop/mobile cases pass, no skips**, real HTTP/cookies/PostgreSQL with canonical subscription click/reload, report reconciliation and invoice detail/print isolation. A targeted mobile follow-up passes1/1 after the CSS fix, asserting all five lifecycle steps fully in viewport and no document overflow. No route interception or page errors. All exact-UUID fixture rows/private manifests removed and servers stopped.
+- Delegated portal PostgreSQL tests: **70 pass**. Own pause/cancel/resume/close dates and linked-draft renewal persist; foreign/missing records share404 before invalid semantic bodies; role/CSRF/Origin/query guards and policy/due-billing failures leave state/audit/financial records unchanged. Invoice nested-address privacy, escaped print and read-only queries remain green. Owner sanitizers are reused unchanged.
+- Report and portal screenshots inspected on desktop/mobile in the approved themes. Current portal captures are under /tmp/cadentra-live6-lifecycle-776a780-results/ and /tmp/cadentra-live-mobile-stepper-results/. These fictional fixtures do not establish the complete financial journey.
+- Frontend build about524kB minified/161kB gzip plus separate95kB Motion features. Vite now reports a500kB chunk warning after owner screens were integrated; do not suppress it or interpret build size as latency. Final integrated timing remains pending.
 
 ## Runtime and reproducible evidence
 
@@ -60,23 +66,28 @@ Feature index modules export getRoutes():RouteObject[]; identity additionally ex
 
 Shared UI exports Button, PageHeader, DataTable, Money, DateLabel, StatusBadge, FormField, ConfirmDialog, EmptyState, ErrorPanel, LoadingSkeleton, SubscriptionStepper, ToastProvider/useToast. Use semantic tokens for both approved modes. Monetary formatting preserves decimal precision; service dates do not drift with browser timezone.
 
+Coordinator approved backward-compatible ConfirmDialog.returnFocusRef on31October. A connected stable target is used only if the original trigger disappears; ordinary Cancel/success focus remains unchanged. Tests cover both paths and failure input/focus retention.
+
 ## Remaining role acceptance work
 
-- T06: delegated invoice detail/escaped print and nested-address privacy pass. Delegate lifecycle actions to the actual owner service and test all foreign mutations404, CSRF, no mutation on failed access, scheduled effective dates and linked draft renewal.
+- T06: delegated reads/print/actions and safe projections pass70 PostgreSQL cases and live read isolation. The prepared T31 scenario will additionally exercise all four own actions and foreign revision protection through real browser contexts.
 - T28: reporting SQL/HTTP reconciliation and the full real Overview including the overdue table pass. Preserve these checks through later owner merges.
-- T31: complete real product/variant/plan -> quotation -> active -> invoice -> payments2000.00+2970.16 -> report/portal reload/print journey. Owners' staff feature UIs and subscription workflow are not yet integrated. Four read cases do not establish this full journey.
-- T30: **10 reporting/portal views measured, 250 raw browser samples**, using exactly 5000 subscriptions and 20000 invoices plus periods/lines/payments. Complete Overview warm p50/p95/max: 511.3/556.7/565.8 ms; fresh-context: 577.8/645.7/645.7 ms. Full customer/date filtering including navigation: 1224.0/1333.9/1372.4 ms warm, 1217.2/1305.7/1305.7 ms fresh. Staff subscription API501 and invoice UI placeholder remain explicit gaps. These local sequential measurements are a baseline, not proof of every page or the later privacy-merged runtime. [Method, all route timings and raw API/browser samples](../backend/tests/reporting/evidence/README.md). All fixture rows and private manifests were cleaned; no database/schema was dropped.
+- T31: prepared real product/variant/plan -> quotation -> active -> invoice -> payments2000.00+2970.16 -> report/portal reload/print -> customer pause/cancel/close/linked Draft journey. The fixture term ends2027-01-02 so Dec2 remains an eligible future boundary. Execution waits the billing owner's corrected uncertain-payment UI; do not consume the earlier3076 UI head or call the prepared test passing.
+- T30 historical baseline: **10 reporting/portal views,250 raw samples**,5000 subscriptions/20000 invoices plus payments. Complete Overview warm p50/p95/max511.3/556.7/565.8ms; full customer/date filter1224.0/1333.9/1372.4ms. The then-missing staff surfaces were honestly excluded. Final current-runtime/all-surface measurement is pending after T31. [Exact method, provenance and raw API/browser timings](../backend/tests/reporting/evidence/README.md). Fixtures/manifests were cleaned without dropping a database/schema.
 - Only after required scope is green: optional CycleGuard and invoice explanation polish.
 
 ## Publishing and coordination
 
-All application changes go through a feature PR targeting main; no direct main push. Coordinator serializes reviewed merges and maintains frozen docs/models/migrations. Incorporate reviewed main at least hourly; preserve atomic commits at least every30minutes during active work.
+The coordinator relayed the user's changed workflow on31October: owners integrate reviewed slices locally and push main with their own verified SSH keys only during an explicit serialized owner window. No API PR creation/merge, force push or deletion. Earlier PRs remain historical evidence. The coordinator maintains frozen docs/models/migrations; incorporate reviewed main at least hourly and preserve atomic commits at least every30minutes during active work.
 
-Existing author sherin745 <sherinsaji2006@gmail.com> is preserved. gh-agent4 authenticated GitHub as Sherin745. Git transport uses command-local ssh -F /dev/null -i "$HOME/.ssh/gh-agent4" -o IdentitiesOnly=yes -o BatchMode=yes; -F bypasses an unreadable system include. No global Git/SSH/OAuth account settings changed. The existing GitHub CLI account is9MidhunPM; use the coordinator's SSH-only PR-metadata fallback.
+Existing author sherin745 <sherinsaji2006@gmail.com> is preserved. gh-agent4 authenticated GitHub as Sherin745. Git transport uses command-local ssh -F /dev/null -i "$HOME/.ssh/gh-agent4" -o IdentitiesOnly=yes -o BatchMode=yes; -F bypasses an unreadable system include. No global Git/SSH/OAuth account settings changed; the existing API account is not used for owner integration.
 
-Prepared PR title: Add committed reporting and customer portal reads
-Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/reporting-portal
-Description: Adds PostgreSQL-backed current/range metrics and zero-filled series, ownership-scoped customer portal reads, and the approved dark/light reporting and portal screens. Includes real cookie/API/PostgreSQL tests and separate unmocked browser evidence. Record the final tested head/check counts before publication. Lifecycle delegation, complete financial browser flow and large-data timings remain explicit follow-up requirements until verified.
+Reporting read slice: feature/reporting-portal, head01c3acc, integrated through PR10 at48c7896. Delivered reconciled current/range metrics, zero-filled series, ownership-scoped reads and approved themes, with PostgreSQL/browser and historical timing evidence. Later lifecycle and final journey work is recorded separately below.
+
+Reviewed lifecycle title: Delegate customer lifecycle actions with accessible updates
+Reviewed feature head: 09d4a6238f06cc64363f15b279f758e71d685c03
+Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/portal-lifecycle
+Description: Reuses the subscription owner's safe query and transactional actions for customer pause/resume/close/renew. Canonical DTO updates preserve inputs, scheduled dates and focus; renewal remains a linked Draft. PostgreSQL/backend and frontend suites pass, with real desktop/mobile read/print proof. Full billing journey and final all-surface timings remain explicit follow-up gates.
 
 ## Parallel production frontend package
 
