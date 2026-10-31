@@ -35,3 +35,5 @@ UI implementation commit065ac50 supplies sign-in/signup/reset/staff forms and cu
 The local mail slice adds pinned Mailpit Compose wiring, explicit one-batch outbox CLI and real native capture at127.0.0.1:1025/inbox8025. A fictional QA account completed browser reset request -> SMTP outbox -> Mailpit capture -> reset form -> new-password sign-in; token removed from URL. The full current native suite passed104backend tests and91frontend tests before billing API integration. Docker execution and external delivery remain NOT RUN. No real recipient or credential was committed.
 
 SSH-only clarification is recorded: teammates push with verified owner keys and send prepared PR metadata; coordinator9MidhunPM creates PRs. No participant gh login/token setup.
+
+After incorporating the financial API/privacy commits, the fresh combined suite passed140backend tests and91frontend tests. Native admin browser coverage includes staff creation and confirmed backend403 for a staff product mutation. Filtered Mailpit web inbox shows the fictional reset capture; the token was consumed and removed from the reset URL. Docker and external email remain unverified.
