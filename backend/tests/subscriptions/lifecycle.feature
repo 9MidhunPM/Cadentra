@@ -284,3 +284,38 @@ Feature: Persisted, authorized subscription workflows
       | ACTIVE    | none    | start_date=2027-02-11        | rejected                        |
       | ACTIVE    | none    | end_date=2027-06-01          | rejected                        |
       | ACTIVE    | none    | payment_terms_days=14        | rejected                        |
+
+  @T13
+  Scenario: Resume before a pending pause begins cancels the interval atomically
+    Given an ACTIVE monthly subscription anchored "2027-01-31" ending "2027-05-01"
+    And cycle 0 is INVOICED, next_cycle_index is 1, and an open pause starts "2027-02-28"
+    And no PAUSED outcome exists for that pause
+    When staff requests resume on "2027-02-10"
+    Then the pending pause interval is removed atomically with a redacted cancellation audit event
+    And no zero-length pause row remains
+    And the existing period, invoice, next_cycle_index and subscription term are unchanged
+
+  @T13
+  Scenario: Resume after a boundary was processed as paused uses the next unprocessed boundary
+    Given an ACTIVE monthly subscription anchored "2027-01-31" ending "2027-05-01"
+    And an open pause starts "2027-02-28"
+    And cycle 1 has a durable PAUSED outcome and next_cycle_index is 2
+    When staff requests resume on "2027-02-28" after the worker committed that outcome
+    Then the pause ends at the next unprocessed boundary "2027-03-31" which is not before the request date
+    And cycle 1 remains PAUSED with no invoice and next_cycle_index remains 2
+    And no back-billing is created for cycle 1 and the subscription term is unchanged
+
+  @billable_inputs
+  Scenario: Product tax selection follows the service period while quoted prices remain frozen
+    Given an ACTIVE monthly subscription anchored "2027-01-31" with quoted unit price "1560.00"
+    And cycle 0 is INVOICED and next_cycle_index is 1
+    And its confirmed plan snapshot retains explicit base-fee tax IDs
+    And a stable product-tax ID becomes valid on "2027-03-01"
+    When billable inputs are read for cycle 1 starting "2027-02-28"
+    Then the new product-tax ID is excluded from cycle 1
+    When billing commits that cycle's outcome on "2027-02-28" and advances next_cycle_index to 2
+    And billable inputs are read for cycle 2 starting "2027-03-31"
+    Then the new product-tax ID is included in cycle 2
+    And product tax IDs were resolved through Catalog.get_product_tax_ids for each period_start
+    And both inputs retain unit price "1560.00" and the explicit base-fee plan tax IDs
+    And billing remains responsible for applicable rates, tax arithmetic and monetary totals
