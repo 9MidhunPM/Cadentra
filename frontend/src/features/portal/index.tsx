@@ -1,12 +1,12 @@
 import type { RouteObject } from 'react-router'
-import { FeaturePlaceholder } from '../../app/FeaturePlaceholder'
+import { AccountPage, InvoiceDetailPage, InvoiceListPage, SubscriptionDetailPage, SubscriptionListPage } from './PortalPages'
 
 export function getRoutes(): RouteObject[] {
   return [
-    { path: '/portal/subscriptions', element: <FeaturePlaceholder title="My subscriptions" description="Your services, dates and subscription details." /> },
-    { path: '/portal/subscriptions/:id', element: <FeaturePlaceholder title="My subscription" description="Your service dates and available actions." /> },
-    { path: '/portal/invoices', element: <FeaturePlaceholder title="My invoices" description="Your invoices, recorded payments and balances." /> },
-    { path: '/portal/invoices/:id', element: <FeaturePlaceholder title="My invoice" description="Your invoice and payment history." /> },
-    { path: '/portal/account', element: <FeaturePlaceholder title="Account" description="Your Brightloop customer profile." /> },
+    { path: '/portal/subscriptions', element: <SubscriptionListPage /> },
+    { path: '/portal/subscriptions/:id', element: <SubscriptionDetailPage /> },
+    { path: '/portal/invoices', element: <InvoiceListPage /> },
+    { path: '/portal/invoices/:id', element: <InvoiceDetailPage /> },
+    { path: '/portal/account', element: <AccountPage /> },
   ]
 }

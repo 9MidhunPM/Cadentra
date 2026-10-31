@@ -25,6 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = selection.theme
     document.documentElement.style.colorScheme = selection.theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', selection.theme === 'dark' ? '#171b1a' : '#f2f4ef')
     // Reading a default must not write a preference the user never chose.
     if (selection.userSelected) {
       try { localStorage.setItem(THEME_STORAGE_KEY, selection.theme) } catch {
