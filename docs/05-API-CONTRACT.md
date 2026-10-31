@@ -61,7 +61,7 @@ A=admin, S=staff, C=customer-own-record. Role checks are cumulative only where l
 | POST /customers | A,S | Midhun P M | CustomerWrite; no automatic login account |
 | GET /customers/{id} | A,S | Midhun P M | Customer |
 | PATCH /customers/{id} | A,S | Midhun P M | CustomerWrite subset |
-| GET /products | A,S | Midhun P M | paginated product list |
+| GET /products | A,S | Midhun P M | paginated product list; optional q (max200), trimmed case-insensitive literal name match; filtered total |
 | POST /products | A | Midhun P M | ProductWrite |
 | GET /products/{id} | A,S | Midhun P M | product + variants |
 | PATCH /products/{id} | A | Midhun P M | ProductWrite subset; archive, not destructive delete |
