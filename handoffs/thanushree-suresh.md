@@ -1,6 +1,19 @@
 # Thanushree Suresh: handoff
 
-Status: REQUIRED SUBSCRIPTION BEHAVIOR VERIFIED; THREE AUDIT FIXES REFRESHED FOR REVIEW
+## Deadline checkpoint: 31 October 2026
+
+The prepared subscription source head `1f27706bd9ac4e121a79a7cece2c91fdce4747d5`
+is published on `feature/subscription-threefix-refresh` and is an ancestor of
+verified main `059e40cf62d7d33de6349f66f0ef08acf7651a20`. The worktree was
+clean at the checkpoint; no subscription code is left uncommitted here. This
+handoff-only update follows that source head on the feature branch.
+
+Remaining verification limits: no full backend or frontend suite was rerun for
+the refreshed three-fix slice; the recorded focused evidence below is unchanged.
+No new checks or deployment verification were performed for this checkpoint.
+Other project-wide acceptance and deployment work remains with its owners.
+
+Status: REQUIRED SUBSCRIPTION BEHAVIOR VERIFIED; THREE AUDIT FIXES INTEGRATED
 
 Role: Subscription Workflows
 Current candidate branch: `feature/subscription-threefix-refresh`
@@ -34,9 +47,8 @@ Checks actually rerun on the refreshed runtime tree, using the disposable
   source/test files are unchanged from the previously reviewed slice.
 
 Exact pre-docs refreshed runtime commits are `81f1082` (variant retry), `1934fdb`
-(history filters), and `7de8c0e` (payment-term guard). Main publication is held
-for the coordinator's fresh candidate review and direct-user approval; do not
-reuse the previous `5324c16` approval window.
+(history filters), and `7de8c0e` (payment-term guard). The earlier review and
+approval hold was resolved; the refreshed source is now present in main.
 
 ## Targeted demo-history adapter (integrated 31 October 2026)
 
