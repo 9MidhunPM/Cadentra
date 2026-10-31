@@ -16,7 +16,7 @@ Business logic belongs on the backend. The frontend must not invent invoice tota
 The stack and documented domain policies are approved. Midhun P M and Sherin Saji resolve and lock compatible dependencies during foundation work; subsequent work uses that baseline.
 
 ## Ownership
-Midhun P M coordinates decisions, contract changes, PR review and integration. Midhun P M owns all database models, migrations, backend wiring, environment contracts and backend dependency manifests, plus identity/catalog features.
+Midhun P M coordinates decisions, contract changes, exact code/test review and serialized integration clearance. Midhun P M owns all database models, migrations, backend wiring, environment contracts and backend dependency manifests, plus identity/catalog features.
 Sherin Saji owns frontend routing, shared UI, styles, API transport, frontend dependency manifests and browser-test configuration, plus reporting/portal features.
 Thanushree Suresh owns subscription feature directories and tests, including their feature UI. Noel Biju owns billing feature directories and tests, including their feature UI.
 Shared changes require a decision from Midhun P M and a request in the requesting contributor's named handoff file.
@@ -24,13 +24,20 @@ Only Midhun P M edits frozen contract documents after Gate A.
 
 ## Startup and Git workflow
 Use your assigned independent clone. Inspect its status, branch, remote and effective author identity first; preserve unrelated local work.
-Fetch `origin`, then create your role's feature branch from reviewed `origin/main` in a clean checkout. If that branch already exists, inspect its ancestry and continue safely rather than overwrite it. Never reset another person's work.
-Use feature names in branches, without participant names. Role files specify the initial branch; subsequent slices use a new descriptive `feature/<functionality>` branch after the previous PR is integrated.
-The user authorized a one-time initial planning-pack commit/push to establish `main`. All subsequent application work goes through feature branches and PRs targeting `main`; do not push application changes directly to `main`.
-After tests and handoff review, participants push feature branches with their verified owner SSH keys. The user selected SSH-only participant workspaces: do not initiate gh login, OAuth, token setup or account switching. Send the exact ready head, title, description, validation results and comparison link to Midhun P M through Codex TUI. The coordinator creates/reviews/merges PRs with the existing authorized 9MidhunPM API account; preserve original commit authorship and report PR authorship accurately.
-PRs record delivered behavior, exact checks, known gaps, dependencies and shared-change requests. Midhun P M reviews and integrates small slices, preserving accurate contribution history.
-The user requests hourly integration checkpoints during active work. Keep tested feature slices ready, report exact heads/checks/dependencies, and incorporate reviewed main into feature branches at least hourly. Midhun P M serializes reviewed PR merges; incomplete or failing slices are not merged merely to meet the clock.
-The user selected this PR workflow. Organiser compatibility remains unverified; record later clarification without presenting it as already obtained.
+Fetch `origin`, then create a descriptive feature branch from reviewed `origin/main` for the next slice. Historical foundation branches already exist; inspect their ancestry rather than recreate or overwrite them. Use feature names without participant names.
+The current user-selected delivery workflow is owner-operated local integration and normal SSH push to main after exact review. Earlier planning-pack/PR procedures are history; there is no current PR requirement.
+
+1. Prepare a scoped feature commit, run applicable checks and update your handoff with exact head, changed paths, commands/results, gaps and dependencies. Send the ready head and expected main SHA to Midhun P M through Codex TUI.
+2. Midhun P M reviews the exact code and test evidence, then gives GO for that feature head and expected main SHA. Midhun P M serializes one main push at a time; each contributor waits for their turn. An elapsed checkpoint is not clearance.
+3. The owning contributor fetches/rechecks remote main before integration. If main differs from the approved SHA, stop, refetch and obtain renewed review/GO against the new main. Do not publish a stale approval.
+4. In the owner's clean checkout, merge only the reviewed slice locally into main while preserving commit authorship and shared history. If conflicts or other changes alter the reviewed result, resolve in scope, rerun affected checks and return the exact candidate for review before publishing.
+5. Recheck the expected remote main immediately before the normal SSH push. The owner pushes main using their own verified SSH identity; a race/rejection requires stopping, refetching and renewed review. Never force-push, delete branches, rewrite history or publish an unreviewed slice.
+6. Report the resulting main SHA and executed checks to Midhun P M, who releases the next integration turn. Bring reviewed main into ongoing feature work without rewriting shared history.
+
+Midhun P M reviews code/tests and coordinates turns; the coordinator does not create or merge PRs through gh/API on behalf of contributors. Use the contributor's verified SSH identity for Git operations. Midhun P M's existing default SSH identity is verified as 9MidhunPM; preserve it. Other contributors use their existing assigned owner keys as documented in docs/13-GIT-IDENTITIES.md.
+Do not initiate gh login, OAuth, token setup, account switching or global Git/SSH/auth configuration changes.
+The user requests hourly integration checkpoints during active work. Keep tested slices ready and report exact heads/checks/dependencies; incomplete or failing slices are not published merely to meet the clock.
+The user selected this workflow. Organiser compatibility remains unverified; record clarification separately rather than claim it was obtained.
 
 ## Credentials and destructive actions
 Do not create a remote repository, register keys or modify global Git, SSH or GitHub CLI configuration.
@@ -49,12 +56,12 @@ Use real persistent data. Mark development mocks explicitly and remove them from
 Do not change dates, currency, rounding, lifecycle or discount semantics without a recorded decision.
 
 ## Delivery and coordination
-Before Gate A, Midhun P M builds the backend foundation and Sherin Saji builds the frontend foundation. Thanushree Suresh and Noel Biju review contracts and prepare scoped tests; they do not initialize competing applications.
-Gate A passes only after both foundations are integrated, models/migration and module imports work, frontend/API boot together, and shared interfaces are agreed. Check the latest handoffs before starting dependent implementation.
+Gate A has passed locally: the backend/frontend foundations are integrated and verified. Continue from the existing application and current release evidence; do not reinitialize scaffolds or create competing migration histories. Check latest handoffs for the exact tested commits and remaining gaps.
 Deliver small working slices with tests. Validate boundary inputs and relevant database constraints.
 No catch-all exception swallowing, fake success responses, hard-coded dashboard totals or inert buttons.
 Use request-scoped database sessions and explicit transactions for financial operations. Handle loading, empty, error and forbidden UI states.
 Update only your named handoff in `handoffs/`; include exact implemented commit, files, tests actually run, blockers and integration needs. The coordinator may update release evidence and maintain the planning pack.
 Never mark an unrun test as passing. Never claim email delivery when only queued or captured locally.
+Midhun P M owns deployment and the user-authorized Dokploy subdomain demo. Coordinate deployment changes through that owner and record actual runtime evidence.
 The four contributor workstreams define ownership. If blocked, prepare scoped tests or a compatible adapter rather than fork shared contracts.
 Before handoff, inspect the diff for secrets and out-of-scope edits. After hour 6, prioritize integration and correctness over optional features.

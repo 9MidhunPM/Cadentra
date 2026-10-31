@@ -1,7 +1,7 @@
 /** UI fixtures only: these tests do not establish live API or PostgreSQL correctness. */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Link, MemoryRouter, Route, Routes, useRoutes } from 'react-router';
+import { Link, MemoryRouter, Route, Routes, useLocation, useNavigate, useRoutes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient, ApiError } from '../../lib';
 import { InvoiceDetail, InvoiceList, PaymentForm } from './invoices';
@@ -395,6 +395,79 @@ describe('billing feature interactions', () => {
     await waitFor(() => expect(screen.queryByLabelText('Amount')).not.toBeInTheDocument());
     expect(sessionStorage.getItem(paymentStorageKey(scope))).toBeNull();
     expect(screen.queryByRole('button', { name: 'Record payment' })).not.toBeInTheDocument();
+  });
+
+  it('honors initial invoice drilldown filters and forwards only allowed API parameters', async () => {
+    const request = vi.spyOn(apiClient, 'request').mockResolvedValue({ items: [], total: 10000, page: 2, page_size: 25 });
+    render(<MemoryRouter initialEntries={['/billing/invoices?overdue=true&customer_id=outside-lookup&status=CONFIRMED&from=2026-10-01&to=2026-11-01&page=2&page_size=9999&total=0&unknown=ignored']}><InvoiceList /></MemoryRouter>);
+    await waitFor(() => expect(request.mock.calls.some(([path]) => path.startsWith('/invoices?'))).toBe(true));
+    const path = request.mock.calls.find(([path]) => path.startsWith('/invoices?'))?.[0];
+    if (!path) throw new Error('Invoice read missing');
+    const query = new URL(`http://test${path}`).searchParams;
+    expect(Object.fromEntries(query)).toEqual({ overdue: 'true', customer_id: 'outside-lookup', status: 'CONFIRMED', from: '2026-10-01', to: '2026-11-01', page: '2', page_size: '25' });
+    expect(screen.getByLabelText('Collection')).toHaveValue('true');
+    expect(screen.getByLabelText('Customer')).toHaveValue('outside-lookup');
+    expect(screen.getByLabelText('Invoice status')).toHaveValue('CONFIRMED');
+    expect(screen.getByLabelText('Invoice date from')).toHaveValue('2026-10-01');
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(request.mock.calls.at(-1)?.[0]).toContain('page=3'));
+    expect(request.mock.calls.at(-1)?.[0]).toContain('customer_id=outside-lookup');
+    expect(request.mock.calls.at(-1)?.[0]).toContain('overdue=true');
+  });
+
+  it('responds to same-route drilldown navigation and browser back and forward', async () => {
+    const request = vi.spyOn(apiClient, 'request').mockResolvedValue({ items: [], total: 10000, page: 1, page_size: 25 });
+    function Navigation() {
+      const navigate = useNavigate();
+      return <><Link to="/billing/invoices?overdue=false&customer_id=customer-b&page=3">Another drilldown</Link><button onClick={() => navigate(-1)}>Back in history</button><button onClick={() => navigate(1)}>Forward in history</button></>;
+    }
+    render(<MemoryRouter initialEntries={['/billing/invoices?overdue=true&customer_id=customer-a&page=2']}><Navigation /><InvoiceList /></MemoryRouter>);
+    const user = userEvent.setup();
+    expect(screen.getByLabelText('Customer')).toHaveValue('customer-a');
+    await user.click(screen.getByRole('link', { name: 'Another drilldown' }));
+    expect(screen.getByLabelText('Customer')).toHaveValue('customer-b');
+    expect(screen.getByLabelText('Collection')).toHaveValue('false');
+    await waitFor(() => expect(request.mock.calls.at(-1)?.[0]).toContain('page=3'));
+    await user.click(screen.getByRole('button', { name: 'Back in history' }));
+    expect(screen.getByLabelText('Customer')).toHaveValue('customer-a');
+    expect(screen.getByLabelText('Collection')).toHaveValue('true');
+    await waitFor(() => expect(request.mock.calls.at(-1)?.[0]).toContain('page=2'));
+    await user.click(screen.getByRole('button', { name: 'Forward in history' }));
+    expect(screen.getByLabelText('Customer')).toHaveValue('customer-b');
+    await waitFor(() => expect(request.mock.calls.at(-1)?.[0]).toContain('overdue=false'));
+  });
+
+  it('persists control changes in the URL, resets pagination and keeps customer search local', async () => {
+    const request = vi.spyOn(apiClient, 'request').mockResolvedValue({ items: [], total: 10000, page: 1, page_size: 25 });
+    function Location() { const location = useLocation(); return <output aria-label="Invoice URL">{location.search}</output>; }
+    render(<MemoryRouter initialEntries={['/billing/invoices?overdue=true&customer_id=selected-customer&from=2026-10-01&page=4&total=999']}><Location /><InvoiceList /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText('Invoice status'), { target: { value: 'PAID' } });
+    await waitFor(() => expect(request.mock.calls.at(-1)?.[0]).toContain('status=PAID'));
+    let query = new URLSearchParams(screen.getByLabelText('Invoice URL').textContent ?? '');
+    expect(query.get('page')).toBe('1');
+    expect(query.get('customer_id')).toBe('selected-customer');
+    expect(query.get('overdue')).toBe('true');
+    expect(query.get('from')).toBe('2026-10-01');
+    expect(query.has('total')).toBe(false);
+    fireEvent.change(screen.getByLabelText('Collection'), { target: { value: '' } });
+    query = new URLSearchParams(screen.getByLabelText('Invoice URL').textContent ?? '');
+    expect(query.has('overdue')).toBe(false);
+    const beforeSearch = screen.getByLabelText('Invoice URL').textContent;
+    await userEvent.type(screen.getByLabelText('Find customer'), 'Suite');
+    expect(screen.getByLabelText('Invoice URL')).toHaveTextContent(beforeSearch ?? '');
+    expect(screen.getByLabelText('Customer')).toHaveValue('selected-customer');
+    fireEvent.change(screen.getByLabelText('Customer'), { target: { value: '' } });
+    query = new URLSearchParams(screen.getByLabelText('Invoice URL').textContent ?? '');
+    expect(query.has('customer_id')).toBe(false);
+  });
+
+  it.each(['0', '-1', 'NaN', '1.5', '9007199254740993'])('uses a safe first page for invalid URL page %s', async page => {
+    const request = vi.spyOn(apiClient, 'request').mockResolvedValue({ items: [], total: 0, page: 1, page_size: 25 });
+    render(<MemoryRouter initialEntries={[`/billing/invoices?page=${page}&overdue=true`]}><InvoiceList /></MemoryRouter>);
+    await waitFor(() => expect(request.mock.calls.some(([path]) => path.startsWith('/invoices?'))).toBe(true));
+    const path = request.mock.calls.find(([path]) => path.startsWith('/invoices?'))?.[0];
+    expect(path).toContain('page=1&');
+    expect(path).toContain('overdue=true');
   });
 
 });

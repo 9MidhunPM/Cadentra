@@ -2,7 +2,7 @@
 
 Read the repository-root AGENTS.md first. Work on behalf of Sherin Saji within this role; this assignment does not change Git identity or authorize impersonation. This file adds scope to shared instructions.
 
-Initial feature branch: `feature/frontend-foundation`. In your assigned independent clone, follow the root startup checks, fetch origin, and create this branch from reviewed origin/main. Keep an existing branch only after inspecting it. Deliver through a PR targeting main; follow the root fallback if PR creation is unavailable.
+Historical initial branch: `feature/frontend-foundation` (already used; preserve its history). Gate A passed locally. Inspect the current checkout and release evidence, fetch origin and continue the existing application on a descriptive feature branch from reviewed main. Do not recreate foundations. Deliver through the root workflow: exact code/test review by Midhun P M, serialized GO tied to the expected main SHA, then the owner's local reviewed merge and normal SSH push to main using their verified identity. No PR/API integration or global auth changes.
 
 ## Owned paths
 frontend/src/app/, frontend/src/components/ui/, frontend/src/lib/, frontend/src/styles/, frontend build/dependency manifests, frontend/src/features/reporting/ and portal/.
@@ -11,12 +11,12 @@ backend/app/modules/reporting/, backend/tests/reporting/, frontend/e2e/ configur
 ## Mission
 Create one coherent product shell, share reusable controls, implement real reporting and customer portal, and exercise the integrated browser journey. Other team members build their own feature screens inside their scopes; do not become the only frontend writer.
 
-## First job: frontend foundation
-The documentation baseline is enough to start this work while Midhun P M builds the backend. Full reporting/portal implementation waits for the integrated Gate A baseline. Open the foundation PR first; use feature/reporting-portal for the next slice after integration.
-Coordinate a same-origin /api transport with Midhun P M. Create app shell, route placeholders importing stable feature exports, API/error/session client, reusable forms/tables/dialogs/status labels and design tokens. Supply these before other team members implement feature screens. Do not implement duplicate backend auth or an in-memory final app.
+## Continue the integrated frontend
+Gate A and the frontend foundation are locally verified. Continue reporting/portal and acceptance work from current main, using a descriptive feature branch such as feature/reporting-portal for the next slice. Preserve existing shared primitives and transport.
+Maintain the existing same-origin /api transport with Midhun P M, app shell, stable feature exports, API/error/session client, reusable controls and design tokens. Do not duplicate backend auth or replace persistent behavior with an in-memory app.
 
 ## Delivery sequence
-1. Gate A frontend shell, feature placeholders, shared types/client/components, coherent navigation and role-aware display.
+1. Preserve the verified Gate A frontend shell, shared types/client/components, navigation and role-aware display.
 2. Reporting queries for current active count, invoiced amounts, actual payments, outstanding/overdue, filters and series.
 3. Customer portal data routes with server ownership checks, safe invoice printing and delegated lifecycle actions.
 4. End-to-end browser test, desktop/mobile checks, complete-flow integration and seeded performance measurement.

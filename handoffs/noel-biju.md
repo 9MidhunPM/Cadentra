@@ -1,10 +1,10 @@
 # Noel Biju: handoff
 
-Status: FINANCIAL API AND ISSUER INTEGRATED; CORRECTED BILLING UI UNDER PR #13; JOINT BACKEND VERIFIED
+Status: BILLING CORE INTEGRATED; URL DRILLDOWN CORRECTION READY; FINAL T31/T30 CHECKS OPEN
 
 Role: Billing & Payments
-Branch: feature/billing-workspace
-Reviewed main incorporated: beedbbdda87774ac6813d3c3e8036db5df465ca3 (issuer, subscription actions, joint worker/race tests, catalog search and local mail wiring)
+Branch: feature/billing-integration-proof
+Reviewed main incorporated: 6cd8b7467698520f8fb1fddb22c353e827dc8082 (corrected billing UI PR #13, issuer, subscription actions, joint worker/race tests, catalog search and local mail wiring)
 Issuer implementation: 41dffac6a826930198e53242ed3b5e0e94cd619e
 Published issuer review head: 96b2a85b19207bf3772574b9c11bdecab577ad74
 Controlled invoice-race extension: 45c7465 (preserved from 7ca967f on the prior branch)
@@ -13,6 +13,8 @@ Discount boundary tests: e0f0e59
 Historical invoice/cancellation proof: 1a7314e
 Paginated product picker: 6da4116
 Payment recovery correction: d18c3e121c61d1662e680117147b0f4def6d4fb1
+Final UI review head: 5037de083b7da163e12571c749941d75c92ab3a6 (merged through PR #13)
+Invoice URL drilldown correction: 695c67de08d2a380c3ba356d8987e9d049a46f0e (reviewed baseline 18e88ff)
 
 ## Delivered and integrated
 
@@ -52,8 +54,8 @@ No shared models, migrations, dependency manifests, central frontend routes or o
 - Issuance: 10 actual PostgreSQL tests passed. They cover golden snapshots/dates/replay, full charge for shortened periods, flushed-before-commit rollback/retry, two independent connections for same-period issuance and the last capped discount use, paused catch-up, actual SQLSTATE 23505 rollback/reload and bounded-failure progress in a fresh interpreter. A real retained tax revision followed by advanced-clock replay, confirmation, detail and print preserves the original rate, total and dates. Issued discounted cancellation plus replay/run-due preserves one cancelled invoice, period, redemption and consumed use.
 - Final combined backend: 329 tests and 121 subtests passed in 64.74 seconds at source HEAD deecddb, including reviewed main beedbbd, on 2026-10-31. A fresh outer generated UUID schema migrated to 0002 and was removed after workers joined; pre-existing public user/customer/period/invoice/payment counts remained exactly unchanged. Per-test issuance schemas are likewise generated and removed. No public truncation, database drops or disabled integrity triggers.
 - Eight controlled invoice races passed: both acquisition orders for payment capacity, matching payment replay, payment versus cancellation, and matching sends. A third physical connection proves the loser waits on PostgreSQL's actual row lock before the winner is released.
-- Billing UI: the corrected billing/payment-command suite has 27 passing tests, plus three picker regressions. Independent standards/specification rechecks cleared payment navigation/reload retention, failed replay uncertainty, paid-invoice recovery, late outcomes, stale read reconciliation, tax/discount route state, zero usage-cap handling and product pagination. Fixture tests are separate from the live persistent browser evidence below.
-- Full frontend: 143 tests in 13 files, typecheck, lint, production build and whitespace checks passed after the final correction. The existing bundle-size warning remains nonblocking; no new dependency was added.
+- Billing UI: 38 owned billing/payment-command/picker cases pass, including eight URL-filter regressions. Independent reviews cleared payment navigation/reload retention, failed replay uncertainty, paid-invoice recovery, late outcomes, stale read reconciliation, route state, zero usage caps, product pagination and invoice query state. Fixture tests are separate from the live persistent browser evidence below.
+- Full frontend: 151 tests in 13 files, typecheck, lint, production build and whitespace checks passed after the URL correction. The existing bundle-size warning remains nonblocking; no new dependency was added.
 - Run-due HTTP tests verify real role/CSRF guards, strict empty payloads and server-owned clock/batch size.
 - Ruff, Python compilation and whitespace checks passed for the reviewed backend slices. Independent standards/specification review findings on batch limits and starvation were corrected before the issuer commit.
 
@@ -78,6 +80,8 @@ A separate read-only live Paid recovery check reloaded a retained existing payme
 
 Actual catalog/picker verification used 105 fictional products: pages of 100 and five, exact search returning one, retained selection names across page/search changes, zero rule writes and zero page errors. The coordinator's bounded name-search API is integrated.
 
+T30 preparation found that the initial invoice list ignored overdue/customer URL parameters. The correction makes known URL filters and page authoritative, keeps them in controls and browser history, resets page on filter changes and forwards only allowed API parameters. Actual read-only QA showed two invoices unfiltered versus zero overdue, retained the customer when clearing collection, and restored filtering through Back/Forward with zero domain writes or page errors.
+
 The actual invoice outbox dispatch reported processed=1, accepted_by_smtp=1, failed=0. The message appeared in the native local Mailpit web inbox with the correct invoice number, total, paid amount and balance. Only fictional recipients were used in visual fixtures. Evidence/scripts/screenshots stay under /tmp, outside the public repository.
 
 User explicitly deferred external delivery until a real SMTP provider is configured. Real SMTP remains environment-configurable with no committed credentials. Midhun P M owns Compose/Mailpit/standalone-outbox wiring and password-reset verification. Native capture is verified; Docker Compose execution is not claimed.
@@ -98,15 +102,17 @@ Issuer PR #12 is integrated. Joint T13/T33/T34 verification is integrated throug
 
 The completion audit's three own-scope evidence gaps are closed by the focused PostgreSQL tests above. Coordinator review of the initial UI found payment command loss across navigation and an unreachable product-picker page. Both were corrected and independently re-reviewed before the final UI head.
 
-Remaining: coordinator integration of the corrected UI, Sherin Saji's full persisted T31 browser journey, and actual billing-page T30 measurements. The earlier performance benchmark explicitly excluded placeholder staff billing surfaces; it does not count as those measurements. Resolve any billing defects these gates reveal before marking the workstream complete.
+The payment/picker UI is integrated through PR #13. The URL drilldown correction is ready for coordinator review and serialized integration; it must be included before final overdue-page measurements. Sherin Saji owns the full persisted T31 browser journey and actual billing-page T30 measurements. The earlier performance benchmark explicitly excluded placeholder staff billing surfaces; it does not count as those measurements. Resolve any further billing defects these gates reveal before marking the workstream complete.
 
-Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. SSH-only pushes remain selected; the coordinator creates/reviews/merges PRs through its existing account.
+Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. The coordinator's latest workflow instruction is owner SSH integration after code review and an explicit serialized go-ahead, with no new GitHub API/PR merge operations. Preserve historical PR records and original authorship; never force-push.
 
 ## PR review
 
 Issuer PR: https://github.com/9MidhunPM/Cadentra/pull/12 (merged)
 
-Prepared UI PR title: Add persistent invoice, payment and rule workspaces
+UI PR: https://github.com/9MidhunPM/Cadentra/pull/13 (merged)
+
+Title: Add persistent invoice, payment and rule workspaces
 
 Replace billing placeholders with server-backed invoice filters/detail, due billing, confirm/cancel/send/print, durable manual-payment recovery and administrator retained-rule forms. Preserve uncertain payment bodies/keys across navigation and reload until fresh history verifies them, including recovery on paid invoices. Guard pending/uncertain rule writes across navigation; browse/search all product pages while retaining selections. Staff rule views remain read-only. Includes controlled invoice-lock races, discount boundary tests and historical invoice proofs.
 

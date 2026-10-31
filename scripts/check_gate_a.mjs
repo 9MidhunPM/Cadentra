@@ -15,14 +15,15 @@ try {
   await page.goto(new URL('/sign-in', origin).href)
   const result = await page.evaluate(async () => {
     const email = `foundation-${Date.now()}@example.com`
+    const password = crypto.randomUUID() + 'Aa!'
     const request = (path, body, headers = {}) => fetch('/api/v1' + path, {
       method: body ? 'POST' : 'GET', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', ...headers },
       ...(body ? { body: JSON.stringify(body) } : {}),
     })
     const health = await request('/health')
-    const signup = await request('/auth/signup', { name: 'Foundation Customer', email, password: 'ValidBrowser!Password' })
-    const login = await request('/auth/login', { email, password: 'ValidBrowser!Password' })
+    const signup = await request('/auth/signup', { name: 'Foundation Customer', email, password })
+    const login = await request('/auth/login', { email, password })
     const signed = await login.json()
     const session = await request('/auth/session')
     const forbidden = await request('/products')
@@ -33,6 +34,8 @@ try {
   if (JSON.stringify(result) !== JSON.stringify(expected)) throw new Error(JSON.stringify(result))
   await page.goto(new URL('/portal/subscriptions', origin).href)
   await page.getByRole('navigation', { name: 'Customer navigation' }).waitFor()
+  await page.getByRole('heading', { name: 'My subscriptions', exact: true }).waitFor()
+  await page.getByText('No subscriptions yet', { exact: true }).waitFor()
   if (process.env.GATE_A_SCREENSHOT) await page.screenshot({ path: process.env.GATE_A_SCREENSHOT, fullPage: true })
   const logout = await page.evaluate(async () => {
     const session = await (await fetch('/api/v1/auth/session')).json()
@@ -41,5 +44,5 @@ try {
     return { logout: out.status, afterLogout: again.status }
   })
   if (logout.logout !== 200 || logout.afterLogout !== 401 || errors.length) throw new Error('Logout/session/render check failed')
-  console.log(JSON.stringify({ gateA: 'PASS', ...result, ...logout, pageErrors: errors.length }))
+  console.log(JSON.stringify({ gateA: 'PASS', ...result, ...logout, portalDataRendered: true, pageErrors: errors.length }))
 } finally { await browser.close() }
