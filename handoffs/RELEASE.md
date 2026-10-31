@@ -1,4 +1,4 @@
-# Cinematic release — 31 October 2026
+# Cinematic release : 31 October 2026
 
 Primary coordinator: Midhun P M. Base main b662117. The candidate adds the approved cinematic public homepage, a guarded /app entry, operational route chunks, live CycleGuard reporting, invoice-send recovery, subscription form recovery, exact migration readiness, bounded pagination, and production Resend SMTP with startup-secret redaction.
 

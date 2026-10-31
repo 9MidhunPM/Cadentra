@@ -1,4 +1,4 @@
-# Current coordinator checkpoint — cinematic release
+# Current coordinator checkpoint : cinematic release
 
 Midhun P M remains primary. Seven bounded helper tasks implemented the approved release in this checkout; helper work is not attributed as new human participation. Root owns review, integration, asset generation, public / routing, auth return destinations, deployment and the single status page.
 
