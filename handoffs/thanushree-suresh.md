@@ -1,6 +1,6 @@
 # Thanushree Suresh: handoff
 
-Status: PRE-GATE A ACCEPTANCE CASES PREPARED; APPLICATION PENDING
+Status: PURE CALENDAR IMPLEMENTED AND TESTED; PERSISTED WORKFLOWS PENDING
 
 Role: Subscription Workflows
 Branch: feature/subscription-workflows
@@ -8,32 +8,46 @@ Baseline: 766cb2664ded48afcb1012001565cbbf65c68142
 Setup commit: c4ea2e4abc22e59790afd51c395249bb7b343aa8 (pushed through gh-agent2)
 Preparation commit: 208adf0a0bdb2d384da15e4186e0d5e2be3afd2c
 Boundary-case commit: 487cabd28a3207eb31f05bdf47225f84a6db9c11
-Application commit: NONE
+Calendar implementation commit: bdb1cf29447ca9d7303d27e049dd61ac31ad6214
+Persistent application commit: NONE
 
 ## Delivered slice
 Created the subscription feature branch from the reviewed main baseline. Verified
 the existing Git author configuration and authenticated the requested gh-agent2
 SSH key as thanushreesuresh. The setup checkpoint was pushed successfully before
-feature preparation began. No production module has been created.
+feature preparation began.
 
 Prepared independent calendar fixtures and declarative lifecycle scenarios under
 the owned subscription tests. The README maps them to acceptance IDs and explains
-how to bind them to the actual services after Gate A. Scenario execution and all
-application acceptance results remain NOT RUN.
+how to bind them to the actual services after Gate A. Lifecycle scenario execution
+and persistent workflow acceptance remain NOT RUN.
 
 The follow-up boundary slice adds coordinator-agreed exclusive quote deadlines,
 requested-start plan availability, template input precedence and state-specific
 PATCH cases. It records intended Gate A interfaces without creating production
 stubs or changing shared files.
 
+The coordinator subsequently authorized the pure calendar module before Gate A,
+using the agreed signature and no alternate models or scaffold. Implemented
+CycleSnapshot/get_cycle_bounds and executable standard-library unit tests. This
+is actual calendar behavior; persistent lifecycle, API and feature UI remain
+unimplemented pending the integrated foundation.
+
 ## Files changed
 handoffs/thanushree-suresh.md
+backend/app/modules/subscriptions/calendar.py
 backend/tests/subscriptions/README.md
 backend/tests/subscriptions/calendar_cases.json
 backend/tests/subscriptions/check_prepared_cases.py
 backend/tests/subscriptions/lifecycle.feature
+backend/tests/subscriptions/test_calendar.py
 
 ## Tests actually run
+- `PYTHONPATH=backend python3 -m unittest discover -s backend/tests/subscriptions -p 'test_calendar.py' -v`:
+  PASS, 10 tests against the actual module; 43 golden boundary dates, six capped
+  periods, invalid indices/dates/cadence, exhausted cycles, huge indices,
+  date.max limits and immutable snapshots. First run was red with ModuleNotFoundError
+  before the production module was written; no tests are skipped.
 - `python3 scripts/check_pack.py`: PASS (planning structure, fixtures and examples only).
 - `bash scripts/preflight.sh`: exit 0; Docker unavailable in this environment.
 - `python3 backend/tests/subscriptions/check_prepared_cases.py`: PASS; 12 boundary
@@ -53,7 +67,21 @@ backend/tests/subscriptions/lifecycle.feature
   expected no-shell exit status was 1. The setup branch push succeeded.
 
 ## Manual verification
-Application verification not performed; the shared foundation is not implemented.
+Calendar correctness has unit evidence only. Persisted application/browser
+verification is not performed; the shared foundation is not integrated.
+
+## Implemented calendar interface
+
+`app.modules.subscriptions.calendar` exports frozen
+`CycleSnapshot(start_date: date, end_date: date, cadence: str, close_effective_on: date | None = None)`
+and `get_cycle_bounds(snapshot, cycle_index: int) -> tuple[date, date] | None`.
+Construct the snapshot from agreed ORM values at the integration boundary;
+original subscription dates remain separate from the frozen plan snapshot.
+No database, injected clock or financial computation is used by this module.
+
+Example: start 2027-01-31, end 2027-05-01, MONTHLY, index 1 returns
+(2027-02-28, 2027-03-31). Due-date filtering stays in the worker. Full persistent
+APIs and sample requests will accompany the post-Gate-A service slice.
 
 ## Agreed Gate A contracts; implementation pending
 
@@ -114,9 +142,10 @@ rationale before implementation.
 
 ## Known gaps and next dependency
 Application implementation awaits the integrated, verified Gate A baseline.
-There are no application models, services, dependency lockfiles or test harness
-on this main baseline. Docker is unavailable in this environment. No application,
-PostgreSQL, concurrency, browser, deployment or email check has been performed.
+There are no shared application models, dependency lockfiles or database test
+harness on this main baseline. Docker is unavailable in this environment. Pure
+calendar tests ran; PostgreSQL, concurrency, lifecycle, browser, deployment and
+email checks have not run for this workstream.
 The coordinator is now implementing the backend foundation. A temporary native
 PostgreSQL runtime is planned but is not yet verified. Neither this plan nor
 available feature branches establishes integrated Gate A readiness.
@@ -132,7 +161,7 @@ the prepared PR from the comparison link below without global account switching.
 
 ## Next slice
 After the integrated Gate A baseline is verified, bind the prepared cases to the
-agreed services, implement calendar/lifecycle validation and the persisted
+agreed services, reuse the tested calendar and implement lifecycle validation and the persisted
 template -> draft -> quotation -> confirmation -> activation slice. Follow with
 staff UI and policy actions. Keep commits atomic and checkpoint active work at
 least every 30 minutes, as requested by the user.
@@ -143,19 +172,20 @@ this workstream or bypass checks to meet the checkpoint.
 
 ## Prepared PR
 
-Title: test(subscriptions): prepare calendar and lifecycle acceptance cases
+Title: Implement anchored subscription calendar and prepare lifecycle acceptance cases
 
 Target: main
 
 Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-workflows
 
-Description: Prepare subscription calendar fixtures and lifecycle acceptance
-scenarios before Gate A. Preserve the canonical cadence fixtures and cover
-snapshot isolation, policy actions, backlog-safe closure and customer isolation.
-Cover agreed quotation/availability boundaries, template overrides and the edit
-matrix, and record agreed service interfaces and remaining foundation needs.
-These are prepared test assets; application behavior is not implemented or verified.
+Description: Implement immutable scheduling inputs and original-anchor daily,
+weekly, monthly and yearly periods, with exclusive expiry/closure caps and safe
+exhaustion at large indices/date limits. Ten unit tests execute the actual helper.
+Also prepare 68 lifecycle acceptance cases for snapshots, policies, backlog-safe
+closure, customer isolation, quotation/availability boundaries, template overrides
+and the edit matrix. Persistent lifecycle/API/UI behavior awaits Gate A.
 
-Validation for PR: planning-pack check, prepared-calendar checker, Python
-compilation, whitespace check and independent reviews passed. Lifecycle scenarios
-have no runtime bindings; PostgreSQL/concurrency/browser checks remain NOT RUN.
+Validation for PR: ten actual calendar unit tests, planning-pack check,
+prepared-calendar checker, Python compilation, whitespace check and independent
+reviews passed. Lifecycle scenarios have no runtime bindings;
+PostgreSQL/concurrency/browser checks remain NOT RUN for this workstream.
