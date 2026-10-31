@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Cadentra · Project status</title>
+<!-- THESIS: A trustworthy operating report makes verified work and release gaps legible together.
+OWN-WORLD: Cadentra Graphite Mint, four named contributors, billing evidence and explicit acceptance gates.
+STORY: current checkpoint → owner activity → evidence/limits → requirements → next actions/history.
+FIRST VIEWPORT: current main, local coverage count and production verification gate; no implied public release.
+FORM: one offline document, embedded JSON facts, semantic sections, functional search/filter and print.
+MAINTENANCE: Root updates project-status-data after meaningful verified checkpoints. Escape '<' as \u003c in JSON. No secrets or private environment values. No heartbeat/live telemetry. -->
+<style>
+:root{color-scheme:dark;--background:#171b1a;--surface:#252e2a;--surface-raised:#2b3530;--ink:#ecf2eb;--muted:#adbdb4;--border:#3c4943;--primary:#b9e8b6;--on-primary:#16271b;--danger:#ffb4ab;--danger-bg:#482722;--warning:#f4cd83;--warning-bg:#44371f;--success:#c4eac8;--success-bg:#24432e;--neutral-bg:#303b35;--sidebar:#202725;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:var(--background);font-synthesis:none}*{box-sizing:border-box}body{margin:0;min-width:320px}a{color:inherit;text-underline-offset:4px}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}:focus-visible{outline:2px solid var(--primary);outline-offset:4px}h1,h2,h3,p{margin:0}button{min-height:42px;border:1px solid var(--border);border-radius:8px;padding:9px 14px;background:var(--surface);color:var(--ink)}button:hover{background:var(--surface-raised)}.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.primary:hover{background:var(--success)}.skip{position:fixed;top:-100px;left:16px;padding:12px;background:var(--primary);color:var(--on-primary);z-index:10}.skip:focus{top:12px}.top{border-bottom:1px solid var(--border);background:var(--sidebar)}.top-inner{max-width:1360px;margin:auto;padding:20px 36px;display:flex;align-items:center;justify-content:space-between;gap:20px}.wordmark{display:flex;align-items:center;gap:11px;font-size:22px;font-weight:700;letter-spacing:-.7px;text-decoration:none}.mark{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--primary);border-radius:9px;color:var(--primary);font-size:20px}.tagline{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}.actions{display:flex;flex-wrap:wrap;gap:8px}.container{max-width:1360px;margin:auto;padding:0 36px 64px}.nav{display:flex;gap:24px;overflow-x:auto;border-bottom:1px solid var(--border);padding:19px 0;font-size:12px;color:var(--muted);white-space:nowrap}.nav a{text-decoration:none}.nav a:hover{color:var(--primary)}.hero{padding:44px 0 28px;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(270px,.8fr);gap:48px}.eyebrow{color:var(--primary);text-transform:uppercase;letter-spacing:.15em;font-size:10px;font-weight:700}.hero h1{font-size:clamp(30px,4vw,49px);letter-spacing:-.04em;line-height:1.12;max-width:780px;margin:16px 0}.lede{color:var(--muted);font-size:15px;line-height:1.8;max-width:730px}.meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:25px;color:var(--muted);font-size:11px;line-height:1.8}.badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;line-height:1.5;border-radius:5px;padding:4px 8px;color:var(--muted);background:var(--neutral-bg);white-space:normal}.badge.good{color:var(--success);background:var(--success-bg)}.badge.warn{color:var(--warning);background:var(--warning-bg)}.badge.danger{color:var(--danger);background:var(--danger-bg)}.coverage{border-left:1px solid var(--border);padding-left:32px;align-self:center}.coverage-number{font-size:54px;letter-spacing:-.04em;line-height:1.1;margin:12px 0 8px;font-variant-numeric:tabular-nums}.coverage-number .small{letter-spacing:normal;line-height:1.8}.coverage-number small{font-size:22px;color:var(--muted);font-weight:400;letter-spacing:-.02em}.bar{height:7px;background:var(--border);border-radius:10px;overflow:hidden;margin:18px 0}.bar span{display:block;height:100%;background:var(--primary)}.small{font-size:11px;color:var(--muted);line-height:1.8}.approval{border:1px solid color-mix(in srgb,var(--warning) 42%,var(--border));border-radius:12px;background:var(--warning-bg);padding:22px 24px;margin-bottom:22px;display:grid;grid-template-columns:160px 1fr;gap:22px}.approval h2{font-size:18px;margin-bottom:9px;line-height:1.4}.approval p{font-size:12px;line-height:1.8;color:var(--muted)}.approval .eyebrow{color:var(--warning)}.snapshot{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:16px 0 28px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}.snapshot label{display:flex;align-items:center;gap:8px;white-space:nowrap}.snapshot input{accent-color:var(--primary);width:17px;height:17px}.section{padding-top:40px;scroll-margin-top:20px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:20px}.section h2{font-size:25px;font-weight:600;letter-spacing:-.035em}.section-intro{max-width:660px;font-size:12px;color:var(--muted);line-height:1.8;margin-top:9px}.team{border-top:1px solid var(--border)}.person{display:grid;grid-template-columns:230px 1fr 1fr;gap:28px;padding:24px 0;border-bottom:1px solid var(--border)}.person h3{font-size:15px;margin-bottom:5px}.person .role{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px}.column-label{font-size:9px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);font-weight:700;margin-bottom:8px}.person p:not(.role){font-size:12px;line-height:1.8}.person .next{margin-top:10px;color:var(--muted)}.two-columns{display:grid;grid-template-columns:1.35fr 1fr;gap:36px}.ledger{border:1px solid var(--border);border-radius:10px;overflow:hidden}.evidence{padding:19px 22px;border-bottom:1px solid var(--border);background:var(--surface)}.evidence:last-child{border-bottom:0}.evidence h3{font-size:11px;color:var(--muted);font-weight:500}.evidence strong{display:block;font-size:14px;margin:6px 0 8px;line-height:1.5}.evidence p{font-size:11px;color:var(--muted);line-height:1.8}.evidence.warn{border-left:1px solid var(--warning)}.gates{display:grid;gap:12px}.gate{border:1px solid var(--border);border-radius:10px;padding:20px;background:var(--surface)}.gate .gate-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}.gate h3{font-size:14px;margin:8px 0}.gate p{font-size:11px;line-height:1.8;color:var(--muted)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em;overflow-wrap:anywhere}.deployment{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}.deployment h3{font-size:15px;margin-bottom:10px}.deployment p{font-size:11px;color:var(--muted);line-height:1.8}.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.filters label{font-size:11px;display:grid;gap:7px;color:var(--muted)}input[type=search],select{min-height:43px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--ink);padding:10px 12px}input[type=search]{width:min(340px,65vw)}.requirements{border-top:1px solid var(--border)}.requirement{display:grid;grid-template-columns:48px 1fr 130px;gap:18px;padding:17px 2px;border-bottom:1px solid var(--border);align-items:start}.requirement h3{font-size:13px;margin-bottom:6px}.requirement p{font-size:11px;color:var(--muted);line-height:1.7}.requirement .owner{font-size:10px;color:var(--muted);margin-top:7px}.requirement>code{color:var(--primary);font-size:11px;padding-top:2px}.result-count{font-size:11px;color:var(--muted);padding:13px 0}.empty{padding:30px 0;color:var(--muted);font-size:13px}.events{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}.event{border-top:2px solid var(--border);padding-top:13px}.event h3{font-size:12px;margin:9px 0;line-height:1.6}.event p{font-size:11px;color:var(--muted)}.steps{counter-reset:steps;list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}.steps li{counter-increment:steps;display:grid;grid-template-columns:32px 1fr;gap:12px;padding:17px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.8}.steps li:before{content:counter(steps,decimal-leading-zero);font-size:11px;color:var(--primary);padding-top:2px}.workflow{padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-top:24px;font-size:12px;line-height:1.9;color:var(--muted)}.history{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:22px}.history-item{border-top:1px solid var(--border);padding-top:16px}.history-item code{font-size:11px;color:var(--primary)}.history-item h3{font-size:13px;margin:9px 0}.history-item p{font-size:11px;line-height:1.8;color:var(--muted)}.source-note{border-top:1px solid var(--border);margin-top:36px;padding-top:20px;font-size:11px;color:var(--muted);line-height:1.9}footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;border-top:1px solid var(--border);padding-top:24px;margin-top:36px;color:var(--muted);font-size:10px}.full-sha{display:block;margin-top:5px}.stale{color:var(--warning)}[hidden]{display:none!important}
+@media(max-width:1000px){.person{grid-template-columns:200px 1fr}.person>div:last-child{grid-column:2}.two-columns{grid-template-columns:1fr}.events{grid-template-columns:repeat(2,1fr)}.history{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.top-inner{padding:18px 20px;align-items:flex-start;flex-wrap:wrap}.container{padding:0 20px 40px}.tagline{display:none}.nav{gap:22px;padding:17px 0}.hero{grid-template-columns:1fr;gap:25px;padding-top:30px}.hero h1{font-size:35px}.coverage{border-left:0;border-top:1px solid var(--border);padding:22px 0 0}.coverage-number{font-size:44px}.approval{grid-template-columns:1fr;gap:11px;padding:20px}.snapshot{align-items:flex-start;flex-direction:column;gap:13px}.section{padding-top:32px}.section-head{flex-direction:column;gap:18px}.person{grid-template-columns:1fr;gap:17px}.person>div:last-child{grid-column:auto}.requirement{grid-template-columns:36px 1fr;gap:12px}.requirement>.badge{grid-column:2;justify-self:start}.events,.history{grid-template-columns:1fr}.filters{width:100%}.filters label:first-child{flex:1}input[type=search]{width:100%}.section h2{font-size:23px}.lede{font-size:14px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}@media print{:root{color-scheme:light;--background:#fff;--surface:#fff;--surface-raised:#fff;--ink:#202722;--muted:#4b574f;--border:#c8d2c9;--primary:#246343;--on-primary:#fff;--warning:#704b00;--warning-bg:#fff7e5;--success:#22653f;--success-bg:#e6f2e8;--neutral-bg:#edf1ea;--sidebar:#fff}body{font-size:10pt}.top-inner,.container{padding-left:0;padding-right:0}.nav,.actions,.snapshot label,.filters,.skip,.result-count,#empty-results{display:none!important}.hero{padding-top:25px}.section{break-before:auto;padding-top:25px}.person,.gate,.evidence,.requirement,.history-item{break-inside:avoid}.section h2{font-size:20pt}.hero h1{font-size:28pt}.coverage-number{font-size:35pt}.top{background:#fff}.requirement[hidden]{display:grid!important}footer{font-size:8pt}.source-note{font-size:9pt}}
+</style></head><body><a class="skip" href="#main">Skip to project report</a><header class="top"><div class="top-inner"><a class="wordmark" href="#main"><span class="mark" aria-hidden="true">C</span><span id="brand"></span></a><span class="tagline">PROJECT OPERATING REPORT</span><div class="actions"><button id="refresh" class="primary" type="button">Refresh saved snapshot</button><button id="print" type="button">Print report</button></div></div></header><div class="container"><nav class="nav" aria-label="Report sections"><a href="#team">People & work</a><a href="#evidence">Evidence & gates</a><a href="#requirements">Requirement checklist</a><a href="#next">Next actions</a><a href="#history">Source history</a></nav><main id="main"><section class="hero" aria-labelledby="headline"><div><p class="eyebrow" id="subtitle"></p><h1 id="headline"></h1><p class="lede" id="summary"></p><div class="meta"><span id="snapshot-time"></span><span id="age" role="status"></span><span>Main <code id="main-short"></code></span></div></div><aside class="coverage" aria-labelledby="coverage-label"><p class="eyebrow" id="coverage-label"></p><div class="coverage-number" id="coverage-number"></div><div class="bar" role="img" id="coverage-bar"><span></span></div><p class="small" id="coverage-caveat"></p></aside></section><section class="approval" aria-labelledby="blocker-title"><div><p class="eyebrow" id="blocker-level"></p><p class="small" style="margin-top:10px">Current release gate</p></div><div><h2 id="blocker-title"></h2><p id="blocker-detail"></p><p id="blocker-action" style="margin-top:10px"></p></div></section><div class="snapshot"><p id="snapshot-notice"></p><label><input id="auto-reload" type="checkbox">Reload saved snapshot every 60 seconds</label></div><section class="section" id="team"><div class="section-head"><div><h2>Four people. Clear ownership.</h2><p class="section-intro">Delivered work, the current focus and the next handoff—kept separate so an active task never looks finished.</p></div></div><div id="team-rows" class="team"></div></section><section class="section" id="evidence"><div class="section-head"><div><h2>Evidence, with its limits.</h2><p class="section-intro">Local checks have real scope. A historical benchmark, a focused rerun or a captured email does not close a wider release gate.</p></div></div><div class="two-columns"><div class="ledger" id="evidence-rows"></div><aside><div class="gates" id="gates"></div><div class="deployment"><span id="deployment-status" class="badge warn"></span><h3 style="margin-top:15px">Deployment target</h3><p><code id="deployment-target"></code></p><p id="deployment-detail" style="margin-top:10px"></p><p class="small" style="margin-top:16px">Current main <code id="main-full" class="full-sha"></code></p><p id="prepared-root" class="small" style="margin-top:10px"></p></div></aside></div></section><section class="section" id="requirements"><div class="section-head"><div><h2>Product requirement checklist.</h2><p class="section-intro">Local verification is counted at the requirement-group level. Partial external delivery and final-page timing remain visible.</p></div><div class="filters"><label>Search requirements<input id="requirement-search" type="search" placeholder="ID, feature or owner…" autocomplete="off"></label><label>Evidence status<select id="requirement-filter"><option value="all">All groups</option><option value="Locally verified">Locally verified</option><option value="Partial">Partial</option></select></label><button id="reset-filters" type="button">Reset filters</button></div></div><p id="result-count" class="result-count" aria-live="polite"></p><div id="requirement-rows" class="requirements"></div><p id="empty-results" class="empty" hidden>No requirement groups match these filters.</p><div style="margin-top:30px"><h3 style="font-size:16px">Event obligations · outside the product percentage</h3><div id="event-rows" class="events"></div></div></section><section class="section" id="next"><div class="section-head"><div><h2>What happens next.</h2><p class="section-intro">Ordered release work. There is no invented finish time or automatic merge promise.</p></div></div><ol id="next-steps" class="steps"></ol><div id="workflow" class="workflow"></div></section><section class="section" id="history"><div class="section-head"><div><h2>Checkpoints behind this snapshot.</h2><p class="section-intro">Source history preserves ownership and distinguishes the current main from prepared work that has not yet taken its integration turn.</p></div></div><div id="history-rows" class="history"></div><p id="source-policy" class="source-note"></p></section></main><footer><span id="footer-project"></span><span>Offline-capable · no external libraries or telemetry</span></footer></div><noscript><p style="padding:24px">Enable JavaScript to render the embedded saved project snapshot. This document makes no live telemetry requests.</p></noscript>
+<script type="application/json" id="project-status-data">
+{
+  "project": "Cadentra",
+  "subtitle": "Subscription Management System · Brightloop Software",
+  "snapshotUTC": "2026-10-31T07:39:48Z",
+  "staleAfterMinutes": 15,
+  "headline": "The product journey passes. Release verification continues.",
+  "summary": "The full cross-owner journey has scoped evidence. The approved private deployment environment is saved, and the security patch passes393 backend and164 frontend tests. Production proxy/container verification and complete final-page timings remain open.",
+  "coverageLabel": "Local product requirement groups",
+  "coverageCaveat": "A count of requirement groups, not effort, release readiness or a claim that the whole product is complete. Event obligations and the separate T31 journey are excluded.",
+  "currentMain": {
+    "sha": "00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd",
+    "label": "Noel Biju owner-SSH URL-filter merge",
+    "state": "Core, portal, owner workflow and URL filters integrated"
+  },
+  "preparedRoot": {
+    "sha": "2b1d54015f01a215362be47af2e001deb6303cac",
+    "label": "Verified production proxy identity and private networking",
+    "state": "Tested root feature commit; production NGINX slice and public runtime checks remain pending. Not yet in main."
+  },
+  "deployment": {
+    "state": "Private environment saved · public release not verified",
+    "target": "https://cadentra.midhunpm.in",
+    "detail": "The user explicitly approved the narrow Cadentra credential transfer and the private environment was saved. Isolated web8080, private database/mail capture, one worker and bootstrap are prepared. Actual container and public-origin verification are not yet evidenced in this snapshot; security/proxy-chain hardening is in progress."
+  },
+  "snapshotNotice": "Saved coordinator snapshot, not live agent telemetry. Reload reads this saved file again; it does not contact teammates or infer activity.",
+  "team": [
+    {
+      "name": "Midhun P M",
+      "role": "Platform · catalog · coordination · deployment",
+      "done": "Shared platform, identity/catalog, native runtime, local verification and deployment package.",
+      "now": "The security API/Compose candidate passes393 backend and164 frontend tests; independent proxy review is clear. Finishing production ingress, deployment and this saved status report.",
+      "next": "Review the frontend proxy candidate and publish the reviewed owner slices before public container/startup checks.",
+      "state": "Release coordination"
+    },
+    {
+      "name": "Thanushree Suresh",
+      "role": "Subscriptions · lifecycle · scheduling",
+      "done": "Subscription workflows, actual worker/action races, staff actions and dark/light checks.",
+      "now": "Closing the final regression audit and ready documentation slice 1fa2; awaiting the serialized owner integration turn.",
+      "next": "Publish the approved documentation checkpoint and support final-page acceptance.",
+      "state": "Documentation ready"
+    },
+    {
+      "name": "Noel Biju",
+      "role": "Billing · invoices · payments",
+      "done": "Billing, pricing, payment guards and recovery behavior.",
+      "now": "URL-filter fix is merged at 00ffa99. Supporting final T30 and documentation checkpoint 854156.",
+      "next": "Support final-page measurements and the remaining release evidence handoff.",
+      "state": "Performance support"
+    },
+    {
+      "name": "Sherin Saji",
+      "role": "Experience · reports · customer portal",
+      "done": "UI/themes, reporting, portal and production frontend package.",
+      "now": "Production proxy-chain hardening and final T30. Tested T31/focus-timing evidence slice 471808 is ready, but its owner main push was rejected by automatic review and awaits the owner’s user approval.",
+      "next": "Obtain the required owner push approval without a workaround, then publish exact tested evidence and final timings.",
+      "state": "Proxy and final performance"
+    }
+  ],
+  "blockers": [
+    {
+      "level": "Security verification in progress",
+      "title": "Login rate-limit identity needs final production-path verification",
+      "detail": "The completed scoped scan reviewed all50 backend application files and found one Medium issue in the shared login IP bucket. The API fix passes393 backend tests, including32 new proxy regressions;164 frontend tests and lint/type/build also pass. Independent review passes37 proxy/helper cases. The production frontend proxy and actual public-path verification are still pending.",
+      "action": "Finish and review the production web proxy, then verify the deployed Cloudflare, private API and container path. Explicit credential-transfer approval is complete; credentials remain private."
+    },
+    {
+      "level": "Owner-reported pass",
+      "title": "First full T31 journey passed; coordinator rerun remains separate",
+      "detail": "The owner reports 1/1 in 16.6s using harness41ef6df against runtimeff18. The actual UI journey covers product/plan → quotation/active → invoice → payments → reports/portal reload/print and owned lifecycle actions. It includes foreign-record404/nochange and zero page errors.",
+      "action": "Preserve that scoped owner evidence and complete the final repeat and performance checks; do not imply an independent coordinator rerun."
+    },
+    {
+      "level": "Evidence gap",
+      "title": "Final-page timing and external email remain open",
+      "detail": "External SMTP is explicitly deferred; only local Mailpit capture is evidenced. Historical performance results do not prove every final page meets the brief.",
+      "action": "Measure final surfaces, retain known external-delivery gaps and avoid claiming a public deployment."
+    },
+    {
+      "level": "Owner approval pending",
+      "title": "Tested owner evidence is waiting for its permitted main push",
+      "detail": "Sherin Saji’s471808test/T31 evidence slice is ready. Automatic approval review rejected that owner’s main push; the owner is waiting for their user approval.",
+      "action": "Keep the reviewed slice intact and wait for the required authorization; do not switch identities or route around the rejection."
+    }
+  ],
+  "evidence": [
+    {
+      "label": "Combined backend verification",
+      "result": "393 tests passed",
+      "scope": "Coordinator executed the current root proxy-security candidate against real isolated PostgreSQL test databases. This includes32 new trust/quota regressions; an independent focused review also passed37 proxy/helper cases.",
+      "tone": "good"
+    },
+    {
+      "label": "Frontend checks",
+      "result": "164 tests; lint, type and production build passed",
+      "scope": "Coordinator repeated the current combined frontend on the security candidate. The shared bundle-size advisory remains a build warning; this does not establish every final-page timing.",
+      "tone": "good"
+    },
+    {
+      "label": "Latest owner repeat",
+      "result": "164 frontend tests passed in the newer owner combined run",
+      "scope": "The earlier155/156focus timing flake is historical. The test-only waitFor fix is in ready owner slice 471808, whose main publication awaits approval. The current full backend repeat after the security patch is still pending.",
+      "tone": "good"
+    },
+    {
+      "label": "Real recurring worker",
+      "result": "One 4680.00 invoice; no restart duplicate",
+      "scope": "Actual standalone worker, persistent database and restart behavior.",
+      "tone": "good"
+    },
+    {
+      "label": "Canonical billing and recovery",
+      "result": "4970.16 settled by 2000.00 + 2970.16",
+      "scope": "Owner-local canonical flow verified. Lost acknowledgement / same key produced one actual record; 105-product pagination also passed.",
+      "tone": "good"
+    },
+    {
+      "label": "Fresh-clone reproduction",
+      "result": "Locked native setup verified at 382fa2b",
+      "scope": "New environments, cached locked dependencies, migration0002, seed idempotency and authentication passed.",
+      "tone": "good"
+    },
+    {
+      "label": "Integrated browser / Gate A",
+      "result": "Actual empty portal render; zero page errors",
+      "scope": "Strengthened check uses the real API/PostgreSQL path. It does not replace full T31.",
+      "tone": "good"
+    },
+    {
+      "label": "Full cross-owner T31 · first pass",
+      "result": "Owner-reported1/1 in 16.6s; zero page errors",
+      "scope": "Harness41ef6df / runtimeff18: actual UI product/plan →quote/active →4970.16invoice →2000.00+2970.16 →report/portal reload/print →owned lifecycle actions; foreign-record404/nochange, zero errors. Noel Biju and Thanushree Suresh independently inspected the safe evidence artifact. Coordinator execution rerun is not claimed.",
+      "tone": "good"
+    },
+    {
+      "label": "Runtime and packaging",
+      "result": "PostgreSQL18.6 · 27 tables · migrations0001/0002",
+      "scope": "Native frontend packaging has eight checks and reset-error log privacy proof. Actual container/public-origin verification remains a release gate.",
+      "tone": "neutral"
+    },
+    {
+      "label": "Historical T30 measurement",
+      "result": "10 views · 250 samples · 5,000 subscriptions · 20,000 invoices",
+      "scope": "Earlier runtime only: Overview p95 556.7ms; filtered view p95 1333.9ms. All final surfaces remain unverified.",
+      "tone": "warn"
+    },
+    {
+      "label": "History protection during cleanup",
+      "result": "Immutable guard rejected DELETE; cleanup transaction rolled back",
+      "scope": "The fictional acceptance dataset remains preserved privately. No domain bypass or database drop was used. A separate fresh performance database is migrated to0002 for T30.",
+      "tone": "neutral"
+    },
+    {
+      "label": "Backend security review and patch",
+      "result": "50 application files reviewed · one Medium finding ·32 targeted tests pass",
+      "scope": "Shared login IP-bucket hardening is being verified with the exact production proxy chain. Full backend repeat is pending; this is not a claim of completed security remediation.",
+      "tone": "warn"
+    },
+    {
+      "label": "Private deployment environment",
+      "result": "Explicit user approval received; private environment saved",
+      "scope": "The previously rejected sensitive transfer is now authorized for Cadentra. No values are included here; public deployment is not yet verified.",
+      "tone": "good"
+    }
+  ],
+  "gates": [
+    {
+      "id": "T31",
+      "title": "Full cross-owner browser journey",
+      "status": "First pass · owner evidence",
+      "note": "Owner first pass1/1in 16.6s at harness41ef6df/runtimeff18; Noel Biju and Thanushree Suresh inspected the safe artifact independently. A coordinator execution rerun is not claimed."
+    },
+    {
+      "id": "T30",
+      "title": "All final-page performance",
+      "status": "Pending",
+      "note": "Measure every required final surface; older aggregate results are insufficient."
+    },
+    {
+      "id": "Deployment",
+      "title": "Public production readiness",
+      "status": "Environment configured",
+      "note": "Narrow transfer approval is granted and private environment saved. Production proxy hardening, actual containers and public-origin verification remain open."
+    },
+    {
+      "id": "SMTP",
+      "title": "External reset and invoice delivery",
+      "status": "Deferred",
+      "note": "User explicitly deferred external SMTP. Local capture is the current limit."
+    }
+  ],
+  "eventObligations": [
+    {
+      "id": "E01",
+      "title": "Portal repository submission / timeline",
+      "status": "Unverified"
+    },
+    {
+      "id": "E02",
+      "title": "Organiser workflow / contribution acceptance",
+      "status": "Unverified"
+    },
+    {
+      "id": "E03",
+      "title": "Evaluator access / selected statement acceptance",
+      "status": "Unverified"
+    },
+    {
+      "id": "E04",
+      "title": "Accessible final functional demo video",
+      "status": "Unverified"
+    }
+  ],
+  "nextSteps": [
+    "Complete the full backend regression repeat for the targeted login hardening and verify the exact production proxy chain.",
+    "Wait for the required owner authorization for the reviewed471808evidence push, and serialize remaining documentation integrations.",
+    "Run actual container and public-origin checks with the already authorized private Cadentra environment.",
+    "Retain the scoped T31 first-pass evidence and measure every final required page using the fresh isolated performance database.",
+    "Reconcile release evidence and remaining external SMTP/event obligations without claiming unperformed checks."
+  ],
+  "workflow": "Midhun P M reviews an exact feature head against an expected main SHA and gives one serialized GO. The owner fetches/rechecks main and uses a normal SSH push with their own verified identity. No gh/API main publishing, force push or concurrent integration turns.",
+  "history": [
+    {
+      "sha": "766cb26",
+      "title": "Four-person planning baseline",
+      "note": "Named ownership, source contracts and startup workflow."
+    },
+    {
+      "sha": "5b78567",
+      "title": "Gate A integrated",
+      "note": "Backend, frontend, migrations and real session/proxy verification."
+    },
+    {
+      "sha": "6cd8b74",
+      "title": "Billing recovery checkpoint",
+      "note": "Recovery and payment safeguards integrated."
+    },
+    {
+      "sha": "18e88ff",
+      "title": "Subscription-owner SSH theme integration",
+      "note": "Thanushree Suresh normal SSH main checkpoint."
+    },
+    {
+      "sha": "2967a8e",
+      "title": "Production frontend package SSH integration",
+      "note": "Frontend packaging checkpoint."
+    },
+    {
+      "sha": "ff18b1f",
+      "title": "Portal-owner SSH merge",
+      "note": "Current verified main; owned portal actions integrated."
+    },
+    {
+      "sha": "eb8d8fd",
+      "title": "Root owner-SSH workflow and deployment manifest",
+      "note": "Current main includes portalff18; deployment remains prepared pending approval and actual runtime checks."
+    },
+    {
+      "sha": "00ffa99",
+      "title": "Billing owner URL-filter integration",
+      "note": "Current verified main; Noel Biju’s reviewed URL-filter follow-up is merged."
+    }
+  ],
+  "sourcePolicy": "Coordinator-maintained JSON after meaningful verified checkpoints. Sources are exact Git heads, owner handoffs, executed checks and Codex TUI reports. Historical evidence retains its commit/runtime scope. No background heartbeat or automatic agent monitoring is implied.",
+  "requirements": [
+    {
+      "id": "R01",
+      "title": "Accounts and authentication",
+      "owner": "Midhun P M",
+      "status": "Locally verified",
+      "note": "Unique email, compliant password, signup/login and persistent sessions."
+    },
+    {
+      "id": "R02",
+      "title": "Password reset delivery",
+      "owner": "Midhun P M",
+      "status": "Partial",
+      "note": "Reset token, local SMTP/inbox and error-log privacy verified. External delivery explicitly deferred."
+    },
+    {
+      "id": "R03",
+      "title": "Roles and customer ownership",
+      "owner": "Midhun P M + Sherin Saji",
+      "status": "Locally verified",
+      "note": "Admin/staff/customer restrictions, CSRF and owned portal actions verified locally."
+    },
+    {
+      "id": "R04",
+      "title": "Product catalog",
+      "owner": "Midhun P M",
+      "status": "Locally verified",
+      "note": "Product fields, API-backed screens and reload persistence verified."
+    },
+    {
+      "id": "R05",
+      "title": "Price-adjusting variants",
+      "owner": "Midhun P M",
+      "status": "Locally verified",
+      "note": "Exact additive variant pricing and validation verified."
+    },
+    {
+      "id": "R06",
+      "title": "Plans and all four cadences",
+      "owner": "Midhun P M + Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Daily, weekly, monthly and yearly behavior verified locally."
+    },
+    {
+      "id": "R07",
+      "title": "Quantity and availability",
+      "owner": "Midhun P M + Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Minimum quantities and exclusive availability boundaries verified."
+    },
+    {
+      "id": "R08",
+      "title": "Pause, close, renewal and expiry",
+      "owner": "Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Staff actions, worker/action races and dark/light checks verified."
+    },
+    {
+      "id": "R09",
+      "title": "Quotation templates",
+      "owner": "Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Persistent templates, copied lines and validity rules verified."
+    },
+    {
+      "id": "R10",
+      "title": "Subscription records",
+      "owner": "Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Unique references, customer, plan, dates, terms and lines verified."
+    },
+    {
+      "id": "R11",
+      "title": "Five-state subscription lifecycle",
+      "owner": "Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Draft → Quotation → Confirmed → Active → Closed verified. Full cross-owner T31 remains a separate gate."
+    },
+    {
+      "id": "R12",
+      "title": "Automatic recurring invoices",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Actual standalone worker issued one 4680.00 invoice; restart did not duplicate it."
+    },
+    {
+      "id": "R13",
+      "title": "Automatic tax rules",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Admin rule management, retained revisions and server calculations verified."
+    },
+    {
+      "id": "R14",
+      "title": "Invoice actions and delivery",
+      "owner": "Noel Biju",
+      "status": "Partial",
+      "note": "Confirm/cancel/print and local send behavior verified. External invoice email delivery deferred."
+    },
+    {
+      "id": "R15",
+      "title": "No duplicate or skipped billing",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Issuer/replay/uniqueness, restart and financial race checks verified locally."
+    },
+    {
+      "id": "R16",
+      "title": "Fixed and percentage discounts",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Admin-only rules and exact fixed/percentage pricing verified."
+    },
+    {
+      "id": "R17",
+      "title": "Discount eligibility and caps",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Scope, minimums, dates and capped-rule concurrency verified."
+    },
+    {
+      "id": "R18",
+      "title": "Automatic discount application",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Invoice selection, expiry and exhaustion behavior verified locally."
+    },
+    {
+      "id": "R19",
+      "title": "Invoice-linked payments",
+      "owner": "Noel Biju",
+      "status": "Locally verified",
+      "note": "Payment fields, guards, races and lost-acknowledgement/same-key recovery verified."
+    },
+    {
+      "id": "R20",
+      "title": "Paid, outstanding and overdue",
+      "owner": "Noel Biju + Sherin Saji",
+      "status": "Locally verified",
+      "note": "Stored balances and report/portal visibility reconcile locally."
+    },
+    {
+      "id": "R21",
+      "title": "Customer portal management",
+      "owner": "Sherin Saji + Thanushree Suresh",
+      "status": "Locally verified",
+      "note": "Portal lifecycle actions merged and PostgreSQL-tested at the current main checkpoint."
+    },
+    {
+      "id": "R22",
+      "title": "Reports, summaries and filters",
+      "owner": "Sherin Saji",
+      "status": "Locally verified",
+      "note": "Stored-record summaries, series and owner browser checks verified."
+    },
+    {
+      "id": "R23",
+      "title": "Every final page below two seconds",
+      "owner": "Sherin Saji",
+      "status": "Partial",
+      "note": "Historical 10-view/250-sample evidence exists. Every final surface must still be measured."
+    }
+  ]
+}
+</script>
+<script>
+'use strict';
+const data = JSON.parse(document.getElementById('project-status-data').textContent);
+const text = (id, value) => { document.getElementById(id).textContent = value; };
+const node = (tag, className, content) => { const element = document.createElement(tag); if (className) element.className = className; if (content !== undefined) element.textContent = content; return element; };
+const badge = (label, tone = '') => node('span', 'badge ' + tone, label);
+const formatDate = (value, zone) => new Intl.DateTimeFormat('en-GB', {dateStyle:'medium',timeStyle:'short',timeZone:zone,hour12:false}).format(new Date(value));
+text('brand', data.project); text('subtitle', data.subtitle); text('headline', data.headline); text('summary', data.summary); text('coverage-label', data.coverageLabel); text('coverage-caveat', data.coverageCaveat);
+text('snapshot-time', 'Saved ' + formatDate(data.snapshotUTC,'UTC') + ' UTC · ' + formatDate(data.snapshotUTC,'Asia/Kolkata') + ' IST'); text('main-short',data.currentMain.sha.slice(0,7)); text('main-full',data.currentMain.sha); text('snapshot-notice',data.snapshotNotice);
+const verified = data.requirements.filter(item=>item.status==='Locally verified').length;
+const number=document.getElementById('coverage-number');number.append(node('strong','',String(verified)),node('small','', ' / ' + data.requirements.length));
+const percentage=Math.round(verified/data.requirements.length*100);document.querySelector('#coverage-bar span').style.width=percentage+'%';document.getElementById('coverage-bar').setAttribute('aria-label',verified+' of '+data.requirements.length+' local product groups verified, approximately '+percentage+' percent');
+number.append(node('p','small',percentage+'% of groups · '+(data.requirements.length-verified)+' partial'));
+const blocker=data.blockers[0];text('blocker-level',blocker.level);text('blocker-title',blocker.title);text('blocker-detail',blocker.detail);text('blocker-action',blocker.action);
+for(const person of data.team){const row=node('article','person');const identity=node('div');identity.append(node('h3','',person.name),node('p','role',person.role),badge(person.state));const done=node('div');done.append(node('div','column-label','Delivered locally'),node('p','',person.done));const now=node('div');now.append(node('div','column-label','Current focus'),node('p','',person.now),node('p','next','Next: '+person.next));row.append(identity,done,now);document.getElementById('team-rows').append(row);}
+for(const entry of data.evidence){const item=node('article','evidence '+entry.tone);item.append(node('h3','',entry.label),node('strong','',entry.result),node('p','',entry.scope));document.getElementById('evidence-rows').append(item);}
+for(const gate of data.gates){const item=node('article','gate');const top=node('div','gate-top');top.append(node('code','',gate.id),badge(gate.status,'warn'));item.append(top,node('h3','',gate.title),node('p','',gate.note));document.getElementById('gates').append(item);}
+text('deployment-status',data.deployment.state);text('deployment-target',data.deployment.target);text('deployment-detail',data.deployment.detail);text('prepared-root','Prepared '+data.preparedRoot.sha+' · '+data.preparedRoot.state);
+const requirements=data.requirements.map(requirement=>{const row=node('article','requirement');const detail=node('div');detail.append(node('h3','',requirement.title),node('p','',requirement.note),node('p','owner',requirement.owner));row.append(node('code','',requirement.id),detail,badge(requirement.status,requirement.status==='Partial'?'warn':'good'));document.getElementById('requirement-rows').append(row);return {row,requirement};});
+function filterRequirements(){const query=document.getElementById('requirement-search').value.trim().toLocaleLowerCase();const filter=document.getElementById('requirement-filter').value;let count=0;for(const {row,requirement} of requirements){const match=(filter==='all'||requirement.status===filter)&&[requirement.id,requirement.title,requirement.owner,requirement.note].join(' ').toLocaleLowerCase().includes(query);row.hidden=!match;if(match)count++;}text('result-count',count+' of '+requirements.length+' requirement groups shown');document.getElementById('empty-results').hidden=count!==0;}
+document.getElementById('reset-filters').addEventListener('click',()=>{document.getElementById('requirement-search').value='';document.getElementById('requirement-filter').value='all';filterRequirements();document.getElementById('requirement-search').focus();});
+document.getElementById('requirement-search').addEventListener('input',filterRequirements);document.getElementById('requirement-filter').addEventListener('change',filterRequirements);filterRequirements();
+for(const event of data.eventObligations){const item=node('article','event');item.append(node('code','',event.id),node('h3','',event.title),badge(event.status,'warn'));document.getElementById('event-rows').append(item);}
+for(const step of data.nextSteps)document.getElementById('next-steps').append(node('li','',step));text('workflow',data.workflow);
+for(const checkpoint of data.history){const item=node('article','history-item');item.append(node('code','',checkpoint.sha),node('h3','',checkpoint.title),node('p','',checkpoint.note));document.getElementById('history-rows').append(item);}text('source-policy',data.sourcePolicy);text('footer-project',data.project+' · '+data.currentMain.state);
+function updateAge(){const minutes=Math.max(0,Math.floor((Date.now()-Date.parse(data.snapshotUTC))/60000));const old=minutes>=data.staleAfterMinutes;const age=document.getElementById('age');age.textContent=(old?'Stale snapshot · ':'Snapshot age · ')+minutes+' min'+(old?' — refresh for a newer saved checkpoint':'');age.classList.toggle('stale',old);}
+updateAge();setInterval(updateAge,30000);let reloadTimer=null;
+const autoControl=document.getElementById('auto-reload');
+function configureReload(enabled){if(reloadTimer)clearInterval(reloadTimer);reloadTimer=enabled?setInterval(()=>location.reload(),60000):null;}
+try{autoControl.checked=sessionStorage.getItem('cadentra-status-auto-reload')==='1';}catch{autoControl.checked=false;}
+configureReload(autoControl.checked);
+autoControl.addEventListener('change',()=>{try{sessionStorage.setItem('cadentra-status-auto-reload',autoControl.checked?'1':'0');}catch{/* A file-origin browser may reject preference storage; manual refresh remains available. */}configureReload(autoControl.checked);});document.getElementById('refresh').addEventListener('click',()=>location.reload());document.getElementById('print').addEventListener('click',()=>window.print());
+</script></body></html>
