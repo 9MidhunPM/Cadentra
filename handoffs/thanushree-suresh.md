@@ -54,7 +54,7 @@ backend/tests/subscriptions/test_calendar.py
   cases (43 expected dates), 6 eligible period cases, and all four unchanged
   canonical fixtures compared with the planning reference only.
 - `git diff --check`: PASS. Inline standard-library inventory/table-width check
-  found 15 scenarios and 10 outlines (68 expanded cases); this is static inventory,
+  found 18 scenarios and 10 outlines (71 expanded cases); this is static inventory,
   not a Gherkin parser or runtime. No Gherkin steps were executed.
 - `python3 -m compileall -q backend/tests/subscriptions`: PASS.
 - Inline standard-library negative controls with temporary copies: the asset
@@ -102,7 +102,8 @@ Midhun P M confirmed these interfaces through user-authorized TUI coordination o
   lines keyed by persisted line IDs. Unit prices already include variant deltas.
   Each line carries product/variant IDs, description, quantity, Decimal price,
   stable tax identities and its source snapshot. Never add base or variant twice.
-- Getter conflicts: non-ACTIVE -> INVALID_TRANSITION; index below cursor ->
+- Getter validates negative/noninteger indices before cursor comparisons with
+  INVALID_CYCLE/409. Other conflicts: non-ACTIVE -> INVALID_TRANSITION; index below cursor ->
   PERIOD_ALREADY_PROCESSED; above cursor -> INVALID_CYCLE; current index beyond
   effective end -> CYCLE_OUT_OF_RANGE (all 409). Missing subscription ->
   NOT_FOUND/404. Pause remains ACTIVE and returns paused=True. Billing reuses a
@@ -111,9 +112,19 @@ Midhun P M confirmed these interfaces through user-authorized TUI coordination o
   immutable tax_rule_revisions at period_start. Invoice tax records retain stable
   identity, revision reference and name/rate/amount snapshots. Tax calculations
   remain in billing. Coordinator owns the models, revisions and numbering.
+- Product memberships are selected per target period_start using the shared
+  Catalog.get_product_tax_ids helper; quote/start-date filtered membership lists
+  must not freeze out a tax that becomes applicable later. Product prices remain
+  frozen. The base-fee line retains explicitly selected stable plan tax IDs from
+  plan_snapshot; rates are still period-specific in billing.
 - The caller owns apply_action's transaction. Schedule/line mutations share the
   subscription row lock used by billing. Lifecycle processing defers terminal
   closure until earlier due periods have durable outcomes.
+- Resume cancels a wholly unapplied pending pause by removing its interval in the
+  same transaction as a redacted cancellation audit event. Never insert a
+  zero-length interval. Once any PAUSED outcome exists, preserve it and resume at
+  the first original boundary on/after today and at/after the next unprocessed
+  cycle; no back-billing or rewriting completed outcomes.
 - quotation_valid_until is an exclusive business DATE; confirm only while today
   is before it. Plan availability checks requested start_date in [from, until).
 - DRAFT permits SubscriptionEdit fields; QUOTATION requires revise first;
@@ -131,10 +142,10 @@ Midhun P M confirmed these interfaces through user-authorized TUI coordination o
 
 - Midhun P M: integrate actual imports/ORM models, shared concrete DTOs and
   disposable PostgreSQL fixtures, and record these agreements in shared contracts.
-  Clarify negative/noninteger getter index validation before cursor comparison;
-  it must not mislabel a negative index as an already-processed period.
-- Sherin Saji: provide exact route factory/client/UI exports and agree the safe
-  portal projection and delegated action result for T06/T31.
+- Sherin Saji confirmed the feature getRoutes factory and shared client/UI exports
+  in frontend foundation 43ed550 are stable for domain owners. Additional new-form
+  routes stay inside the subscription factory. Portal projection follows the
+  safe docs/05 essentials with ownership rechecked in query/action services.
 
 No additional schema change is requested beyond the coordinator-owned foundation.
 If a missing persistent field is found, request type, nullability, default and
@@ -151,7 +162,7 @@ PostgreSQL runtime is planned but is not yet verified. Neither this plan nor
 available feature branches establishes integrated Gate A readiness.
 
 Latest reviewed origin/main: 766cb2664ded48afcb1012001565cbbf65c68142, fetched
-through gh-agent2 at the 04:37 UTC / 10:07 IST checkpoint on 31 October 2026.
+through gh-agent2 at the 04:48 UTC / 10:18 IST checkpoint on 31 October 2026.
 It is already an ancestor of this branch; no merge is needed at that checkpoint.
 
 The connected GitHub API account is 9MidhunPM; SSH push authentication is the
@@ -181,7 +192,7 @@ Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscri
 Description: Implement immutable scheduling inputs and original-anchor daily,
 weekly, monthly and yearly periods, with exclusive expiry/closure caps and safe
 exhaustion at large indices/date limits. Ten unit tests execute the actual helper.
-Also prepare 68 lifecycle acceptance cases for snapshots, policies, backlog-safe
+Also prepare 71 lifecycle acceptance cases for snapshots, policies, backlog-safe
 closure, customer isolation, quotation/availability boundaries, template overrides
 and the edit matrix. Persistent lifecycle/API/UI behavior awaits Gate A.
 
