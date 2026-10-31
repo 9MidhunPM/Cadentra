@@ -127,6 +127,7 @@ describe('identity forms', () => {
 })
 
 it('keeps post-login destinations within operational routes', () => {
+  expect(workspaceDestination('/dev')).toBe('/dev')
   expect(workspaceDestination('/billing/invoices/example?from=home#payments')).toBe('/billing/invoices/example?from=home#payments')
   for (const value of ['//evil.example', '/\\evil.example', '/\n/evil.example', '/sign-in', '/app/../sign-in', '/%73ign-in', 'https://evil.example', null]) expect(workspaceDestination(value)).toBe('/app')
 })

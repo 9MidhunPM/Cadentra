@@ -3,6 +3,7 @@ import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-libr
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SessionProvider, useSession } from './session';
 import { apiClient } from './api';
+import { AUTH_EVENT_KEY, authNavigation } from './auth-events';
 
 const actor = { id: 'actor-1', name: 'Customer One', role: 'CUSTOMER', customer_id: 'customer-1' };
 function Probe() {
@@ -12,9 +13,58 @@ function Probe() {
     <button onClick={() => void session.logout()}>Log out</button></>;
 }
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('server session state', () => {
+  it('clears actor/grant state and reloads on a cross-tab account change, ignoring an older refresh', async () => {
+    const reload = vi.spyOn(authNavigation, 'reload').mockImplementation(() => {});
+    let resolveRefresh!: (value: Response) => void;
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(response({ data: { actor, csrf_token: 'csrf' } }))
+      .mockImplementationOnce(() => new Promise(resolve => { resolveRefresh = resolve; }));
+    vi.stubGlobal('fetch', fetcher);
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    let refreshing!: Promise<void>;
+    await act(async () => { refreshing = result.current.refresh(); });
+    await act(async () => { window.dispatchEvent(new StorageEvent('storage', { key: AUTH_EVENT_KEY, newValue: '{"event":"changed","timestamp":1}' })); });
+    expect(result.current.actor).toBeNull(); expect(result.current.devTools).toBeNull(); expect(reload).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[1][1]?.signal?.aborted).toBe(true);
+    await act(async () => { resolveRefresh(response({ data: { actor, csrf_token: 'old-csrf' } })); await refreshing; });
+    expect(result.current.actor).toBeNull();
+  });
+
+  it('rejects mismatched role-testing target metadata instead of exposing the session', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(response({ data: { actor, csrf_token: 'csrf', dev_tools: {
+      enabled: true, unlocked: true, dev_csrf_token: 'private-dev-csrf', expires_at: '2099-01-01T00:00:00Z',
+      operator: { id: 'admin-1', name: 'Operator' }, target: { ...actor, id: 'another-user' },
+    } } })));
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.actor).toBeNull(); expect(result.current.devTools).toBeNull();
+  });
+
+  it.each([
+    { ...actor, role: 'STAFF', customer_id: null },
+    { ...actor, customer_id: 'another-customer' },
+  ])('rejects a same-ID role-testing target with changed role or customer scope', async target => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(response({ data: { actor, csrf_token: 'csrf', dev_tools: {
+      enabled: true, unlocked: true, dev_csrf_token: 'private-dev-csrf', expires_at: '2099-01-01T00:00:00Z',
+      operator: { id: 'admin-1', name: 'Operator' }, target,
+    } } })));
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.actor).toBeNull(); expect(result.current.devTools).toBeNull();
+  });
+
+  it('rejects role-testing authority with an empty operator ID', async () => {
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(response({ data: { actor, csrf_token: 'csrf', dev_tools: {
+      enabled: true, unlocked: true, dev_csrf_token: 'private-dev-csrf', expires_at: '2099-01-01T00:00:00Z',
+      operator: { id: '', name: 'Operator' }, target: actor,
+    } } })));
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.actor).toBeNull(); expect(result.current.devTools).toBeNull();
+  });
   it('loads the real session and invalidates it on logout', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(response({ data: { actor, csrf_token: 'csrf' } }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));

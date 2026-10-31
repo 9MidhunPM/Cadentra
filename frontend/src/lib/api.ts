@@ -1,3 +1,5 @@
+import { notifyAuthChange } from './auth-events';
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -94,6 +96,10 @@ export function createApiClient(fetcher: typeof fetch = (...args) => fetch(...ar
         throw new ApiError(0, 'NETWORK_ERROR', 'Cannot reach the server. Check your connection and try again.');
       }
       options.signal?.throwIfAborted();
+      if (response.ok && method === 'POST' && ['/auth/login', '/auth/logout', '/auth/password-reset/confirm', '/dev-tools/unlock', '/dev-tools/switch', '/dev-tools/end'].includes(decoded.replace(/\/$/, ''))) {
+        // Cookies may already have changed even if the following JSON is unreadable.
+        notifyAuthChange();
+      }
       if (response.status === 401 && !publicAuth && requestSessionVersion === sessionVersion) {
         csrfToken = null;
         sessionVersion += 1;

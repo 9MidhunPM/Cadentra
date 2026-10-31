@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { apiClient, ApiError } from "../../lib";
 import { getRoutes } from "./index";
-import type { SubscriptionDetail } from "./types";
+import type { InvoiceDetail, SubscriptionDetail } from "./types";
 
 // Client fixtures only; PostgreSQL tests establish backend ownership enforcement.
 const subscription = {
@@ -49,6 +49,31 @@ const subscription = {
     { id: "linked-invoice", number: "INV-41", status: "PAID" },
   ],
 } satisfies SubscriptionDetail;
+
+const invoiceDetail = {
+  id: "own-invoice",
+  number: "INV-00000008",
+  subscription_id: subscription.id,
+  status: "CONFIRMED",
+  collection_status: "PARTIALLY_PAID",
+  currency: "INR",
+  invoice_date: "2026-10-01",
+  due_date: "2026-10-08",
+  period_start: "2026-10-01",
+  period_end: "2026-11-01",
+  subtotal: "100.00",
+  discount_total: "0.00",
+  tax_total: "0.00",
+  total: "100.00",
+  paid_amount: "26.79",
+  balance_due: "73.21",
+  overdue: true,
+  lines: [],
+  payments: [
+    { id: "payment", method: "MANUAL", amount: "26.79", paid_on: "2026-10-03" },
+  ],
+} satisfies InvoiceDetail;
+
 function open(path: string) {
   const router = createMemoryRouter(getRoutes(), { initialEntries: [path] });
   render(<RouterProvider router={router} />);
@@ -57,6 +82,119 @@ function open(path: string) {
 afterEach(() => vi.restoreAllMocks());
 
 describe("customer portal", () => {
+  it.each(["subscriptions", "invoices"])(
+    "shows an honest empty %s list without a fabricated page count",
+    async (kind) => {
+      vi.spyOn(apiClient, "request").mockResolvedValue({
+        items: [],
+        total: 0,
+        page: 1,
+        page_size: 25,
+      });
+      open(`/portal/${kind}`);
+      expect(
+        await screen.findByRole("heading", { name: `No ${kind} yet` }),
+      ).toBeVisible();
+      expect(
+        screen.getByText(`0 ${kind} in total. No records on page 1.`),
+      ).toBeVisible();
+      expect(screen.queryByText(/Page 1 of 1/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Back to first page" }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([
+    { kind: "subscriptions", total: 1, row: subscription, singular: "subscription" },
+    { kind: "invoices", total: 1, row: invoiceDetail, singular: "invoice" },
+    { kind: "subscriptions", total: 0, row: subscription, singular: "subscription" },
+    { kind: "invoices", total: 0, row: invoiceDetail, singular: "invoice" },
+  ])(
+    "recovers an empty $kind page when the server total is $total",
+    async ({ kind, total, row, singular }) => {
+      const request = vi.spyOn(apiClient, "request")
+        .mockResolvedValueOnce({ items: [], total, page: 99, page_size: 25 })
+        .mockResolvedValueOnce({
+          items: total ? [row] : [],
+          total,
+          page: 1,
+          page_size: 25,
+        });
+      const router = open(`/portal/${kind}?page=99`);
+      expect(
+        await screen.findByRole("heading", { name: `No ${kind} on this page` }),
+      ).toBeVisible();
+      expect(
+        screen.getByText(`${total} ${total === 1 ? singular : kind} in total. No records on page 99.`),
+      ).toBeVisible();
+      expect(screen.queryByText(/Page 99 of/)).not.toBeInTheDocument();
+      await userEvent.click(
+        screen.getByRole("button", { name: "Back to first page" }),
+      );
+      await waitFor(() => expect(router.state.location.search).toBe("?page=1"));
+      if (total) {
+        expect(await screen.findByRole("link", { name: row.number })).toBeVisible();
+      } else {
+        expect(
+          await screen.findByRole("heading", { name: `No ${kind} yet` }),
+        ).toBeVisible();
+      }
+      expect(request).toHaveBeenLastCalledWith(
+        `/portal/${kind}?page=1&page_size=25`,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+    },
+  );
+
+  it.each([
+    { status: "CONFIRMED", label: "Remaining balance", balance: "73.21", paid: "26.79" },
+    { status: "PAID", label: "Remaining balance", balance: "0.00", paid: "100.00" },
+    { status: "DRAFT", label: "Document balance", balance: "100.00", paid: "0.00" },
+    { status: "CANCELLED", label: "Document balance", balance: "100.00", paid: "0.00" },
+  ])(
+    "puts the stored $status balance next to the invoice identity",
+    async ({ status, label, balance, paid }) => {
+      vi.spyOn(apiClient, "request").mockResolvedValue({ data: {
+        ...invoiceDetail,
+        status,
+        collection_status: status,
+        balance_due: balance,
+        paid_amount: paid,
+      } });
+      open(`/portal/invoices/${invoiceDetail.id}`);
+      const number = await screen.findByRole("heading", { name: invoiceDetail.number });
+      const summary = screen.getByLabelText("Invoice balance summary");
+      expect(number.closest(".portal-invoice-heading")).toContainElement(summary);
+      expect(within(summary).getByText(label)).toBeVisible();
+      expect(within(summary).getByText(`INR ${balance}`)).toBeVisible();
+      if (["DRAFT", "CANCELLED"].includes(status)) {
+        expect(within(summary).getByText("Not payable")).toBeVisible();
+      }
+    },
+  );
+
+  it("names the invoice line and payment scrollers and makes them keyboard focusable", async () => {
+    vi.spyOn(apiClient, "request").mockResolvedValue({ data: invoiceDetail });
+    open(`/portal/invoices/${invoiceDetail.id}`);
+    for (const name of ["Stored invoice lines", "Recorded payments"]) {
+      const region = await screen.findByRole("region", { name });
+      expect(region).toHaveAttribute("tabindex", "0");
+      region.focus();
+      expect(region).toHaveFocus();
+      expect(within(region).getByRole("table")).toBeVisible();
+    }
+  });
+
+  it("keeps subscription lines in a named keyboard-focusable scroller", async () => {
+    vi.spyOn(apiClient, "request").mockResolvedValue({ data: subscription });
+    open(`/portal/subscriptions/${subscription.id}`);
+    const region = await screen.findByRole("region", { name: "Agreed product lines" });
+    expect(region).toHaveAttribute("tabindex", "0");
+    region.focus();
+    expect(region).toHaveFocus();
+  });
+
   it("shows recorded balances without collecting online payment or selecting a customer", async () => {
     const request = vi.spyOn(apiClient, "request").mockResolvedValue({
       items: [
@@ -93,6 +231,9 @@ describe("customer portal", () => {
       screen.queryByRole("button", { name: /pay now/i }),
     ).not.toBeInTheDocument();
     expect(request.mock.calls[0][0]).not.toContain("customer_id");
+    expect(screen.getByRole("region", { name: "My invoices" })).toHaveAttribute(
+      "tabindex", "0",
+    );
   });
 
   it("retains honest missing-record errors and retries explicitly", async () => {

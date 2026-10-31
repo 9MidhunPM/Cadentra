@@ -1,26 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { apiClient, ApiError, isAbortError } from './api';
-import type { Actor, ResourceResponse, SessionPayload } from './types';
+import type { Actor, DevToolsStatus, ResourceResponse, SessionPayload } from './types';
+import { validSessionPayload } from './session-validation';
+import { authNavigation, subscribeAuthChanges } from './auth-events';
 
 export type SessionStatus = 'loading' | 'authenticated' | 'anonymous' | 'error';
-interface SessionState { status: SessionStatus; actor: Actor | null; error: unknown }
+interface SessionState { status: SessionStatus; actor: Actor | null; devTools: DevToolsStatus | null; error: unknown }
 interface SessionContextValue extends SessionState {
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 }
 const SessionContext = createContext<SessionContextValue | null>(null);
-const empty: SessionState = { status: 'loading', actor: null, error: null };
-
-function validSession(value: unknown): value is SessionPayload {
-  if (!value || typeof value !== 'object') return false;
-  const session = value as Partial<SessionPayload>;
-  const actor = session.actor;
-  return typeof session.csrf_token === 'string' && session.csrf_token.length > 0 && !!actor &&
-    typeof actor.id === 'string' && typeof actor.name === 'string' &&
-    ['ADMIN', 'STAFF', 'CUSTOMER'].includes(actor.role) &&
-    (actor.customer_id === null || typeof actor.customer_id === 'string') &&
-    (actor.role !== 'CUSTOMER' || typeof actor.customer_id === 'string');
-}
+const empty: SessionState = { status: 'loading', actor: null, devTools: null, error: null };
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>(empty);
@@ -38,16 +29,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       const result = await apiClient.request<ResourceResponse<SessionPayload>>('/auth/session', { signal: abort.signal });
       if (abort.signal.aborted || serial !== generation.current) return;
-      if (!validSession(result.data)) throw new ApiError(200, 'INVALID_SESSION', 'The server returned an invalid session.');
+      if (!validSessionPayload(result.data)) throw new ApiError(200, 'INVALID_SESSION', 'The server returned an invalid session.');
       apiClient.setCsrfToken(result.data.csrf_token);
-      setState({ status: 'authenticated', actor: result.data.actor, error: null });
+      setState({ status: 'authenticated', actor: result.data.actor, devTools: result.data.dev_tools ?? null, error: null });
     } catch (error) {
       if (abort.signal.aborted || serial !== generation.current || isAbortError(error)) return;
       apiClient.setCsrfToken(null);
       if (error instanceof ApiError && error.status === 401) {
-        setState({ status: 'anonymous', actor: null, error: null });
+        setState({ status: 'anonymous', actor: null, devTools: null, error: null });
       } else {
-        setState({ status: 'error', actor: null, error });
+        setState({ status: 'error', actor: null, devTools: null, error });
       }
     }
   }, []);
@@ -64,14 +55,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           // If logout cancelled a refresh, expose recovery instead of leaving an
           // abandoned loading state. An already authenticated actor is retained.
           if (serial === generation.current) {
-            setState(current => current.status === 'loading' ? { status: 'error', actor: null, error } : current);
+            setState(current => current.status === 'loading' ? { status: 'error', actor: null, devTools: null, error } : current);
           }
           throw error;
         }
       }
       if (serial !== generation.current) return;
       apiClient.setCsrfToken(null);
-      setState({ status: 'anonymous', actor: null, error: null });
+      setState({ status: 'anonymous', actor: null, devTools: null, error: null });
     })();
     const pending = request.finally(() => {
       if (logoutPending.current === pending) logoutPending.current = null;
@@ -84,11 +75,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const unsubscribe = apiClient.onUnauthorized(() => {
       generation.current += 1;
       controller.current?.abort();
-      setState({ status: 'anonymous', actor: null, error: null });
+      setState({ status: 'anonymous', actor: null, devTools: null, error: null });
+    });
+    const unsubscribeTabs = subscribeAuthChanges(() => {
+      generation.current += 1;
+      controller.current?.abort();
+      apiClient.setCsrfToken(null);
+      setState(empty);
+      // A new document clears feature state and retained commands for the old actor.
+      authNavigation.reload();
     });
     void refresh();
     return () => {
       unsubscribe();
+      unsubscribeTabs();
       generation.current += 1;
       controller.current?.abort();
       apiClient.setCsrfToken(null);

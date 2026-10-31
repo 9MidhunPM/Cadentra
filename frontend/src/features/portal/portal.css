@@ -1,5 +1,7 @@
 .portal-page {
   color: var(--color-ink);
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 .portal-back {
   display: inline-flex;
@@ -12,6 +14,16 @@
 }
 .portal-back:hover {
   color: var(--color-primary);
+}
+.portal-back,
+.portal-inline-link,
+.portal-document-list a,
+.portal-page .ui-actions a {
+  min-block-size: 44px;
+}
+.portal-inline-link {
+  display: inline-flex;
+  align-items: center;
 }
 .portal-detail-layout {
   display: grid;
@@ -94,6 +106,33 @@
   color: var(--color-primary);
   font-weight: 550;
   text-underline-offset: 4px;
+  min-block-size: 44px;
+  padding-block: 8px;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.portal-page .ui-table th:first-child,
+.portal-page .ui-table td:first-child {
+  min-inline-size: 10rem;
+}
+.portal-page .ui-table-panel {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.portal-page .ui-table-scroll,
+.portal-table-scroll {
+  max-inline-size: 100%;
+  overscroll-behavior-inline: contain;
+}
+.portal-empty-page {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.portal-empty-page .ui-empty {
+  padding: 12px 0;
 }
 .portal-statuses {
   display: flex;
@@ -103,6 +142,11 @@
 .portal-table-scroll {
   overflow-x: auto;
   margin-top: 20px;
+}
+.portal-table-scroll:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 .portal-table-scroll table {
   width: 100%;
@@ -167,6 +211,10 @@
   text-decoration: none;
   color: var(--color-primary);
   font-size: 12px;
+  flex-wrap: wrap;
+}
+.portal-record-number {
+  white-space: nowrap;
 }
 .portal-document-list a svg:last-child {
   margin-left: auto;
@@ -207,6 +255,39 @@
 .portal-profile address span {
   display: block;
 }
+.portal-invoice-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.portal-invoice-identity {
+  display: grid;
+  gap: 12px;
+  min-inline-size: 0;
+}
+.portal-invoice-identity h2 {
+  overflow-wrap: anywhere;
+}
+.portal-heading-balance {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  text-align: end;
+}
+.portal-heading-balance dt {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+.portal-heading-balance dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.portal-heading-balance dd.portal-muted {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
 @media (max-width: 1050px) {
   .portal-detail-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -229,6 +310,9 @@
   .portal-section-heading {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+  .portal-heading-balance {
+    text-align: start;
   }
   .portal-surface .ui-stepper {
     padding-bottom: 8px;

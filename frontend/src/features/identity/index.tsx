@@ -11,7 +11,7 @@ export function workspaceDestination(value: unknown): string {
   if (typeof value !== 'string' || !value.startsWith('/') || [...value].some(character => character === '\\' || character.charCodeAt(0) <= 32)) return '/app'
   try {
     const url = new URL(value, window.location.origin)
-    if (url.origin !== window.location.origin || !/^\/(?:app|overview|cycleguard|customers|catalog|subscriptions|billing|portal|settings)(?:\/|$)/.test(url.pathname)) return '/app'
+    if (url.origin !== window.location.origin || !/^\/(?:app|dev|overview|cycleguard|customers|catalog|subscriptions|billing|portal|settings)(?:\/|$)/.test(url.pathname)) return '/app'
     return `${url.pathname}${url.search}${url.hash}`
   } catch { return '/app' }
 }

@@ -18,6 +18,7 @@ const billing = () => import('../features/billing')
 const reporting = () => import('../features/reporting')
 const portal = () => import('../features/portal')
 const identity = () => import('../features/identity')
+const devTools = () => import('../features/dev-tools')
 const shell = async () => ({ Component: (await import('./AppShell')).AppShell })
 
 export function createAppRouter() {
@@ -27,6 +28,7 @@ export function createAppRouter() {
     errorElement: <RouteErrorBoundary />,
     children: [
       { path: '/', lazy: async () => ({ Component: (await import('../features/home')).default }) },
+      feature('/dev', devTools),
       ...['/sign-in', '/sign-up', '/forgot-password', '/reset-password'].map(path => feature(path, identity)),
       { element: <RoleGuard roles={['ADMIN', 'STAFF', 'CUSTOMER']} />, children: [{ path: '/app', element: <Landing /> }] },
       { element: <RoleGuard roles={['ADMIN', 'STAFF']} />, children: [{ lazy: shell, children: [
