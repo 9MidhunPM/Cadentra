@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SessionProvider, useSession } from './session';
 import { apiClient } from './api';
@@ -77,6 +77,93 @@ describe('server session state', () => {
     expect(screen.getByTestId('status').textContent).toBe('authenticated');
     await act(async () => screen.getByText('Log out').click());
     expect(new Headers(fetcher.mock.calls[2][1]?.headers).get('X-CSRF-Token')).toBe('csrf');
+  });
+
+  it('deduplicates logout and suppresses refresh until logout finishes', async () => {
+    let resolveLogout!: (value: Response) => void;
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(response({ data: { actor, csrf_token: 'csrf' } }))
+      .mockImplementationOnce(() => new Promise(resolve => { resolveLogout = resolve; }));
+    vi.stubGlobal('fetch', fetcher);
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    let pending!: Promise<void>;
+    await act(async () => {
+      pending = result.current.logout();
+      expect(result.current.logout()).toBe(pending);
+      await result.current.refresh();
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      resolveLogout(new Response(null, { status: 204 }));
+      await pending;
+    });
+    expect(result.current.status).toBe('anonymous');
+    expect(result.current.actor).toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains the actor after failed logout and allows an explicit refresh and logout retry', async () => {
+    let resolveLogout!: (value: Response) => void;
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(response({ data: { actor, csrf_token: 'csrf' } }))
+      .mockImplementationOnce(() => new Promise(resolve => { resolveLogout = resolve; }))
+      .mockResolvedValueOnce(response({ data: { actor, csrf_token: 'new-csrf' } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetcher);
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    let pending!: Promise<void>;
+    await act(async () => {
+      pending = result.current.logout();
+      await result.current.refresh();
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      resolveLogout(response({ error: { code: 'UNAVAILABLE' } }, 503));
+      await expect(pending).rejects.toMatchObject({ status: 503 });
+    });
+    expect(result.current.status).toBe('authenticated');
+    expect(result.current.actor?.id).toBe(actor.id);
+    await act(async () => result.current.refresh());
+    expect(fetcher.mock.calls[2][0]).toBe('/api/v1/auth/session');
+    await act(async () => result.current.logout());
+    expect(result.current.status).toBe('anonymous');
+    expect(new Headers(fetcher.mock.calls[3][1]?.headers).get('X-CSRF-Token')).toBe('new-csrf');
+    expect(fetcher).toHaveBeenCalledTimes(4);
+  });
+
+  it('does not restore an actor from an older refresh completing after logout', async () => {
+    let resolveRefresh!: (value: Response) => void;
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(response({ data: { actor, csrf_token: 'csrf' } }))
+      .mockImplementationOnce(() => new Promise(resolve => { resolveRefresh = resolve; }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetcher);
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    let pendingRefresh!: Promise<void>;
+    await act(async () => { pendingRefresh = result.current.refresh(); });
+    await act(async () => result.current.logout());
+    await act(async () => {
+      resolveRefresh(response({ data: { actor, csrf_token: 'stale-csrf' } }));
+      await pendingRefresh;
+    });
+    expect(result.current.status).toBe('anonymous');
+    expect(result.current.actor).toBeNull();
+  });
+
+  it('offers recovery when logout cancels a refresh and then fails', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(response({ data: { actor, csrf_token: 'csrf' } }))
+      .mockImplementationOnce(() => new Promise(() => {}))
+      .mockResolvedValueOnce(response({ error: { code: 'UNAVAILABLE' } }, 503))
+      .mockResolvedValueOnce(response({ data: { actor, csrf_token: 'recovered' } }));
+    vi.stubGlobal('fetch', fetcher);
+    const { result } = renderHook(useSession, { wrapper: SessionProvider });
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    await act(async () => { void result.current.refresh(); });
+    expect(result.current.status).toBe('loading');
+    await act(async () => { await expect(result.current.logout()).rejects.toMatchObject({ status: 503 }); });
+    expect(result.current.status).toBe('error');
+    await act(async () => result.current.refresh());
+    expect(result.current.status).toBe('authenticated');
   });
 
   it('aborts its pending session request on unmount', () => {

@@ -73,11 +73,20 @@ export function createApiClient(fetcher: typeof fetch = (...args) => fetch(...ar
       headers.delete('X-CSRF-Token');
       if (options.json !== undefined) headers.set('Content-Type', 'application/json');
       if (csrfToken && method !== 'GET' && method !== 'HEAD') headers.set('X-CSRF-Token', csrfToken);
+      let body: string | undefined;
+      if (options.json !== undefined) {
+        try {
+          body = JSON.stringify(options.json);
+          if (body === undefined) throw new TypeError('Not JSON serializable');
+        } catch {
+          throw new ApiError(0, 'INVALID_REQUEST', 'The request could not be encoded as JSON.');
+        }
+      }
       let response: Response;
       try {
         response = await fetcher(`/api/v1${path}`, {
           method, headers, credentials: 'same-origin', redirect: 'error',
-          body: options.json === undefined ? undefined : JSON.stringify(options.json),
+          body,
           signal: options.signal,
         });
       } catch (error) {
@@ -106,7 +115,11 @@ export function createApiClient(fetcher: typeof fetch = (...args) => fetch(...ar
           isRecord(details.fields) ? details.fields : {},
           typeof details.request_id === 'string' ? details.request_id : undefined);
       }
-      if (!isRecord(payload) || (!('data' in payload) && !Array.isArray(payload.items))) {
+      const validList = isRecord(payload) && Array.isArray(payload.items) &&
+        Number.isSafeInteger(payload.total) && (payload.total as number) >= 0 &&
+        Number.isSafeInteger(payload.page) && (payload.page as number) >= 1 &&
+        Number.isSafeInteger(payload.page_size) && (payload.page_size as number) >= 1 && (payload.page_size as number) <= 100;
+      if (!isRecord(payload) || (!('data' in payload) && !validList)) {
         throw new ApiError(response.status, 'INVALID_RESPONSE', 'The server returned an unexpected response.');
       }
       return payload as T;
