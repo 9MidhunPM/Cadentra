@@ -53,3 +53,10 @@ Executed on the root candidate:393 backend tests,164 frontend tests, Ruff, lint/
 One offline-capable status artifact is frontend/public/PROJECT_STATUS.html, also served at /PROJECT_STATUS.html. Real Chromium desktop1440/mobile390 checks cover filtering/reset,print,refresh,offline reload,keyboard,zero errors/no external requests/no overflow. It names all four people and distinguishes local20/23 requirement-group evidence from release readiness. The HTML is a saved coordinator snapshot, not live task telemetry.
 
 Sherin's471808 test/T31-evidence feature remains ready; her owner-main push was rejected by automatic approval review pending her current user's explicit authorization. No root/other-owner workaround will publish that rejected merge. Thanushree's1fa223c closing docs wait for that integration and a fresh expected-main GO. Final all-surfaceT30 and external SMTP remain open/deferred respectively.
+
+
+## Actual Docker startup and app-scoped routing correction
+
+First authorized deployment built all images, created only Cadentra networks/volumes and completed migrations/bootstrap with exit0. API, PostgreSQL and private Mailpit report healthy; one worker runs as cadentra and web as UID101. No service publishes a host port. Public HTTPS still returned Traefik404: actual web labels lacked router/enable settings despite the saved native domain record. The root follow-up adds explicit Cadentra-only routers/service8080, Cloudflare middleware on both HTTP/HTTPS and app-only redirect/TLS resolver settings.
+
+Actual Dokploy also attached web to the default network. Root adds cadentra-api-proxy only on the private proxy network; Sherin's separately reviewed follow-up must select that upstream, retaining exact web `.2` API trust. No wider proxy trust or other service/domain changes are authorized by this correction. Actual ingress/source/functional workflow verification remains pending.
