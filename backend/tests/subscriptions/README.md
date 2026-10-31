@@ -1,7 +1,18 @@
 # Subscription acceptance cases
 
 Status: CALENDAR, BILLING INPUTS, LIFECYCLE, API, ACTUAL WORKER AND ACTION RACE
-TESTS PASS; JOINT PAYMENT/CUSTOMER-PORTAL BROWSER JOURNEY REMAINS IN INTEGRATION.
+TESTS PASS; RETAINED JOINT PAYMENT/CUSTOMER-PORTAL EVIDENCE IS PUBLISHED.
+
+Current audit head c4c0d05511e9702a1850a8a1ddab457880e7471e on reviewed main
+56bd60b adds ten payment-term regression cases: invalid create/edit/renew leaves
+records/audits unchanged, legacy or clock-advanced quotations remain revisable,
+and accepted boundary terms produce and replay a real invoice due on date.max.
+The approved horizon is max(real business date, service end); the billing issuer
+still validates the actual issue date for later catch-up. No arbitrary terms cap
+or historical-data mutation is introduced. The focused workflow file passes
+62 tests in 5.42s against the owned disposable PostgreSQL database. Frontend
+variant retry and URL-history regressions also pass in the focused 18-test run;
+these component tests use API fixtures, not a new native browser journey.
 
 Gate A was released on reviewed main 5b78567. Set DATABASE_URL and
 TEST_DATABASE_URL to this workspace's isolated databases before database tests.
@@ -10,7 +21,7 @@ TEST_DATABASE_URL to this workspace's isolated databases before database tests.
 
 Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions -q` from the
 repository root, with DATABASE_URL and TEST_DATABASE_URL set to the same isolated
-PostgreSQL `*_test` database with reviewed migrations applied. The current owned
+PostgreSQL `*_test` database with reviewed migrations applied. The historical owned
 suite contains 124 tests and 80 subtests on reviewed main 382fa2b plus this slice:
 10 calendar, 25 billing-input, 52 workflow, 27 API, four worker and six race tests.
 The full integrated backend run passed 314 tests and 121 subtests in 59.25s,
@@ -41,8 +52,11 @@ the subscription service. Separate integration tests establish actual issuance:
 Both integration fixtures migrate and clean up only their freshly generated UUID
 schemas. They do not remove public data or other workstreams' financial fixtures.
 PostgreSQL 18.6 at read committed isolation was used. Native staff-browser
-evidence and remaining joint T31 payment/customer-portal checks are recorded in
-handoffs/thanushree-suresh.md.
+evidence is recorded in handoffs/thanushree-suresh.md. The completed owner-run
+joint T31 result is backend/tests/reporting/evidence/t31-2026-10-31.json, on its
+recorded clean 41ef6df source. It verifies the paid/reloaded invoice and report,
+actual portal actions/print, replay without duplicates, and cross-customer
+isolation. It is retained evidence, not a rerun of the current audit head.
 
 ### Billing-input tests
 
@@ -115,9 +129,10 @@ boundaries, template line overrides and the lifecycle-specific edit matrix.
 
 The tests use the integrated backend's actor, clock, models, sessions and test
 database fixtures. Worker checks call the shared worker and finalized billing
-issuer. The remaining joint browser journey uses Sherin Saji's shared harness and
-must exercise the actual payment and portal services. No duplicate business logic
-belongs in test steps.
+issuer. The completed joint browser journey uses Sherin Saji's shared harness and
+exercises actual payment and portal services. No duplicate business logic belongs
+in test steps. Full-suite historical counts above are tied to their named source;
+the current audit ran only its affected checks.
 
 Exercise persisted actions and worker catch-up against disposable PostgreSQL.
 For billing-versus-edit/pause/close races, use two independent connections and a
