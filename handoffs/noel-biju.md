@@ -1,6 +1,6 @@
 # Noel Biju: handoff
 
-Status: BILLING INTEGRATED; FULL T31 FUNCTIONAL JOURNEY PASSED; FINAL T30 EXTERNALLY BLOCKED
+Status: BILLING INTEGRATED; FULL T31 FUNCTIONAL JOURNEY PASSED; FINAL T30 RUNNING
 
 Role: Billing & Payments
 Branch: feature/billing-closeout
@@ -114,6 +114,8 @@ The payment/picker UI and URL correction are integrated, and the full functional
 The coordinator explicitly paused final T30 execution until the reviewed production client-IP/proxy contract is settled. That prerequisite remained open on 2026-10-31 at 07:42 UTC; no final benchmark runner or completed measurements were available. The guarded fixture preparation and other owners' proxy work are separate from Noel's completed billing implementation. To finish this workstream, obtain the exact reviewed runtime head and final raw T30 artifact for the 5,000-subscription/20,000-invoice dataset, inspect actual billing-page counts and timings, fix any billing defect, then publish the final handoff through coordinator review and the serialized owner-SSH workflow. No timings or completed performance status are inferred from the earlier partial benchmark.
 
 The backend portion was subsequently published at main 89017d6. The coordinator's 07:45 update still requires native production NGINX validation and exact review; final T30 remains held until that external prerequisite changes.
+
+That external prerequisite subsequently changed: the final T30 run started at 08:10 UTC against clean frozen source 67c5855139ec61d8ebaf02681daa4a7e89c1cecc, with application/configuration bytes matching reviewed main b662117d9536f5bae2d86ada0d79777c51b9f0c6. The runner/API/NGINX PIDs were independently observed live. The recorded dataset has 5,000 subscriptions, 20,000 invoices, 20,000 payments and 40,000 lines, reconciling invoiced 2000000.00, received 1500000.00 and outstanding 500000.00. A read-only startup audit compared all 129 source/configuration hashes to that main commit and all 51 API source hashes to the server receipt; commits, schemas and source/dist digests agree. Fifteen completed invoice list/filter/detail/print/portal cases each had 20 warm and five fresh-context samples; independently recomputed percentiles matched, with every recorded sample below two seconds and a provisional maximum of 852.97 ms. Tax/discount forms and final post-run freeze checks were still pending at that snapshot. These are interim native-local results, not a full T30 pass, mutation-latency result or deployment claim.
 
 Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. The coordinator's latest workflow instruction is owner SSH integration after code review and an explicit serialized go-ahead, with no new GitHub API/PR merge operations. Preserve historical PR records and original authorship; never force-push.
 
