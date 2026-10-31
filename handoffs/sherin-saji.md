@@ -57,7 +57,7 @@ Python3.12 backend environment is installed from the coordinator-owned frozen lo
 - DATABASE_URL=postgresql+psycopg://cadentra@127.0.0.1:55431/cadentra_experience
 - TEST_DATABASE_URL=postgresql+psycopg://cadentra@127.0.0.1:55431/cadentra_experience_test
 
-Run backend checks from backend/ with APP_ENV=test and .venv/bin/pytest -q; .venv/bin/ruff check app/modules/reporting tests/reporting. Restricted-shell loopback is isolated, so native PostgreSQL/browser processes need the authorized host network execution context. No migration/reset/drop was performed in this role.
+The earlier experience_test now retains the immutable T31 journey history by coordinator decision. Do not run ordinary suites, seed again, or attempt cleanup there. Final T30 uses only cadentra_performance_test and its generated per-run namespace. Backend fixture guard tests do not connect to either database. Ruff remains .venv/bin/ruff check app/modules/reporting tests/reporting. Restricted-shell loopback is isolated, so native PostgreSQL/browser processes need the authorized host network execution context. No production migration, database reset/drop, or guard disabling was performed in this role.
 
 Frontend commands from frontend/: npm run lint; npm test; npm run build. Vite binds5174 and proxies unchanged /api to API_PORT (default8004). PLAYWRIGHT_BROWSERS_PATH=/tmp/cadentra-agent4-browsers selects the installed pinned Chromium. The native IAB tool is unsupported in this Linux session; Playwright is the documented fallback.
 
