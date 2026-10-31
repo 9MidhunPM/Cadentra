@@ -98,6 +98,37 @@ describe('same-origin API transport', () => {
     await expect(createApiClient(vi.fn<typeof fetch>().mockResolvedValue(new Response(body))).request('/auth/session')).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
   });
 
+  it.each([
+    { items: [] },
+    { items: [], total: -1, page: 1, page_size: 25 },
+    { items: [], total: 0.5, page: 1, page_size: 25 },
+    { items: [], total: Number.MAX_SAFE_INTEGER + 1, page: 1, page_size: 25 },
+    { items: [], total: 0, page: 0, page_size: 25 },
+    { items: [], total: 0, page: '1', page_size: 25 },
+    { items: [], total: 0, page: 1, page_size: 0 },
+    { items: [], total: 0, page: 1, page_size: 101 },
+    { items: [], total: 0, page: 1, page_size: 2.5 },
+  ])('rejects invalid pagination metadata: %j', async payload => {
+    const client = createApiClient(vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(payload)));
+    await expect(client.request('/invoices')).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+
+  it('accepts pagination boundaries without requiring a nonempty result', async () => {
+    const payload = { items: [], total: 0, page: 1, page_size: 100 };
+    await expect(createApiClient(vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(payload))).request('/invoices')).resolves.toEqual(payload);
+  });
+
+  it('reports local JSON encoding errors without sending or retrying a request', async () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const fetcher = vi.fn<typeof fetch>();
+    const client = createApiClient(fetcher);
+    for (const json of [circular, { amount: 1n }, () => {}]) {
+      await expect(client.request('/invoices', { method: 'POST', json })).rejects.toMatchObject({ status: 0, code: 'INVALID_REQUEST' });
+    }
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it('does not display HTML proxy responses or unknown exception details', async () => {
     const client = createApiClient(vi.fn<typeof fetch>().mockResolvedValue(new Response('<html>private proxy internals</html>', { status: 503 })));
     await expect(client.request('/auth/session')).rejects.toMatchObject({ status: 503, message: 'The server could not complete this request.' });
