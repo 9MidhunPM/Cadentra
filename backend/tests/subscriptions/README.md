@@ -38,7 +38,7 @@ as executed, skipped by an application runner, or passing.
 |---|---|
 | T09 | All cadences, original anchors, leap dates and exclusive period caps |
 | T10 | Template edits do not mutate issued quotations |
-| T11 | Required progression, invalid jumps and expired quotations |
+| T11 | Required progression, invalid jumps and exclusive quotation deadlines |
 | T12 | Plan policies reject disallowed actions |
 | T13 | Scheduled pause/resume/close, expiry and linked renewal |
 | T33 | Unprocessed due periods block changes; unpaid processed invoices do not |
@@ -46,7 +46,8 @@ as executed, skipped by an application runner, or passing.
 | T06 | Cross-customer reads/actions return 404 without mutation |
 | T31 | The persisted journey survives browser reload |
 
-Additional scenarios cover minimum product quantity and unavailable plans.
+Additional scenarios cover minimum product quantity, requested-start availability
+boundaries, template line overrides and the lifecycle-specific edit matrix.
 
 ## Binding the tests after Gate A
 
@@ -62,7 +63,9 @@ barrier, then assert durable outcomes and snapshots. A sequential simulation is
 not concurrency evidence. Coordinate period/invoice assertions with Noel Biju;
 the subscription feature must not issue invoices itself.
 
-Pending contract decisions are recorded in the named handoff: exact snapshot
-types/transaction ownership, quotation deadline, template input precedence and
-allowed edits by lifecycle state. Bind those cases only after Midhun P M records
-the decisions; do not silently choose different business rules in step code.
+The coordinator's agreed Gate A contracts are recorded in the named handoff,
+including exclusive quotation dates, start-based plan availability, template
+line precedence and allowed edits by state. These agreements do not establish
+that the shared foundation is integrated or that the scenarios have passed.
+Bind the cases to actual exports once Gate A is verified; do not implement
+alternate shared types or business rules in step code.

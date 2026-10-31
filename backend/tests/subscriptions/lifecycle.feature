@@ -1,7 +1,7 @@
 # Prepared acceptance cases only: no runner or step bindings exist before Gate A.
 # Bind to real services/PostgreSQL and the shared browser harness after Gate A.
 # Sources: docs/05-API-CONTRACT.md, docs/06-DOMAIN-RULES.md, docs/10-TEST-PLAN.md.
-# Exact quote-deadline and plan-availability boundary semantics await coordinator agreement.
+# Edge cases below reflect the coordinator-agreed planning contract; runtime bindings remain pending.
 @pending_gate_a
 Feature: Persisted, authorized subscription workflows
   Background:
@@ -214,3 +214,73 @@ Feature: Persisted, authorized subscription workflows
     And staff reloads the subscription detail and the customer reloads their own portal
     Then both show persisted permitted subscription details and the same paid invoice reference
     And every lifecycle action reflects its server result and effective date
+
+  @T11
+  Scenario Outline: Quotation validity is an exclusive business-date deadline
+    Given an otherwise confirmable QUOTATION with quotation_valid_until "<deadline>"
+    When staff requests confirm on the business date "2027-02-10"
+    Then the confirmation outcome is "<outcome>"
+    Examples:
+      | deadline   | outcome                            |
+      | 2027-02-09 | 409; state remains QUOTATION        |
+      | 2027-02-10 | 409; state remains QUOTATION        |
+      | 2027-02-11 | confirmed; state becomes CONFIRMED  |
+
+  @R07
+  Scenario Outline: Plan availability uses the requested service start in a half-open interval
+    Given a plan available from "2027-02-10" until exclusive "2027-03-01"
+    And an otherwise valid subscription request ending "2027-05-01"
+    When staff creates the draft with requested start_date "<start_date>" on business date "2027-02-10"
+    Then plan eligibility is "<result>" using start_date rather than today's date
+    Examples:
+      | start_date | result   |
+      | 2027-02-09 | rejected |
+      | 2027-02-10 | accepted |
+      | 2027-02-28 | accepted |
+      | 2027-03-01 | rejected |
+      | 2027-03-02 | rejected |
+
+  @T10 @R07
+  Scenario Outline: SubscriptionCreate distinguishes omitted template lines from explicit overrides
+    Given available plans P and Q each requiring minimum product quantity 3
+    And template T selects plan P with lines "Desk:3"
+    And all other SubscriptionCreate fields are valid
+    When staff creates a subscription selecting template "<template>" and plan "<plan>" with lines "<lines>"
+    Then draft creation is "<result>" and persisted lines are "<persisted_lines>"
+    Examples:
+      | template | plan | lines   | result   | persisted_lines |
+      | T        | P    | omitted | accepted | Desk:3          |
+      | T        | P    | Desk:4  | accepted | Desk:4          |
+      | T        | P    | []      | rejected | no draft        |
+      | T        | P    | null    | rejected | no draft        |
+      | none     | P    | omitted | rejected | no draft        |
+      | none     | P    | Desk:3  | accepted | Desk:3          |
+      | T        | Q    | omitted | rejected | no draft        |
+
+  @T11 @T33
+  Scenario Outline: PATCH allows only fields appropriate to the current lifecycle state
+    Given a subscription in state "<state>" from "2027-01-31" through exclusive "2027-05-01"
+    And its due-period backlog is "<backlog>" and all other validation is satisfied
+    When staff PATCHes the subscription with "<patch>" on business date "2027-02-10"
+    Then the edit outcome is "<outcome>"
+    And a rejected edit leaves dates, terms, lines, revision and existing invoice snapshots unchanged
+    Examples:
+      | state     | backlog | patch                       | outcome                         |
+      | DRAFT     | none    | start_date=2027-02-11        | accepted                        |
+      | DRAFT     | none    | end_date=2027-06-01          | accepted                        |
+      | DRAFT     | none    | payment_terms_days=14        | accepted                        |
+      | DRAFT     | none    | lines=Desk:4                | accepted                        |
+      | QUOTATION | none    | start_date=2027-02-11        | rejected; revise to DRAFT first  |
+      | QUOTATION | none    | payment_terms_days=14        | rejected; revise to DRAFT first  |
+      | QUOTATION | none    | lines=Desk:4                | rejected; revise to DRAFT first  |
+      | CONFIRMED | none    | start_date=2027-02-11        | rejected                        |
+      | CONFIRMED | none    | payment_terms_days=14        | rejected                        |
+      | CONFIRMED | none    | lines=Desk:4                | rejected                        |
+      | CLOSED    | none    | start_date=2027-02-11        | rejected                        |
+      | CLOSED    | none    | payment_terms_days=14        | rejected                        |
+      | CLOSED    | none    | lines=Desk:4                | rejected                        |
+      | ACTIVE    | none    | lines=Desk:4                | accepted for next cycle         |
+      | ACTIVE    | due     | lines=Desk:4                | 409 DUE_BILLING_PENDING          |
+      | ACTIVE    | none    | start_date=2027-02-11        | rejected                        |
+      | ACTIVE    | none    | end_date=2027-06-01          | rejected                        |
+      | ACTIVE    | none    | payment_terms_days=14        | rejected                        |
