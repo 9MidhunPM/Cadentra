@@ -1,5 +1,21 @@
 # Noel Biju: handoff
 
+## Preserved original importer draft checkpoint
+
+At the user's immediate-push cutoff, this branch preserves the original billing
+demo importer, no-email guard and its two prepared test files. These drafts were
+not executed against a database in this checkout. The coordinator reviewed and
+integrated successor importer code through main `71af9f6` and populated the demo;
+do not merge these older drafts over the reviewed implementation. No secret,
+provider credential or real recipient is part of this checkpoint.
+
+The completed final billing UI is separately reviewed/published as main
+`894121f44e47c384838a953d18caa5a38fa72e07`, feature `fb5e32d`. Its 47 focused
+tests, build and bounded visual checks passed. Combined hub deployment/live
+role-switch verification, post-release authenticated billing smoke and the
+global performance gate remain with the coordinator. No further tests, polish,
+business writes or email sends were started at the cutoff.
+
 Status: BILLING CORE, SEND RECOVERY AND PRODUCT LABELS INTEGRATED; INVOICE LAYOUT READY FOR REVIEW
 
 ## Current checkpoint: 31 October 2026
