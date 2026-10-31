@@ -16,8 +16,6 @@ from app.models import (
     Invoice,
     Payment,
     Subscription,
-    SubscriptionLine,
-    SubscriptionPause,
 )
 
 
@@ -76,71 +74,6 @@ def subscriptions(db: Session, actor: Actor, page: int, page_size: int) -> dict:
     )
     rows, metadata = _page(query, db, page, page_size)
     return {"items": [_subscription_summary(row[0]) for row in rows], **metadata}
-
-
-def _public_plan(snapshot: dict) -> dict:
-    """Whitelist scalar values, never forwarding arbitrary nested pricing/audit payloads."""
-    if not isinstance(snapshot, dict):
-        return {}
-    fields = {
-        "name": str,
-        "base_fee": str,
-        "currency": str,
-        "cadence": str,
-        "min_quantity": int,
-        "allow_pause": bool,
-        "allow_early_close": bool,
-        "allow_renew": bool,
-        "auto_close": bool,
-    }
-    return {key: snapshot[key] for key, kind in fields.items() if type(snapshot.get(key)) is kind}
-
-
-def subscription_detail(db: Session, actor: Actor, subscription_id: UUID) -> dict:
-    scope = customer_scope(actor)
-    row = db.scalar(
-        select(Subscription).where(
-            Subscription.id == subscription_id, Subscription.customer_id == scope
-        )
-    )
-    if row is None:
-        raise DomainError("NOT_FOUND", "Record not found.", 404)
-    lines = db.scalars(
-        select(SubscriptionLine)
-        .where(SubscriptionLine.subscription_id == row.id)
-        .order_by(SubscriptionLine.created_at, SubscriptionLine.id)
-    )
-    pauses = db.scalars(
-        select(SubscriptionPause)
-        .where(SubscriptionPause.subscription_id == row.id)
-        .order_by(SubscriptionPause.starts_on, SubscriptionPause.id)
-    )
-    invoices = db.execute(
-        select(Invoice.id, Invoice.number)
-        .where(Invoice.subscription_id == row.id, Invoice.customer_id == scope)
-        .order_by(Invoice.created_at.desc(), Invoice.id.desc())
-    )
-    return {
-        **_subscription_summary(row),
-        "payment_terms_days": row.payment_terms_days,
-        "quotation_valid_until": row.quotation_valid_until,
-        "plan_snapshot": _public_plan(row.plan_snapshot),
-        "lines": [
-            {
-                "id": str(line.id),
-                "product_id": str(line.product_id),
-                "variant_id": str(line.variant_id) if line.variant_id else None,
-                "description": line.description,
-                "quantity": line.quantity,
-                "unit_price": money_string(line.unit_price),
-            }
-            for line in lines
-        ],
-        "pause_intervals": [
-            {"starts_on": pause.starts_on, "ends_on": pause.ends_on} for pause in pauses
-        ],
-        "invoices": [{"id": str(invoice.id), "number": invoice.number} for invoice in invoices],
-    }
 
 
 def invoices(db: Session, actor: Actor, page: int, page_size: int) -> dict:
