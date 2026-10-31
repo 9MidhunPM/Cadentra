@@ -1,0 +1,458 @@
+{
+  "fixture_version": 1,
+  "purpose": "Reporting and portal acceptance inputs; not a production seed or proof of implemented endpoints.",
+  "application_test_status": "REPORTING SUMMARY/SERIES VERIFIED AGAINST POSTGRESQL; PORTAL SCENARIOS NOT VERIFIED BY THIS FIXTURE",
+  "clock": {
+    "business_date": "2026-11-02",
+    "timezone": "Asia/Kolkata",
+    "test_only": true
+  },
+  "query": {
+    "from": "2026-10-01",
+    "to": "2026-11-01",
+    "currency": "INR"
+  },
+  "customers": [
+    {
+      "key": "A",
+      "display_name": "Fixture Customer A"
+    },
+    {
+      "key": "B",
+      "display_name": "Fixture Customer B"
+    }
+  ],
+  "actors": [
+    {
+      "key": "admin",
+      "role": "ADMIN",
+      "customer_key": null
+    },
+    {
+      "key": "staff",
+      "role": "STAFF",
+      "customer_key": null
+    },
+    {
+      "key": "customer_a",
+      "role": "CUSTOMER",
+      "customer_key": "A"
+    },
+    {
+      "key": "customer_b",
+      "role": "CUSTOMER",
+      "customer_key": "B"
+    }
+  ],
+  "invoices": [
+    {
+      "key": "A_PARTIAL",
+      "customer_key": "A",
+      "status": "CONFIRMED",
+      "invoice_date": "2026-10-10",
+      "due_date": "2026-10-20",
+      "total": "4970.16"
+    },
+    {
+      "key": "A_PRIOR_PAID",
+      "customer_key": "A",
+      "status": "PAID",
+      "invoice_date": "2026-09-30",
+      "due_date": "2026-10-07",
+      "total": "1000.00"
+    },
+    {
+      "key": "A_DUE_TODAY",
+      "customer_key": "A",
+      "status": "CONFIRMED",
+      "invoice_date": "2026-10-31",
+      "due_date": "2026-11-02",
+      "total": "400.00"
+    },
+    {
+      "key": "A_RANGE_LAST_DAY",
+      "customer_key": "A",
+      "status": "PAID",
+      "invoice_date": "2026-10-31",
+      "due_date": "2026-11-07",
+      "total": "300.00"
+    },
+    {
+      "key": "A_EXCLUDED_END",
+      "customer_key": "A",
+      "status": "PAID",
+      "invoice_date": "2026-11-01",
+      "due_date": "2026-11-08",
+      "total": "600.00"
+    },
+    {
+      "key": "A_DRAFT",
+      "customer_key": "A",
+      "status": "DRAFT",
+      "invoice_date": "2026-10-15",
+      "due_date": "2026-10-22",
+      "total": "900.00"
+    },
+    {
+      "key": "A_CANCELLED",
+      "customer_key": "A",
+      "status": "CANCELLED",
+      "invoice_date": "2026-10-15",
+      "due_date": "2026-10-22",
+      "total": "800.00"
+    },
+    {
+      "key": "A_ZERO_PAID",
+      "customer_key": "A",
+      "status": "PAID",
+      "invoice_date": "2026-10-18",
+      "due_date": "2026-10-25",
+      "total": "0.00"
+    },
+    {
+      "key": "B_OVERDUE",
+      "customer_key": "B",
+      "status": "CONFIRMED",
+      "invoice_date": "2026-10-01",
+      "due_date": "2026-10-30",
+      "total": "200.00"
+    }
+  ],
+  "payments": [
+    {
+      "key": "P_A_PARTIAL",
+      "invoice_key": "A_PARTIAL",
+      "amount": "2000.00",
+      "paid_on": "2026-10-15"
+    },
+    {
+      "key": "P_A_PRIOR_1",
+      "invoice_key": "A_PRIOR_PAID",
+      "amount": "250.00",
+      "paid_on": "2026-09-30"
+    },
+    {
+      "key": "P_A_PRIOR_2",
+      "invoice_key": "A_PRIOR_PAID",
+      "amount": "750.00",
+      "paid_on": "2026-10-01"
+    },
+    {
+      "key": "P_A_LAST",
+      "invoice_key": "A_RANGE_LAST_DAY",
+      "amount": "300.00",
+      "paid_on": "2026-10-31"
+    },
+    {
+      "key": "P_A_END",
+      "invoice_key": "A_EXCLUDED_END",
+      "amount": "600.00",
+      "paid_on": "2026-11-01"
+    }
+  ],
+  "subscriptions": [
+    {
+      "key": "A_ACTIVE",
+      "customer_key": "A",
+      "state": "ACTIVE",
+      "start_date": "2026-11-02",
+      "end_date": "2026-12-02",
+      "close_effective_on": null,
+      "pauses": []
+    },
+    {
+      "key": "B_ACTIVE",
+      "customer_key": "B",
+      "state": "ACTIVE",
+      "start_date": "2026-10-01",
+      "end_date": "2026-12-01",
+      "close_effective_on": null,
+      "pauses": []
+    },
+    {
+      "key": "A_PAUSED",
+      "customer_key": "A",
+      "state": "ACTIVE",
+      "start_date": "2026-10-01",
+      "end_date": "2026-12-01",
+      "close_effective_on": null,
+      "pauses": [
+        {
+          "starts_on": "2026-11-01",
+          "ends_on": "2026-11-03"
+        }
+      ]
+    },
+    {
+      "key": "A_FUTURE",
+      "customer_key": "A",
+      "state": "ACTIVE",
+      "start_date": "2026-11-03",
+      "end_date": "2026-12-03",
+      "close_effective_on": null,
+      "pauses": []
+    },
+    {
+      "key": "A_EXPIRED",
+      "customer_key": "A",
+      "state": "ACTIVE",
+      "start_date": "2026-10-02",
+      "end_date": "2026-11-02",
+      "close_effective_on": null,
+      "pauses": []
+    },
+    {
+      "key": "A_EFFECTIVELY_CLOSED",
+      "customer_key": "A",
+      "state": "ACTIVE",
+      "start_date": "2026-10-01",
+      "end_date": "2026-12-01",
+      "close_effective_on": "2026-11-02",
+      "pauses": []
+    },
+    {
+      "key": "A_DRAFT_SUB",
+      "customer_key": "A",
+      "state": "DRAFT",
+      "start_date": "2026-10-01",
+      "end_date": "2026-12-01",
+      "close_effective_on": null,
+      "pauses": []
+    },
+    {
+      "key": "A_CLOSED_SUB",
+      "customer_key": "A",
+      "state": "CLOSED",
+      "start_date": "2026-10-01",
+      "end_date": "2026-12-01",
+      "close_effective_on": "2026-11-01",
+      "pauses": []
+    }
+  ],
+  "expectedSummary": {
+    "A": {
+      "data": {
+        "as_of": "2026-11-02",
+        "range_from": "2026-10-01",
+        "range_to": "2026-11-01",
+        "currency": "INR",
+        "active_subscriptions": 1,
+        "invoiced_gross_in_range": "5670.16",
+        "cash_received_in_range": "3050.00",
+        "outstanding_now": "3370.16",
+        "overdue_now": "2970.16",
+        "overdue_invoice_count": 1
+      }
+    },
+    "combined": {
+      "data": {
+        "as_of": "2026-11-02",
+        "range_from": "2026-10-01",
+        "range_to": "2026-11-01",
+        "currency": "INR",
+        "active_subscriptions": 2,
+        "invoiced_gross_in_range": "5870.16",
+        "cash_received_in_range": "3050.00",
+        "outstanding_now": "3570.16",
+        "overdue_now": "3170.16",
+        "overdue_invoice_count": 2
+      }
+    }
+  },
+  "expectedDailySeries": {
+    "data": {
+      "range_from": "2026-10-01",
+      "range_to": "2026-11-01",
+      "currency": "INR",
+      "cadence": "DAILY",
+      "buckets": [
+        {
+          "period_start": "2026-10-01",
+          "period_end": "2026-10-02",
+          "invoiced_gross": "200.00",
+          "cash_received": "750.00"
+        },
+        {
+          "period_start": "2026-10-02",
+          "period_end": "2026-10-03",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-03",
+          "period_end": "2026-10-04",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-04",
+          "period_end": "2026-10-05",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-05",
+          "period_end": "2026-10-06",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-06",
+          "period_end": "2026-10-07",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-07",
+          "period_end": "2026-10-08",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-08",
+          "period_end": "2026-10-09",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-09",
+          "period_end": "2026-10-10",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-10",
+          "period_end": "2026-10-11",
+          "invoiced_gross": "4970.16",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-11",
+          "period_end": "2026-10-12",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-12",
+          "period_end": "2026-10-13",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-13",
+          "period_end": "2026-10-14",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-14",
+          "period_end": "2026-10-15",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-15",
+          "period_end": "2026-10-16",
+          "invoiced_gross": "0.00",
+          "cash_received": "2000.00"
+        },
+        {
+          "period_start": "2026-10-16",
+          "period_end": "2026-10-17",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-17",
+          "period_end": "2026-10-18",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-18",
+          "period_end": "2026-10-19",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-19",
+          "period_end": "2026-10-20",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-20",
+          "period_end": "2026-10-21",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-21",
+          "period_end": "2026-10-22",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-22",
+          "period_end": "2026-10-23",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-24",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-24",
+          "period_end": "2026-10-25",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-25",
+          "period_end": "2026-10-26",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-26",
+          "period_end": "2026-10-27",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-27",
+          "period_end": "2026-10-28",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-28",
+          "period_end": "2026-10-29",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-29",
+          "period_end": "2026-10-30",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-30",
+          "period_end": "2026-10-31",
+          "invoiced_gross": "0.00",
+          "cash_received": "0.00"
+        },
+        {
+          "period_start": "2026-10-31",
+          "period_end": "2026-11-01",
+          "invoiced_gross": "700.00",
+          "cash_received": "300.00"
+        }
+      ]
+    }
+  }
+}
