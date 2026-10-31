@@ -19,6 +19,8 @@ export function SubscriptionList() {
   const query = params.get('q') ?? ''; const state = params.get('state') ?? '';
   const [search, setSearch] = useState(query);
   const [filterState, setFilterState] = useState(state);
+  // Only applied URL filters replace the form draft; page/retry changes leave edits intact.
+  useEffect(() => { setSearch(query); setFilterState(state); }, [query, state]);
   const request = new URLSearchParams({ page: String(page), page_size: '25' });
   if (query) request.set('q', query); if (state) request.set('state', state);
   const [retry, setRetry] = useState(0);
