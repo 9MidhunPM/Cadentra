@@ -1,11 +1,24 @@
 # Subscription acceptance cases
 
-Status: PREPARED; APPLICATION TESTS NOT RUN. Gate A is pending.
+Status: CALENDAR UNIT TESTS PASS; PERSISTED LIFECYCLE TESTS NOT RUN. Gate A is pending.
 
-These assets prepare Thanushree Suresh's subscription tests without initializing
-another application or guessing the foundation's concrete types. They are test
-inputs and expected outcomes, not an implementation or a passing application
-suite. They add no dependency or test-runner configuration.
+These assets test Thanushree Suresh's pure calendar module and prepare the
+persisted subscription acceptance cases without initializing another application.
+Calendar tests execute the actual helper; lifecycle scenarios still require the
+shared foundation and bindings. They add no dependency or runner configuration.
+
+## Executable calendar tests
+
+Run `PYTHONPATH=backend python3 -m unittest discover -s backend/tests/subscriptions -p 'test_calendar.py' -v`.
+The 10 unittest methods exercise the actual subscription calendar module against
+43 golden boundary dates and six capped periods, invalid inputs, exhausted
+cycles, huge indices, date limits and immutable snapshots. They do not use the
+planning reference as the implementation under test, skip absent services, or
+make database/lifecycle claims.
+
+The coordinator explicitly authorized pure calendar implementation before Gate A
+because its signature was agreed. Persistent subscription services and feature UI
+still await the integrated foundation.
 
 Run `python3 backend/tests/subscriptions/check_prepared_cases.py` from the repository
 root to check the calendar fixture data against the existing planning reference,
