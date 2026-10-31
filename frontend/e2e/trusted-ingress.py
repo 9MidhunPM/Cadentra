@@ -24,7 +24,7 @@ FRONTEND = Path(__file__).resolve().parents[1]
 BINARY = Path(os.environ.get('CADENTRA_TEST_NGINX', '/tmp/cadentra-agent4-nginx-native/nginx-1.30.6/objs/nginx'))
 DEV_SHA = '96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99'
 ROOT = Path(tempfile.mkdtemp(prefix='cadentra-trusted-ingress-'))
-records, checks = [], []
+records, checks, dns_queries = [], [], []
 sha = lambda value: hashlib.sha256(value).hexdigest()
 assert sha((FRONTEND/'nginx.conf').read_bytes()) == DEV_SHA
 version = subprocess.run([str(BINARY), '-V'], capture_output=True, text=True, check=True).stderr
@@ -57,9 +57,16 @@ class Dns(socketserver.BaseRequestHandler):
     def handle(self):
         query, connection = self.request
         offset = 12
+        labels = []
         while query[offset]:
+            labels.append(query[offset+1:offset+1+query[offset]].decode('ascii'))
             offset += query[offset]+1
+        name = '.'.join(labels)
+        dns_queries.append(name)
         question = query[12:offset+5]
+        if name != 'cadentra-api-proxy':
+            connection.sendto(query[:2]+struct.pack('!HHHHH',0x8183,1,0,0,0)+question,self.client_address)
+            return
         answer = query[:2]+struct.pack('!HHHHH',0x8180,1,1,0,0)+question
         answer += b'\xc0\x0c'+struct.pack('!HHIH',1,1,1,4)+socket.inet_aton('127.0.0.1')
         connection.sendto(answer,self.client_address)
@@ -83,7 +90,8 @@ assert source.count('10.0.1.20') == 2
 adapted = source.replace('10.0.1.20','127.0.0.1')
 adapted = adapted.replace('listen 8080;',f'listen 127.0.0.1:{port};')
 adapted = adapted.replace('/usr/share/nginx/html',str(static))
-adapted = adapted.replace('api:8001',f'api:{api.server_port}')
+assert source.count('server cadentra-api-proxy:8001 resolve;') == 1
+adapted = adapted.replace('cadentra-api-proxy:8001',f'cadentra-api-proxy:{api.server_port}')
 adapted = adapted.replace('127.0.0.11',f'127.0.0.1:{dns.server_address[1]}')
 site = ROOT/'site.conf'
 site.write_text(adapted)
@@ -183,7 +191,8 @@ try:
     status,headers,body = request(trusted,'/api/v1/missing?preserve=1')
     assert status==404 and json.loads(body)['path']=='/api/v1/missing?preserve=1'
     assert headers['Cache-Control']=='private, no-store' and headers['Set-Cookie']=='fixture_only=yes; Path=/api; HttpOnly; SameSite=Lax'
-    checks.append({'case':'spa_assets_cache_gzip_errors_cookie_referrer_preserved','passed':True})
+    assert dns_queries and set(dns_queries)=={'cadentra-api-proxy'}, dns_queries
+    checks.append({'case':'spa_assets_cache_gzip_errors_cookie_referrer_preserved','passed':True,'dns_alias':'cadentra-api-proxy'})
 finally:
     process.terminate()
     process.wait(timeout=5)
@@ -228,8 +237,10 @@ checks.append({'case':'unknown_selector_values_fail_closed','passed':True})
 assert source_hashes=={name:sha((configs/name).read_bytes()) for name in source_hashes}
 assert sha((FRONTEND/'nginx.conf').read_bytes())==DEV_SHA
 report = {'fixture_only':True,'real_traefik_cloudflare_docker_api_or_database_verified':False,
-          'base':'00ffa99','uid':os.getuid(),'nginx_version':version.strip(),'nginx_binary_sha256':sha(BINARY.read_bytes()),
+          'base':'25e6351','uid':os.getuid(),'nginx_version':version.strip(),'nginx_binary_sha256':sha(BINARY.read_bytes()),
           'source_hashes':{name:sha((FRONTEND/name).read_bytes()) for name in ['nginx.conf','nginx.production.conf','docker-entrypoint.sh','Dockerfile']},
+          'upstream_alias':'cadentra-api-proxy','dns_queries':sorted(set(dns_queries)),
+          'alias_rationale':'Coordinator observed Dokploy default-network attachment; cadentra-api-proxy must resolve only on the dedicated proxy network, avoiding ambiguous default/api service aliases.',
           'checks':checks,'adaptations':['Exact trusted Traefik peer10.0.1.20 replaced only with127.0.0.1 in native policy; wrong peer127.0.0.2 tested.',
           'Listener/static/MIME/runtime paths and API/DNS protocol fixture destinations use task-owned loopback/temp resources.',
           'Selector config directory and MIME/runtime paths adapted under/tmp; source files0444 and directory0555; process nonroot.',

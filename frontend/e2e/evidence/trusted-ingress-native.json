@@ -1,16 +1,21 @@
 {
   "fixture_only": true,
   "real_traefik_cloudflare_docker_api_or_database_verified": false,
-  "base": "00ffa99",
+  "base": "25e6351",
   "uid": 1000,
   "nginx_version": "nginx version: nginx/1.30.6\nbuilt by gcc 16.2.1 20260810 (GCC) \nconfigure arguments: --prefix=/tmp/cadentra-agent4-nginx-native/runtime --with-http_gzip_static_module --with-threads --with-http_realip_module",
   "nginx_binary_sha256": "f6e74e621129abb4e0241e720c94b19b3087a83d147c605d3e1e6a0fea54472b",
   "source_hashes": {
     "nginx.conf": "96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99",
-    "nginx.production.conf": "1c79339cccf34fe7fae0a0a3f4bf2a73843790bf55ab53badfe7fc8167c2e549",
+    "nginx.production.conf": "f6c02b8a318ded01f463bd4f816b8ca12282e64b7e31f477442f1daf4d61ee65",
     "docker-entrypoint.sh": "05845bdfe5c00004152a6a2e079e044f58e1dd199889dc50b277edd428a2b813",
     "Dockerfile": "89da48a85738e3ef1dfa67e96c70bb51ddc48b3bee1b412e5fe7079b0acbcb72"
   },
+  "upstream_alias": "cadentra-api-proxy",
+  "dns_queries": [
+    "cadentra-api-proxy"
+  ],
+  "alias_rationale": "Coordinator observed Dokploy default-network attachment; cadentra-api-proxy must resolve only on the dedicated proxy network, avoiding ambiguous default/api service aliases.",
   "checks": [
     {
       "case": "missing_cf_and_direct_http_health",
@@ -173,7 +178,8 @@
     },
     {
       "case": "spa_assets_cache_gzip_errors_cookie_referrer_preserved",
-      "passed": true
+      "passed": true,
+      "dns_alias": "cadentra-api-proxy"
     },
     {
       "case": "selector",
@@ -205,7 +211,7 @@
     "No actual read-only-rootfs mount or container execution; immutable configuration simulation only."
   ],
   "healthcheck": "No HTTP bypass. Missing identity returns403; use coordinator-approved local config/process health contract.",
-  "runtime_directory": "/tmp/cadentra-trusted-ingress-qg1az8b7",
+  "runtime_directory": "/tmp/cadentra-trusted-ingress-1gw0w8jt",
   "servers_stopped": true,
   "official_image_source_review": {
     "image": "nginx/nginx-unprivileged:1.30.6-alpine@sha256:2daef144b574804198caccc4041819fa1801ecd5df2252a39646bfa2b1ff3bea",
@@ -218,6 +224,8 @@
     "validation": "Strict IPv4/mixed IPv6 shapes plus realip parsing; successful changed-address rewrite required. Original peer checked independently.",
     "selector": "Unset/false uses untouched dev; true uses separate production config; any other value including empty exits64.",
     "readonly": "NonrootUID1000, readonly config fixtures0444/directory0555; writes only task-local/tmp runtime. Not a Docker readonly-rootfs execution.",
-    "early_failure": "A test-local enumerate variable shadowed expected HTML bytes; corrected without relaxing ingress logic."
-  }
+    "upstream_alias": "The native DNS fixture resolves only cadentra-api-proxy; queries were asserted to use only that alias. Real Dokploy network resolution remains unverified."
+  },
+  "validation_head": "25e63510fa129962ab7b61e3e919061ac085a14f",
+  "test_source_sha256": "55baf99d0988e06124eef41c1b9a1fe3e1a9b146abd7354e744c1bdcb527752f"
 }
