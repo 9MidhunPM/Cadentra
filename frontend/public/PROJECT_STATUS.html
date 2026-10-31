@@ -112,7 +112,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "label": "Latest owner repeat",
       "result": "164 frontend tests passed in the newer owner combined run",
-      "scope": "The earlier155/156focus timing flake is historical. The test-only waitFor fix is in ready owner slice 471808, whose main publication awaits approval. The current full backend repeat after the security patch is still pending.",
+      "scope": "The earlier155/156focus timing flake is historical. The test-only waitFor fix is in ready owner slice 471808, whose main publication awaits approval. The coordinator subsequently passed393 backend tests on the security candidate.",
       "tone": "good"
     },
     {
@@ -165,14 +165,20 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     },
     {
       "label": "Backend security review and patch",
-      "result": "50 application files reviewed · one Medium finding ·32 targeted tests pass",
-      "scope": "Shared login IP-bucket hardening is being verified with the exact production proxy chain. Full backend repeat is pending; this is not a claim of completed security remediation.",
+      "result": "50 application files reviewed · one Medium finding ·393 backend tests pass",
+      "scope": "The current API fix includes32 trust/quota regressions; independent proxy/helper review passes37 cases. Production web and deployed-chain verification remain open, so complete runtime remediation is not claimed.",
       "tone": "warn"
     },
     {
       "label": "Private deployment environment",
       "result": "Explicit user approval received; private environment saved",
       "scope": "The previously rejected sensitive transfer is now authorized for Cadentra. No values are included here; public deployment is not yet verified.",
+      "tone": "good"
+    },
+    {
+      "label": "Production frontend dependency advisory check",
+      "result": "Zero known vulnerabilities reported",
+      "scope": "npm audit --omit=dev against the current lockfile and npm advisory registry. This is an advisory lookup, not proof that every dependency is vulnerability-free.",
       "tone": "good"
     }
   ],
@@ -225,7 +231,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     }
   ],
   "nextSteps": [
-    "Complete the full backend regression repeat for the targeted login hardening and verify the exact production proxy chain.",
+    "Review the production web proxy and verify the exact deployed proxy chain after the completed393-backend/164-frontend regression repeat.",
     "Wait for the required owner authorization for the reviewed471808evidence push, and serialize remaining documentation integrations.",
     "Run actual container and public-origin checks with the already authorized private Cadentra environment.",
     "Retain the scoped T31 first-pass evidence and measure every final required page using the fresh isolated performance database.",
