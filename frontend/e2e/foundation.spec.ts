@@ -24,6 +24,8 @@ test('staff shell imports every feature and keeps placeholders honest', async ({
   for (const label of ['Customers', 'Products', 'Plans', 'Subscriptions', 'Quotation templates', 'Invoices', 'Taxes', 'Discounts', 'Staff settings']) {
     await navigate(page, label)
     await expect(page.getByRole('heading', { name: label === 'Taxes' ? 'Tax rules' : label, exact: true })).toBeVisible()
+    await expect(page).toHaveTitle(`${label === 'Taxes' ? 'Tax rules' : label} · Cadentra`)
+    await expect(page.getByRole('heading', { name: label === 'Taxes' ? 'Tax rules' : label, exact: true })).toBeFocused()
   }
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Staff settings' })).toBeVisible()
@@ -91,7 +93,20 @@ test('mobile navigation closes with Escape and restores focus', async ({ page },
   const open = page.getByRole('button', { name: 'Open navigation' })
   await open.click()
   await expect(page.getByRole('dialog', { name: 'Workspace sidebar' })).toBeVisible()
+  await page.keyboard.press('Control+k')
+  await expect(page.getByRole('dialog', { name: 'Search pages' })).toHaveCount(0)
   await page.keyboard.press('Escape')
   await expect(open).toBeFocused()
   await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('keyboard navigation focuses and announces the destination', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Desktop keyboard navigation')
+  await session(page)
+  await page.goto('/')
+  const link = page.getByRole('navigation').getByRole('link', { name: 'Customers', exact: true })
+  await link.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { name: 'Customers', exact: true })).toBeFocused()
+  await expect(page).toHaveTitle('Customers · Cadentra')
 })

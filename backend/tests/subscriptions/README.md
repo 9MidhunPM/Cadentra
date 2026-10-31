@@ -1,11 +1,23 @@
 # Subscription acceptance cases
 
-Status: CALENDAR UNIT TESTS PASS; PERSISTED LIFECYCLE TESTS NOT RUN. Gate A is pending.
+Status: CALENDAR AND BILLING-INPUT TESTS PASS; LIFECYCLE/API/UI WORK REMAINS.
+
+Gate A was released on reviewed main 5b78567. Set DATABASE_URL and
+TEST_DATABASE_URL to this workspace's isolated databases before database tests.
+
+## Executable PostgreSQL billing-input tests
+
+Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions/test_billable_inputs.py -q`
+from the repository root. The 25 cases use the real shared models, catalog helper
+and PostgreSQL transaction fixtures. They exercise frozen prices, one BASE line,
+cursor/state errors, pause intervals, future product-tax membership, deep
+immutability, independent JSON materialization and absence of commit/outcome writes.
+They do not prove billing concurrency or lifecycle/API/browser behavior.
 
 These assets test Thanushree Suresh's pure calendar module and prepare the
 persisted subscription acceptance cases without initializing another application.
-Calendar tests execute the actual helper; lifecycle scenarios still require the
-shared foundation and bindings. They add no dependency or runner configuration.
+Calendar and billing-input tests execute the actual services; lifecycle scenarios
+still require implementation and bindings. They add no dependency or runner configuration.
 
 ## Executable calendar tests
 
@@ -17,8 +29,8 @@ planning reference as the implementation under test, skip absent services, or
 make database/lifecycle claims.
 
 The coordinator explicitly authorized pure calendar implementation before Gate A
-because its signature was agreed. Persistent subscription services and feature UI
-still await the integrated foundation.
+because its signature was agreed. The verified integrated foundation now supplies
+the models, sessions and PostgreSQL fixtures for persisted feature work.
 
 Run `python3 backend/tests/subscriptions/check_prepared_cases.py` from the repository
 root to check the calendar fixture data against the existing planning reference,
@@ -76,9 +88,8 @@ barrier, then assert durable outcomes and snapshots. A sequential simulation is
 not concurrency evidence. Coordinate period/invoice assertions with Noel Biju;
 the subscription feature must not issue invoices itself.
 
-The coordinator's agreed Gate A contracts are recorded in the named handoff,
+The coordinator's Gate A contracts are recorded in docs/05 and the named handoff,
 including exclusive quotation dates, start-based plan availability, template
 line precedence and allowed edits by state. These agreements do not establish
-that the shared foundation is integrated or that the scenarios have passed.
-Bind the cases to actual exports once Gate A is verified; do not implement
+that all lifecycle scenarios have passed. Bind the remaining cases to actual exports; do not implement
 alternate shared types or business rules in step code.
