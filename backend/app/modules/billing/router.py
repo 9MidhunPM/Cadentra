@@ -1,12 +1,10 @@
-"""Foundation placeholder; the billing owner replaces this in place."""
+"""Staff billing routes, registered once by the application foundation."""
 
 from fastapi import APIRouter
 
-from app.core.errors import DomainError
+from app.modules.billing.invoices_router import router as invoices_router
+from app.modules.billing.rules_router import router as rules_router
 
 router = APIRouter(tags=["billing"])
-
-
-@router.get("/billing")
-def not_implemented():
-    raise DomainError("NOT_IMPLEMENTED", "Billing is not implemented yet.", 501)
+router.include_router(rules_router)
+router.include_router(invoices_router)
