@@ -1,6 +1,6 @@
 # Noel Biju: handoff
 
-Status: BILLING INTEGRATED; FULL T31 FUNCTIONAL JOURNEY PASSED; FINAL T30 OPEN
+Status: BILLING INTEGRATED; FULL T31 FUNCTIONAL JOURNEY PASSED; FINAL T30 EXTERNALLY BLOCKED
 
 Role: Billing & Payments
 Branch: feature/billing-closeout
@@ -109,6 +109,8 @@ Issuer PR #12 is integrated. Joint T13/T33/T34 verification is integrated throug
 The completion audit's three own-scope evidence gaps are closed by the focused PostgreSQL tests above. Coordinator review of the initial UI found payment command loss across navigation and an unreachable product-picker page. Both were corrected and independently re-reviewed before the final UI head.
 
 The payment/picker UI and URL correction are integrated, and the full functional T31 journey passed. Remaining: Sherin Saji's final actual billing-page T30 measurements on the corrected main and a fresh isolated namespace. The earlier benchmark explicitly excluded placeholder staff billing surfaces; it does not count as those measurements. Preserve immutable rule history during fixture handling and resolve any billing defects exposed by the final run before marking the workstream complete.
+
+The coordinator explicitly paused final T30 execution until the reviewed production client-IP/proxy contract is settled. That prerequisite remained open on 2026-10-31 at 07:42 UTC; no final benchmark runner or completed measurements were available. The guarded fixture preparation and other owners' proxy work are separate from Noel's completed billing implementation. To finish this workstream, obtain the exact reviewed runtime head and final raw T30 artifact for the 5,000-subscription/20,000-invoice dataset, inspect actual billing-page counts and timings, fix any billing defect, then publish the final handoff through coordinator review and the serialized owner-SSH workflow. No timings or completed performance status are inferred from the earlier partial benchmark.
 
 Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. The coordinator's latest workflow instruction is owner SSH integration after code review and an explicit serialized go-ahead, with no new GitHub API/PR merge operations. Preserve historical PR records and original authorship; never force-push.
 

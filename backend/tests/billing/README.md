@@ -2,6 +2,8 @@
 
 Status: financial API, recurring issuer, corrected billing UI and URL drilldowns integrated through main 00ffa99. Joint lifecycle/worker checks and the full T31 functional browser journey pass. Final billing-page performance remains an integration gate.
 
+Final T30 execution is externally blocked on the coordinator-reviewed production proxy contract. See [Noel's handoff](../../../handoffs/noel-biju.md) for the exact remaining evidence and completion conditions.
+
 ## Commands
 
 Use the reviewed backend lock and Python 3.12:
