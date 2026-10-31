@@ -1,3 +1,28 @@
+# Homepage video preview: 31 October 2026
+
+Midhun P M accepted ownership of the user-requested scroll-driven homepage film.
+The implementation commit is `a8c6612b0e6bb2cd69a686b6840f90595fe4ea66`, based
+on main `1e87dfef4039798f72d202273e2cfa429a5fd1e4`. Runtime changes are confined
+to the homepage component and stylesheet plus `frontend/public/assets/home/hero-film.mp4`.
+
+The film is a 1280x720, 60fps, 600-frame, all-intra H.264 interpolation of the
+provided 24fps original, 12,458,939 bytes. Source frames contain generated text
+and non-interactive interface graphics; real navigation and CTA are separate,
+and interpolation can distort moving edges. Mobile preserves the complete
+landscape frame with letterboxing. Reduced-motion and save-data use a still and
+do not request the video. This is a local candidate, not deployment evidence.
+
+Frontend build/typecheck, lint and `git diff --check` passed. Chromium checks
+covered desktop/mobile scroll forwards and backwards, transition, real links,
+mobile menu Escape/outside close, keyboard skip, reduced motion and save-data.
+The final visual captures are `/tmp/cadentra-final-desktop.png`,
+`/tmp/cadentra-final-mobile.png`, `/tmp/cadentra-final-reduced-motion.png`, and
+`/tmp/cadentra-final-save-data.png`. These checks do not establish a human
+assessment of smoothness or production deployment.
+
+This candidate awaits coordinator exact-head review and its serialized owner
+main-push turn; another contributor's existing GO remains in effect.
+
 # Commerce showcase preparation:31 October2026
 
 New user instruction, relayed with exact wording through Noel's thread, requests coordinated substantial demo data. The user explicitly selected the public Dokploy demo as the target. Existing records and immutable financial history must be preserved; imported contacts must receive no email. Implementation is active; no commerce data has been imported yet.
