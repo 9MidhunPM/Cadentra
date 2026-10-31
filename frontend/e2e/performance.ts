@@ -5,7 +5,7 @@ import { dirname } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
-import { checkedOrigin, PERFORMANCE_INGRESS_HEADERS, digest, readManifest, runtimeInputs, tmpPath, type NativeEvidence } from './performance-server'
+import { checkedOrigin, PERFORMANCE_INGRESS_HEADERS, PERFORMANCE_MIGRATION, digest, readManifest, runtimeInputs, tmpPath, type NativeEvidence } from './performance-server'
 import { anonymousSession401, confirmedAbort, requiredBrowserResponse, validateApiResponse, type ApiExpectation } from './performance-response'
 
 type Json = Record<string, unknown>
@@ -37,7 +37,7 @@ const metadataPath = tmpPath(process.env.CADENTRA_PERFORMANCE_SERVER_METADATA, '
 const native: NativeEvidence = JSON.parse(readFileSync(metadataPath, 'utf8'))
 if (native.test_only !== true || native.serving !== 'native-nginx-static' || native.origin !== origin
   || native.api_origin !== 'http://127.0.0.1:8004' || native.database !== fixture.database || native.schema !== fixture.schema || native.dataset_run !== fixture.run
-  || native.api_readiness?.status !== 'ready' || native.api_readiness?.migration !== '0002'
+  || native.api_readiness?.status !== 'ready' || native.api_readiness?.migration !== PERFORMANCE_MIGRATION
   || native.production_config !== 'nginx.production.conf' || native.api_environment !== 'test'
   || native.ingress_fixture?.original_peer !== '10.0.1.20' || native.ingress_fixture?.native_peer !== '127.0.0.1'
   || native.ingress_fixture?.cf_connecting_ip !== PERFORMANCE_INGRESS_HEADERS['CF-Connecting-IP']

@@ -7,6 +7,7 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const PERFORMANCE_ORIGIN = 'http://127.0.0.1:8080'
+export const PERFORMANCE_MIGRATION = '0003' as const
 // Public documentation address simulates the trusted ingress producer only in
 // this native test topology. Never use these headers as production client code.
 export const PERFORMANCE_INGRESS_HEADERS = Object.freeze({ 'CF-Connecting-IP': '198.51.100.77' })
@@ -48,9 +49,10 @@ function sourceInputs(repo: string) {
   walk(repo, join(repo, 'frontend/src'), source)
   walk(repo, join(repo, 'frontend/public'), source)
   walk(repo, join(repo, 'backend/app'), source)
+  walk(repo, join(repo, 'backend/migrations'), source)
   for (const file of ['frontend/package.json', 'frontend/package-lock.json', 'frontend/vite.config.ts',
     'frontend/index.html', 'frontend/nginx.conf', 'frontend/nginx.production.conf', 'frontend/docker-entrypoint.sh',
-    'frontend/Dockerfile', 'backend/pyproject.toml', 'backend/uv.lock']) {
+    'frontend/Dockerfile', 'backend/pyproject.toml', 'backend/uv.lock', 'backend/alembic.ini']) {
     source[file] = digest(readFileSync(join(repo, file)))
   }
   return source
@@ -75,7 +77,7 @@ export type NativeEvidence = {
   native_versions: { nginx: string; node: string }; nginx_binary_sha256: string;
   server_files: { directory: string; wrapper: string; adapted_config: string; error_log: string };
   production_config: 'nginx.production.conf'; api_environment: 'test';
-  api_readiness: { status: 'ready'; migration: '0002' };
+  api_readiness: { status: 'ready'; migration: typeof PERFORMANCE_MIGRATION };
   ingress_fixture: { original_peer: '10.0.1.20'; native_peer: '127.0.0.1'; cf_connecting_ip: '198.51.100.77' };
   adaptations: string[]; docker_verified: false; traefik_verified: false; production_deployment_verified: false; server_stopped?: boolean;
 }
@@ -165,8 +167,8 @@ http {
           headers: PERFORMANCE_INGRESS_HEADERS, signal: AbortSignal.timeout(1000),
         })
         const readiness = await health.json()
-        if (health.status !== 200 || readiness.data?.status !== 'ready' || readiness.data?.migration !== '0002') {
-          throw new Error('The proxied API is not ready at the reviewed migration0002')
+        if (health.status !== 200 || readiness.data?.status !== 'ready' || readiness.data?.migration !== PERFORMANCE_MIGRATION) {
+          throw new Error(`The proxied API is not ready at the reviewed migration${PERFORMANCE_MIGRATION}`)
         }
         break
       } catch (error) {
@@ -183,7 +185,7 @@ http {
       native_versions: { nginx: `${version.stdout}${version.stderr}`.trim(), node: process.version },
       nginx_binary_sha256: digest(readFileSync(binary)), docker_verified: false, traefik_verified: false, production_deployment_verified: false,
       production_config: 'nginx.production.conf', api_environment: 'test',
-      api_readiness: { status: 'ready', migration: '0002' },
+      api_readiness: { status: 'ready', migration: PERFORMANCE_MIGRATION },
       ingress_fixture: { original_peer: '10.0.1.20', native_peer: '127.0.0.1', cf_connecting_ip: '198.51.100.77' },
       server_files: { directory: temporary, wrapper: config, adapted_config: serverConfig, error_log: log },
       adaptations: ['Loads the strict nginx.production.conf, not the development default; static root points to this dist and listener is loopback8080.',
