@@ -20,7 +20,7 @@ Dependency versions: backend/uv.lock and frontend/package-lock.json
 Deployment: NOT CREATED
 
 ## Checks actually executed against the app
-Backend tests:61PASS plus80subtests against real PostgreSQL18.6 before pricing integration
+Backend tests:74PASS in the unified suite against real PostgreSQL18.6 (includes pure calendar/pricing checks)
 Concurrency tests: NOT RUN
 Frontend type/lint/build: PASS;47unit/component tests PASS
 Browser full workflow: NOT RUN

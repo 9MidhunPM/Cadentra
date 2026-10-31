@@ -1,6 +1,6 @@
 # Midhun P M: handoff
 
-Status: GATE A INTEGRATION VERIFIED; FOUNDATION PR PUBLICATION IN PROGRESS
+Status: GATE A VERIFIED; FOUNDATION PR4 READY FOR MERGE
 
 Role: Platform & Catalog; team coordination and integration
 Branch: feature/platform-foundation
@@ -12,7 +12,7 @@ Shared PostgreSQL ORM (27 tables), static Alembic0001, atomic numbering, retaine
 
 ## Tests actually executed
 
-Backend implementation initially passed50PostgreSQL tests; after calendar integration and migration0002 the combined suite passed61tests plus80subtests. Frontend typecheck/lint/build and47unit/component tests pass. A real Chromium browser through localhost:5171 Vite -> localhost:8001 FastAPI -> PostgreSQL passed health200, signup201, login/session200, customer403forcatalog, missingCSRF403, renderedcustomer navigation, logout200 and subsequent401 with zero page errors. Screenshot inspected locally; test accounts are fictional. Tests cover signup/login/logout/reset/staff/customer permissions, catalog prices/plans/snapshots, decimal context, malformed CSRF, seed login/idempotency, outbox payload/retry/SMTP adapter behavior and database uniqueness/revision guards. Migrations0001/0002 apply to isolated native PostgreSQL18.6 databases; Alembic drift check passes.
+Backend implementation initially passed50PostgreSQL tests; after calendar integration and migration0002 the combined suite passed74tests after pricing integration (calendar checks also exercise80subtests). Frontend typecheck/lint/build and47unit/component tests pass. A real Chromium browser through localhost:5171 Vite -> localhost:8001 FastAPI -> PostgreSQL passed health200, signup201, login/session200, customer403forcatalog, missingCSRF403, renderedcustomer navigation, logout200 and subsequent401 with zero page errors. Screenshot inspected locally; test accounts are fictional. Tests cover signup/login/logout/reset/staff/customer permissions, catalog prices/plans/snapshots, decimal context, malformed CSRF, seed login/idempotency, outbox payload/retry/SMTP adapter behavior and database uniqueness/revision guards. Migrations0001/0002 apply to isolated native PostgreSQL18.6 databases; Alembic drift check passes.
 
 No real external email, true financial service races, complete product browser journey, benchmark or Docker deployment is claimed. Native runtime uses signed packages under /tmp, no system install.
 
@@ -22,7 +22,7 @@ Models: app.models; app.db.base.Base; app.db.session get_session/SessionFactory 
 
 ## Coordination
 
-Frontend foundation PR2 and subscription calendar PR1 reviewed and integrated. Billing pricing PR3 awaits its final precision-head review. Hourly ready-slice/main synchronization requested from all three teammates; merges remain serial and review-gated.
+Frontend foundation PR2 and subscription calendar PR1 reviewed and integrated. Billing pricing PR3 reviewed and integrated with final precision head76c1bd6. Hourly ready-slice/main synchronization requested from all three teammates; merges remain serial and review-gated.
 
 ## Next dependency
 
