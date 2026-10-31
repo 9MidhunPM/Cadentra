@@ -14,26 +14,26 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
 {
   "project": "Cadentra",
   "subtitle": "Subscription Management System · Brightloop Software",
-  "snapshotUTC": "2026-10-31T07:39:48Z",
+  "snapshotUTC": "2026-10-31T08:04:19Z",
   "staleAfterMinutes": 15,
   "headline": "The product journey passes. Release verification continues.",
   "summary": "The full cross-owner journey has scoped evidence. The approved private deployment environment is saved, and the security patch passes393 backend and164 frontend tests. Production proxy/container verification and complete final-page timings remain open.",
   "coverageLabel": "Local product requirement groups",
   "coverageCaveat": "A count of requirement groups, not effort, release readiness or a claim that the whole product is complete. Event obligations and the separate T31 journey are excluded.",
   "currentMain": {
-    "sha": "00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd",
-    "label": "Noel Biju owner-SSH URL-filter merge",
-    "state": "Core, portal, owner workflow and URL filters integrated"
+    "sha": "25e63510fa129962ab7b61e3e919061ac085a14f",
+    "label": "Reporting customer drilldowns and production ingress integrated",
+    "state": "Owner integrations verified; actual containers started, public route correction pending"
   },
   "preparedRoot": {
     "sha": "2b1d54015f01a215362be47af2e001deb6303cac",
     "label": "Verified production proxy identity and private networking",
-    "state": "Tested root feature commit; production NGINX slice and public runtime checks remain pending. Not yet in main."
+    "state": "Published by Midhun P M in main89017d6; production frontend and real runtime verification still required."
   },
   "deployment": {
-    "state": "Private environment saved · public release not verified",
+    "state": "Images built · API healthy · public route correction pending",
     "target": "https://cadentra.midhunpm.in",
-    "detail": "The user explicitly approved the narrow Cadentra credential transfer and the private environment was saved. Isolated web8080, private database/mail capture, one worker and bootstrap are prepared. Actual container and public-origin verification are not yet evidenced in this snapshot; security/proxy-chain hardening is in progress."
+    "detail": "Actual Dokploy images built; migrations/bootstrap exit0; API/database/private capture healthy, one worker and UID101 web running. No host ports. Public HTTPS returns routing404; explicit app-only routers and a proxy-only API alias are being corrected before acceptance."
   },
   "snapshotNotice": "Saved coordinator snapshot, not live agent telemetry. Reload reads this saved file again; it does not contact teammates or infer activity.",
   "team": [
@@ -41,7 +41,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "name": "Midhun P M",
       "role": "Platform · catalog · coordination · deployment",
       "done": "Shared platform, identity/catalog, native runtime, local verification and deployment package.",
-      "now": "The security API/Compose candidate passes393 backend and164 frontend tests; independent proxy review is clear. Finishing production ingress, deployment and this saved status report.",
+      "now": "Actual Docker images/startup succeeded. Correcting the observed Cadentra routing and proxy-only API lookup, then running the public functional acceptance flow.",
       "next": "Review the frontend proxy candidate and publish the reviewed owner slices before public container/startup checks.",
       "state": "Release coordination"
     },
@@ -49,15 +49,15 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "name": "Thanushree Suresh",
       "role": "Subscriptions · lifecycle · scheduling",
       "done": "Subscription workflows, actual worker/action races, staff actions and dark/light checks.",
-      "now": "Closing the final regression audit and ready documentation slice 1fa2; awaiting the serialized owner integration turn.",
-      "next": "Publish the approved documentation checkpoint and support final-page acceptance.",
+      "now": "Closing documentation is reviewed. The owner-main push was automatically rejected pending that session’s direct user authorization; the intact candidate is preserved and no workaround is used.",
+      "next": "After direct authorization, obtain a renewed exact main turn and publish the reviewed closing docs.",
       "state": "Documentation ready"
     },
     {
       "name": "Noel Biju",
       "role": "Billing · invoices · payments",
       "done": "Billing, pricing, payment guards and recovery behavior.",
-      "now": "URL-filter fix is merged at 00ffa99. Supporting final T30 and documentation checkpoint 854156.",
+      "now": "Billing source is unchanged and locally verified. Closeout505c8b3 is prepared; final T30 audit waits for settled proxy source and actual timing evidence.",
       "next": "Support final-page measurements and the remaining release evidence handoff.",
       "state": "Performance support"
     },
@@ -65,17 +65,17 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "name": "Sherin Saji",
       "role": "Experience · reports · customer portal",
       "done": "UI/themes, reporting, portal and production frontend package.",
-      "now": "Production proxy-chain hardening and final T30. Tested T31/focus-timing evidence slice 471808 is ready, but its owner main push was rejected by automatic review and awaits the owner’s user approval.",
-      "next": "Obtain the required owner push approval without a workaround, then publish exact tested evidence and final timings.",
+      "now": "Production proxy and reporting fixes are integrated through owner SSH. Preparing the proxy-only API alias follow-up; fresh performance data is seeded but no final timings have run.",
+      "next": "Complete the exact production proxy review/integration, then measure final pages on a clean settled source.",
       "state": "Proxy and final performance"
     }
   ],
   "blockers": [
     {
-      "level": "Security verification in progress",
-      "title": "Login rate-limit identity needs final production-path verification",
-      "detail": "The completed scoped scan reviewed all50 backend application files and found one Medium issue in the shared login IP bucket. The API fix passes393 backend tests, including32 new proxy regressions;164 frontend tests and lint/type/build also pass. Independent review passes37 proxy/helper cases. The production frontend proxy and actual public-path verification are still pending.",
-      "action": "Finish and review the production web proxy, then verify the deployed Cloudflare, private API and container path. Explicit credential-transfer approval is complete; credentials remain private."
+      "level": "Deployment verification in progress",
+      "title": "Public route and private upstream need actual verification",
+      "detail": "The shared login quota correction is reviewed and passes393 backend/164 frontend tests, plus26 independent native proxy checks. First actual containers are running, but the platform did not inject the expected route labels and added a default web network attachment. The public request still returns404.",
+      "action": "Add explicit Cadentra-only guarded routers and use the private proxy-only API alias. Keep exact peer trust, then verify real Cloudflare/direct-origin behavior and the persisted public workflow."
     },
     {
       "level": "Owner-reported pass",
@@ -88,12 +88,6 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "title": "Final-page timing and external email remain open",
       "detail": "External SMTP is explicitly deferred; only local Mailpit capture is evidenced. Historical performance results do not prove every final page meets the brief.",
       "action": "Measure final surfaces, retain known external-delivery gaps and avoid claiming a public deployment."
-    },
-    {
-      "level": "Owner approval pending",
-      "title": "Tested owner evidence is waiting for its permitted main push",
-      "detail": "Sherin Saji’s471808test/T31 evidence slice is ready. Automatic approval review rejected that owner’s main push; the owner is waiting for their user approval.",
-      "action": "Keep the reviewed slice intact and wait for the required authorization; do not switch identities or route around the rejection."
     }
   ],
   "evidence": [
@@ -112,7 +106,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "label": "Latest owner repeat",
       "result": "164 frontend tests passed in the newer owner combined run",
-      "scope": "The earlier155/156focus timing flake is historical. The test-only waitFor fix is in ready owner slice 471808, whose main publication awaits approval. The coordinator subsequently passed393 backend tests on the security candidate.",
+      "scope": "The earlier155/156 focus timing flake is historical. The test-only waitFor fix and scoped T31 evidence are published in main0b131db. The coordinator passed393 backend tests on the root security candidate.",
       "tone": "good"
     },
     {
@@ -180,6 +174,18 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "result": "Zero known vulnerabilities reported",
       "scope": "npm audit --omit=dev against the current lockfile and npm advisory registry. This is an advisory lookup, not proof that every dependency is vulnerability-free.",
       "tone": "good"
+    },
+    {
+      "label": "Production Python dependency advisory check",
+      "result": "Zero known vulnerabilities reported",
+      "scope": "pip-audit of the exact production dependency export from backend/uv.lock, with no project environment changes. This is an advisory lookup, not proof that unknown vulnerabilities are absent.",
+      "tone": "good"
+    },
+    {
+      "label": "First actual Docker deployment",
+      "result": "Images built; migrations/bootstrap0; API healthy",
+      "scope": "UID101 web, one worker, private database/capture and no host ports verified. Public route still404; deployed functional/ingress acceptance has not passed.",
+      "tone": "warn"
     }
   ],
   "gates": [
@@ -231,11 +237,11 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     }
   ],
   "nextSteps": [
-    "Review the production web proxy and verify the exact deployed proxy chain after the completed393-backend/164-frontend regression repeat.",
-    "Wait for the required owner authorization for the reviewed471808evidence push, and serialize remaining documentation integrations.",
-    "Run actual container and public-origin checks with the already authorized private Cadentra environment.",
-    "Retain the scoped T31 first-pass evidence and measure every final required page using the fresh isolated performance database.",
-    "Reconcile release evidence and remaining external SMTP/event obligations without claiming unperformed checks."
+    "Integrate the reviewed app-only routing labels and proxy-only API alias without widening trusted peers.",
+    "Verify public HTTPS, real ingress restrictions and a persisted fictional invoice/payment/portal workflow.",
+    "Run final native page timings from a clean frozen source with the fresh UUID schema; distinguish them from public production timings.",
+    "Publish reviewed owner closing docs only after each required direct authorization and a fresh serialized GO.",
+    "Keep external SMTP/event obligations explicit and update this saved report after verified checkpoints."
   ],
   "workflow": "Midhun P M reviews an exact feature head against an expected main SHA and gives one serialized GO. The owner fetches/rechecks main and uses a normal SSH push with their own verified identity. No gh/API main publishing, force push or concurrent integration turns.",
   "history": [
@@ -267,7 +273,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "sha": "ff18b1f",
       "title": "Portal-owner SSH merge",
-      "note": "Current verified main; owned portal actions integrated."
+      "note": "Verified main at this checkpoint; owned portal actions integrated."
     },
     {
       "sha": "eb8d8fd",
@@ -277,7 +283,27 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "sha": "00ffa99",
       "title": "Billing owner URL-filter integration",
-      "note": "Current verified main; Noel Biju’s reviewed URL-filter follow-up is merged."
+      "note": "Verified main at this checkpoint; Noel Biju’s reviewed URL-filter follow-up is merged."
+    },
+    {
+      "sha": "89017d6",
+      "title": "Root production security and status integration",
+      "note": "Exact reviewed root feature9345cf8 merged and normal owner SSH push verified. API/network regression checks pass; public deployment not started."
+    },
+    {
+      "sha": "0b131db",
+      "title": "Experience owner evidence integration",
+      "note": "Sherin Saji’s approved471808 merge verified over89017d6, preserving security/status. Focused focus regression1/1, pack and whitespace pass."
+    },
+    {
+      "sha": "f385846",
+      "title": "Production frontend ingress integration",
+      "note": "Sherin Saji’s c227 exact source integrated; independent native26/26 plus expanded IPv6 checks clear. Actual container checks remain separate."
+    },
+    {
+      "sha": "25e6351",
+      "title": "Applied customer reporting drilldowns",
+      "note": "Both overdue links preserve only the applied customer;8 reporting tests/type/pack/whitespace pass."
     }
   ],
   "sourcePolicy": "Coordinator-maintained JSON after meaningful verified checkpoints. Sources are exact Git heads, owner handoffs, executed checks and Codex TUI reports. Historical evidence retains its commit/runtime scope. No background heartbeat or automatic agent monitoring is implied.",
