@@ -770,3 +770,73 @@ def test_resume_cannot_turn_expiry_into_an_original_schedule_boundary(db_session
         )
         == "PAUSED"
     )
+
+
+@pytest.mark.parametrize("role", ["STAFF", "CUSTOMER"])
+@pytest.mark.parametrize(
+    "flag,action",
+    [("allow_pause", "pause"), ("allow_early_close", "close"), ("allow_renew", "renew")],
+)
+def test_disabled_frozen_policy_rejects_staff_and_actual_customer_owner(
+    db_session, setup, role, flag, action
+):
+    from app.modules.subscriptions.service import apply_action
+
+    setattr(setup.plan, flag, False)
+    db_session.flush()
+    row = active(db_session, setup)
+    assert row.plan_snapshot[flag] is False
+    outcome(db_session, row, 0, date(2027, 1, 31), date(2027, 2, 28))
+    actor = setup.actor
+    if role == "CUSTOMER":
+        customer_user = User(
+            display_name="Policy owner",
+            normalized_email=f"policy-owner-{uuid4()}@example.invalid",
+            password_hash="test-only",
+            role="CUSTOMER",
+            customer_id=setup.customer.id,
+        )
+        db_session.add(customer_user)
+        db_session.flush()
+        actor = Actor(customer_user.id, customer_user.role, customer_user.customer_id)
+    assert action not in w.allowed_actions(db_session, actor, row, setup.clock.today())
+    revision = row.revision
+    audits = set(db_session.scalars(select(AuditEvent.id).where(AuditEvent.entity_id == row.id)))
+    lines = list(
+        db_session.execute(
+            select(SubscriptionLine.id, SubscriptionLine.quantity, SubscriptionLine.unit_price)
+            .where(SubscriptionLine.subscription_id == row.id)
+            .order_by(SubscriptionLine.id)
+        )
+    )
+    payload = {"start_date": "2027-05-01", "end_date": "2027-08-01"} if action == "renew" else {}
+    with pytest.raises(DomainError) as caught:
+        apply_action(db_session, actor, row.id, action, payload)
+    assert (caught.value.code, caught.value.status_code) == ("POLICY_FORBIDDEN", 409)
+    assert row.state == "ACTIVE" and row.revision == revision and row.next_cycle_index == 1
+    assert (
+        set(db_session.scalars(select(AuditEvent.id).where(AuditEvent.entity_id == row.id)))
+        == audits
+    )
+    assert (
+        list(
+            db_session.execute(
+                select(SubscriptionLine.id, SubscriptionLine.quantity, SubscriptionLine.unit_price)
+                .where(SubscriptionLine.subscription_id == row.id)
+                .order_by(SubscriptionLine.id)
+            )
+        )
+        == lines
+    )
+    assert (
+        db_session.scalar(
+            select(SubscriptionPause.id).where(SubscriptionPause.subscription_id == row.id)
+        )
+        is None
+    )
+    assert (
+        db_session.scalar(
+            select(Subscription.id).where(Subscription.prior_subscription_id == row.id)
+        )
+        is None
+    )
