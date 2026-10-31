@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { apiClient, getErrorMessage, type ListResponse, type ResourceResponse } from '../../lib';
 import { Button, ConfirmDialog, DataTable, DateLabel, ErrorPanel, FormField, LoadingSkeleton, Money, PageHeader, StatusBadge } from '../../components/ui';
 import { fieldError, useResource } from './resource';
@@ -8,10 +8,27 @@ import { PaymentForm } from './payments';
 export { PaymentForm };
 
 export function InvoiceList() {
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawPage = searchParams.get('page') ?? '1';
+  const parsedPage = Number(rawPage);
+  const page = /^\d+$/.test(rawPage) && Number.isSafeInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
   const [customerSearch, setCustomerSearch] = useState('');
   const customers = useResource<ListResponse<{ id: string; display_name: string }>>(`/customers?page_size=100&q=${encodeURIComponent(customerSearch)}`);
-  const [filters, setFilters] = useState({ customer_id: '', status: '', overdue: '', from: '', to: '' });
+  const filterKeys = ['customer_id', 'status', 'overdue', 'from', 'to'] as const;
+  type FilterKey = typeof filterKeys[number];
+  const filters = Object.fromEntries(filterKeys.map(key => [key, searchParams.get(key) ?? ''])) as Record<FilterKey, string>;
+  function updateQuery(changes: Partial<Record<FilterKey, string>>, nextPage = 1) {
+    setSearchParams(previous => {
+      const next = new URLSearchParams();
+      for (const key of filterKeys) {
+        const value = changes[key] ?? previous.get(key) ?? '';
+        if (value) next.set(key, value);
+      }
+      next.set('page', String(nextPage));
+      return next;
+    });
+  }
+  const setPage = (nextPage: number) => updateQuery({}, nextPage);
   const query = new URLSearchParams({ page: String(page), page_size: '25' });
   Object.entries(filters).forEach(([key, value]) => { if (value) query.set(key, value); });
   const resource = useResource<ListResponse<Invoice>>(`/invoices?${query}`);
@@ -32,11 +49,11 @@ export function InvoiceList() {
   return <section><PageHeader eyebrow="Billing" title="Invoices" description="Stored charges, payments and outstanding balances." actions={<Button pending={pending} onClick={() => void runDue()}>Run due billing</Button>} />
     <form className="billing-filters" onSubmit={event => event.preventDefault()}>
       <FormField id="invoice-customer-search" label="Find customer"><input value={customerSearch} onChange={event => setCustomerSearch(event.target.value)} /></FormField>
-      <FormField id="invoice-customer" label="Customer"><select value={filters.customer_id} onChange={event => { setPage(1); setFilters({ ...filters, customer_id: event.target.value }); }}><option value="">All customers</option>{filters.customer_id && !customers.data?.items.some(customer => customer.id === filters.customer_id) && <option value={filters.customer_id}>Selected customer</option>}{customers.data?.items.map(customer => <option key={customer.id} value={customer.id}>{customer.display_name}</option>)}</select></FormField>
-      <FormField id="invoice-status" label="Invoice status"><select value={filters.status} onChange={event => { setPage(1); setFilters({ ...filters, status: event.target.value }); }}><option value="">All statuses</option>{['DRAFT', 'CONFIRMED', 'PAID', 'CANCELLED'].map(status => <option key={status}>{status}</option>)}</select></FormField>
-      <FormField id="invoice-overdue" label="Collection"><select value={filters.overdue} onChange={event => { setPage(1); setFilters({ ...filters, overdue: event.target.value }); }}><option value="">All invoices</option><option value="true">Overdue only</option></select></FormField>
-      <FormField id="invoice-from" label="Invoice date from"><input type="date" value={filters.from} onChange={event => { setPage(1); setFilters({ ...filters, from: event.target.value }); }} /></FormField>
-      <FormField id="invoice-to" label="Invoice date before"><input type="date" value={filters.to} onChange={event => { setPage(1); setFilters({ ...filters, to: event.target.value }); }} /></FormField>
+      <FormField id="invoice-customer" label="Customer"><select value={filters.customer_id} onChange={event => updateQuery({ customer_id: event.target.value })}><option value="">All customers</option>{filters.customer_id && !customers.data?.items.some(customer => customer.id === filters.customer_id) && <option value={filters.customer_id}>Selected customer</option>}{customers.data?.items.map(customer => <option key={customer.id} value={customer.id}>{customer.display_name}</option>)}</select></FormField>
+      <FormField id="invoice-status" label="Invoice status"><select value={filters.status} onChange={event => updateQuery({ status: event.target.value })}><option value="">All statuses</option>{['DRAFT', 'CONFIRMED', 'PAID', 'CANCELLED'].map(status => <option key={status}>{status}</option>)}</select></FormField>
+      <FormField id="invoice-overdue" label="Collection"><select value={filters.overdue} onChange={event => updateQuery({ overdue: event.target.value })}><option value="">All invoices</option><option value="true">Overdue only</option><option value="false">Not overdue</option></select></FormField>
+      <FormField id="invoice-from" label="Invoice date from"><input type="date" value={filters.from} onChange={event => updateQuery({ from: event.target.value })} /></FormField>
+      <FormField id="invoice-to" label="Invoice date before"><input type="date" value={filters.to} onChange={event => updateQuery({ to: event.target.value })} /></FormField>
     </form>
     {customers.error != null && <ErrorPanel title="Customer search unavailable" message={getErrorMessage(customers.error)} onRetry={customers.reload} />}
     {message && <p role="status">{message}</p>}{error != null && <ErrorPanel message={getErrorMessage(error)} />}
