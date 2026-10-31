@@ -1,3 +1,19 @@
+# Current coordinator checkpoint: signed-in UI polish
+
+Midhun P M remains the primary coordinator. The user requested an actual native-computer review of the deployed demo. A separate headed Chromium profile was opened through the user desktop session, signed in using the authorized private demo credentials, and inspected on desktop and mobile. No customer, catalog, subscription, invoice or payment records were created or changed by this review.
+
+Root UI source805aa5750226d636868750ec57ac9e5b48dbee99 (plus c211d72 field-height correction) shortens visible catalog row actions while retaining full accessible names; aligns shared controls/headers; reduces CycleGuard spacing; balances five overview metrics across responsive rows; and adds brief route arrival, hover/press and filter-opening motion with reduced-motion support. The persistent Outlet is not keyed or remounted for animation. Two bounded helper assistants worked on shell motion and reporting styles under root review; these are not extra human contributors.
+
+Actual audit evidence is private under /tmp/cadentra-ui-audit:24 before screenshots of12 staff surfaces at1440px/390px and24 candidate screenshots with real production API data. The before batch recorded no document overflow or page exceptions. The candidate interaction check confirms20px checkbox sizing, reduced-motion opacity1/identity transform, no mobile document overflow or page exceptions. A stale test selector (`Close` instead of the actual `Close editor`) interrupted the first tail check; the corrected interaction-only check passed without rerunning the screenshot batch. Empty button arrays from an early loading-state sample are not used as sizing evidence. Production build/typecheck and lint passed before the final one-line padding correction; integrated build/lint and final live sizing are next.
+
+Noel Biju owns the complementary invoice mobile-density slice fb2cd2a37edb927c907ed4238d9e8eae4450223c; root reviewed its exact two UI files and named handoff and reserved his owner SSH integration turn against ea91836. Existing31 billing checks and actual responsive owner evidence passed; no new backend changes or broad test repeat. Thanushree Suresh's reviewed subscription improvements remain unpublished pending her direct-user owner-push authorization after automatic review rejected that action. Root will not publish that rejected action through another identity. Sherin Saji's benchmark harness dc42bef passed read-only review; final runtime remains held until the final UI source freeze.
+
+This checkpoint is source/candidate evidence, not a deployment claim. Production currently retains the verified56bd60b homepage composition. Actual Resend reset/invoice delivery remains unverified because private SMTP password and verified sender are not yet configured.
+
+---
+
+## Previous coordinator checkpoints
+
 # Current coordinator checkpoint : cinematic release
 
 Midhun P M remains primary. Seven bounded helper tasks implemented the approved release in this checkout; helper work is not attributed as new human participation. Root owns review, integration, asset generation, public / routing, auth return destinations, deployment and the single status page.
