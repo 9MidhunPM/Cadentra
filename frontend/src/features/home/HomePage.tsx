@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { ArrowDown, ArrowRight, Check, ChevronRight, CircleCheck, CreditCard, FileText, Layers3, Menu, RefreshCw, ShieldCheck, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, Check, CircleCheck, CreditCard, FileText, Layers3, RefreshCw, ShieldCheck } from 'lucide-react'
 import './home.css'
 
 type Stage = 'plan' | 'quote' | 'bill' | 'renew'
@@ -29,27 +29,85 @@ function StagePreview({ stage }: { stage: Stage }) {
   </div>
 }
 
-function HeroWorkspace() {
-  return <div className="home-hero-workspace" aria-label="Illustrative connected subscription, invoice and payment records"><div className="home-hero-workspace-top"><span>Cycle overview</span><span className="home-card-orbit" aria-hidden="true" /></div><div className="home-hero-record"><span className="home-hero-record-icon"><Layers3 size={19} aria-hidden="true" /></span><div><strong>Design Suite</strong><span>Subscription · 3 seats</span></div><span className="home-hero-status">ACTIVE</span></div><div className="home-hero-record"><span className="home-hero-record-icon"><FileText size={19} aria-hidden="true" /></span><div><strong>INR 4,970.16</strong><span>Confirmed invoice</span></div><ChevronRight size={16} aria-hidden="true" /></div><div className="home-hero-record"><span className="home-hero-record-icon"><CreditCard size={19} aria-hidden="true" /></span><div><strong>INR 2,000.00</strong><span>Recorded payment</span></div><ChevronRight size={16} aria-hidden="true" /></div><div className="home-hero-card-footer"><span>Remaining balance</span><strong>INR 2,970.16</strong></div></div>
-}
-
 export default function HomePage() {
   const [stage, setStage] = useState<Stage>('plan')
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [filmFailed, setFilmFailed] = useState(false)
+  const [staticFilm, setStaticFilm] = useState(() => {
+    const connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches || connection?.saveData === true
+  })
+  const [showExplore, setShowExplore] = useState(false)
+  const menu = useRef<HTMLDetailsElement>(null)
+  const film = useRef<HTMLVideoElement>(null)
+  const hero = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const dismissOutside = (event: PointerEvent) => {
+      const details = menu.current
+      if (details?.open && event.target instanceof Node && !details.contains(event.target)) details.open = false
+    }
+    const dismissEscape = (event: globalThis.KeyboardEvent) => {
+      const details = menu.current
+      if (event.key === 'Escape' && details?.open) {
+        details.open = false
+        details.querySelector<HTMLElement>('summary')?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', dismissOutside)
+    document.addEventListener('keydown', dismissEscape)
+    return () => {
+      document.removeEventListener('pointerdown', dismissOutside)
+      document.removeEventListener('keydown', dismissEscape)
+    }
+  }, [])
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection
+    const update = () => setStaticFilm(media.matches || connection?.saveData === true)
+    media.addEventListener('change', update)
+    connection?.addEventListener('change', update)
+    return () => { media.removeEventListener('change', update); connection?.removeEventListener('change', update) }
+  }, [])
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const video = film.current
+    const section = hero.current
+    if (!video || !section) return
+    let frame = 0
+    let position: number | undefined
+    let previousTime = 0
+    const update = (now: number) => {
+      frame = 0
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return
+      const distance = Math.max(1, section.offsetHeight - window.innerHeight)
+      const progress = media.matches ? 0 : Math.max(0, Math.min(1, -section.getBoundingClientRect().top / distance))
+      setShowExplore(media.matches || progress >= 0.8)
+      const target = progress * Math.max(0, video.duration - 1 / 60)
+      const elapsed = previousTime ? Math.min(now - previousTime, 64) : 16
+      previousTime = now
+      position = position === undefined || media.matches ? target : position + (target - position) * (1 - Math.exp(-elapsed / 80))
+      if (Math.abs(target - position) < 0.008) position = target
+      if (Math.abs(video.currentTime - position) > 0.004) video.currentTime = position
+      if (position !== target) frame = requestAnimationFrame(update)
+      else previousTime = 0
+    }
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
+    video.pause()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    video.addEventListener('loadedmetadata', schedule)
+    media.addEventListener('change', schedule)
+    schedule()
+    return () => {
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      video.removeEventListener('loadedmetadata', schedule)
+      media.removeEventListener('change', schedule)
+      cancelAnimationFrame(frame)
+    }
+  }, [filmFailed, staticFilm])
   const page = useRef<HTMLElement>(null)
-  const header = useRef<HTMLElement>(null)
-  const menuButton = useRef<HTMLButtonElement>(null)
   const tabs = useRef<(HTMLButtonElement | null)[]>([])
   const current = stages.find(item => item.id === stage)!
-  useEffect(() => {
-    if (!menuOpen) return
-    header.current?.querySelector<HTMLAnchorElement>('#home-navigation a')?.focus()
-    function outside(event: PointerEvent) { if (!header.current?.contains(event.target as Node)) setMenuOpen(false) }
-    function escape(event: globalThis.KeyboardEvent) { if (event.key === 'Escape') { setMenuOpen(false); menuButton.current?.focus() } }
-    document.addEventListener('pointerdown', outside)
-    document.addEventListener('keydown', escape)
-    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
-  }, [menuOpen])
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
     const observer = new IntersectionObserver(entries => {
@@ -68,14 +126,25 @@ export default function HomePage() {
     if (next !== undefined) { event.preventDefault(); setStage(stages[next].id); tabs.current[next]?.focus() }
   }
   return <main ref={page} className="home-page">
-    <a className="home-skip" href="#home-content">Skip to content</a>
-    <section className="home-hero" aria-labelledby="home-title">
-      <img className="home-hero-art" src="/assets/home/hero.webp" srcSet="/assets/home/hero-small.webp 960w, /assets/home/hero.webp 1672w" sizes="100vw" alt="" fetchPriority="high" />
-      <div className="home-hero-shade" aria-hidden="true" />
-      <header className="home-header" ref={header}><a href="#" className="home-wordmark" aria-label="Cadentra home">Cadentra<span>.</span></a><nav className={menuOpen ? 'home-navigation is-open' : 'home-navigation'} id="home-navigation" aria-label="Main navigation"><a href="#product" onClick={() => setMenuOpen(false)}>Product</a><a href="#cycleguard" onClick={() => setMenuOpen(false)}>CycleGuard</a><a href="#team" onClick={() => setMenuOpen(false)}>Our team</a></nav><div className="home-header-actions"><a className="home-button home-button-small" href="/app">Open app<ArrowRight size={15} aria-hidden="true" /></a><button type="button" className="home-menu-toggle" ref={menuButton} onClick={() => setMenuOpen(value => !value)} aria-controls="home-navigation" aria-expanded={menuOpen} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button></div></header>
-      <div id="home-content" className="home-hero-inner" tabIndex={-1}><div className="home-hero-copy"><h1 id="home-title">Every cycle.<br />Under control.</h1><p className="home-hero-description">Subscriptions, billing and customer<br className="home-desktop-break" /> relationships. Beautifully connected.</p><div className="home-hero-actions"><a className="home-button" href="/app">Open app<ArrowRight size={18} aria-hidden="true" /></a><a className="home-text-link" href="#product">Explore the platform<ArrowDown size={17} aria-hidden="true" /></a></div></div><div className="home-hero-product"><HeroWorkspace /><span className="home-illustration-note">Illustrative workspace · INR</span></div></div>
+    <section id="top" ref={hero} className={filmFailed || staticFilm ? 'home-hero home-hero-static' : 'home-hero'} aria-labelledby="home-title">
+      <div className="home-film-sticky">
+      <h1 id="home-title" className="home-film-title">Cadentra: every cycle under control</h1>
+      <a className="home-skip" href="#product">Skip to content</a>
+      <div id="home-content" className="home-film-stage" tabIndex={-1}>
+        {filmFailed || staticFilm ? <img src="/assets/home/hero.webp" alt="Mint glass sculpture" /> : <video ref={film} src="/assets/home/hero-film.mp4" poster="/assets/home/hero.webp" aria-label="Cadentra concept film" muted playsInline preload="auto" onError={() => setFilmFailed(true)} />}
+      </div>
+      <header className="home-film-header">
+        <a className="home-film-brand" href="#top">Cadentra<span>.</span></a>
+        <nav className="home-film-nav" aria-label="Main navigation"><a href="#top">Home</a><a href="#product">Product</a><a href="#cycleguard">CycleGuard</a><a href="#team">Our team</a></nav>
+        <a className="home-film-app" href="/app">Open app <ArrowRight size={15} aria-hidden="true" /></a>
+        <details className="home-film-menu" ref={menu}><summary aria-label="Main navigation">Menu</summary><nav aria-label="Mobile navigation" onClick={() => { if (menu.current) menu.current.open = false }}><a href="#top">Home</a><a href="#product">Product</a><a href="#cycleguard">CycleGuard</a><a href="#team">Our team</a><a href="/app">Open app</a></nav></details>
+      </header>
+      <p className="home-film-mobile-copy" aria-hidden="true">Every cycle.<br />Under control.</p>
+      {!filmFailed && !staticFilm && !showExplore && <span className="home-film-scroll-cue" aria-hidden="true">Scroll to explore <ArrowDown size={14} /></span>}
+      {(showExplore || filmFailed || staticFilm) && <a className="home-film-explore" href="#product">Explore the product <ArrowDown size={15} aria-hidden="true" /></a>}
+      </div>
     </section>
-    <section className="home-product home-section" id="product" aria-labelledby="home-product-title"><div className="home-section-heading"><p className="home-section-kicker">ONE CONTINUOUS WORKFLOW</p><h2 id="home-product-title">From first quote to next renewal.</h2><p>Build the plan. Agree the terms. Follow the money.<br className="home-desktop-break" />One workspace keeps the whole cycle in view.</p></div><div className="home-product-layout"><div className="home-product-story"><div role="tablist" aria-label="Explore the subscription workflow" className="home-tabs">{stages.map((item,index)=><button key={item.id} ref={element=>{tabs.current[index]=element}} id={`home-tab-${item.id}`} type="button" role="tab" aria-selected={stage===item.id} aria-controls="home-stage-panel" tabIndex={stage===item.id?0:-1} onKeyDown={event=>tabKey(event,index)} onClick={()=>setStage(item.id)}>{item.label}</button>)}</div><div className="home-stage-copy"><span className="home-stage-number">{current.number}<span> / 04</span></span><h3>{current.title}</h3><p>{current.description}</p><a href="/app" className="home-dark-link">See it in the workspace<ArrowRight size={17} aria-hidden="true" /></a></div><p className="home-preview-disclaimer">Product previews use illustrative records.<br />Your workspace uses your saved data.</p></div><div id="home-stage-panel" role="tabpanel" aria-labelledby={`home-tab-${stage}`} className="home-product-stage" tabIndex={0}><StagePreview stage={stage} /></div></div><div className="home-principles"><div><span><Layers3 size={20} aria-hidden="true" /></span><h3>One connected record.</h3><p>Products, subscriptions, invoices and payments share the same story.</p></div><div><span><ShieldCheck size={20} aria-hidden="true" /></span><h3>Clarity at every step.</h3><p>Roles and ownership keep customer records in the right hands.</p></div><div><span><RefreshCw size={20} aria-hidden="true" /></span><h3>Built around the cycle.</h3><p>Recurring schedules and linked renewals keep the next step visible.</p></div></div></section>
+    <section className="home-product home-section" id="product" tabIndex={-1} aria-labelledby="home-product-title"><div className="home-section-heading"><p className="home-section-kicker">ONE CONTINUOUS WORKFLOW</p><h2 id="home-product-title">From first quote to next renewal.</h2><p>Build the plan. Agree the terms. Follow the money.<br className="home-desktop-break" />One workspace keeps the whole cycle in view.</p></div><div className="home-product-layout"><div className="home-product-story"><div role="tablist" aria-label="Explore the subscription workflow" className="home-tabs">{stages.map((item,index)=><button key={item.id} ref={element=>{tabs.current[index]=element}} id={`home-tab-${item.id}`} type="button" role="tab" aria-selected={stage===item.id} aria-controls="home-stage-panel" tabIndex={stage===item.id?0:-1} onKeyDown={event=>tabKey(event,index)} onClick={()=>setStage(item.id)}>{item.label}</button>)}</div><div className="home-stage-copy"><span className="home-stage-number">{current.number}<span> / 04</span></span><h3>{current.title}</h3><p>{current.description}</p><a href="/app" className="home-dark-link">See it in the workspace<ArrowRight size={17} aria-hidden="true" /></a></div><p className="home-preview-disclaimer">Product previews use illustrative records.<br />Your workspace uses your saved data.</p></div><div id="home-stage-panel" role="tabpanel" aria-labelledby={`home-tab-${stage}`} className="home-product-stage" tabIndex={0}><StagePreview stage={stage} /></div></div><div className="home-principles"><div><span><Layers3 size={20} aria-hidden="true" /></span><h3>One connected record.</h3><p>Products, subscriptions, invoices and payments share the same story.</p></div><div><span><ShieldCheck size={20} aria-hidden="true" /></span><h3>Clarity at every step.</h3><p>Roles and ownership keep customer records in the right hands.</p></div><div><span><RefreshCw size={20} aria-hidden="true" /></span><h3>Built around the cycle.</h3><p>Recurring schedules and linked renewals keep the next step visible.</p></div></div></section>
     <section className="home-cycleguard home-section" id="cycleguard" aria-labelledby="home-cycle-title"><div className="home-cycle-copy"><p className="home-section-kicker">CYCLEGUARD</p><h2 id="home-cycle-title">Know what needs<br />your attention.</h2><p>Keep billing health in view. CycleGuard brings record-linked signals into the workspace, so the next action starts with context.</p><a href="/app" className="home-text-link">Explore your workspace<ArrowRight size={18} aria-hidden="true" /></a><span className="home-cycle-footnote">Explainable records. No black-box forecasts.</span></div><div className="home-cycle-visual"><img src="/assets/home/cycle.webp" srcSet="/assets/home/cycle-small.webp 960w, /assets/home/cycle.webp 1672w" sizes="(max-width: 800px) 100vw, 50vw" alt="" loading="lazy" /><div className="home-health-panel"><div className="home-health-heading"><span className="home-health-symbol"><ShieldCheck size={20} aria-hidden="true" /></span><div><strong>CycleGuard</strong><span>Billing health, with context</span></div><span className="home-health-preview">PREVIEW</span></div><div className="home-health-row"><span className="home-health-indicator" /><div><strong>Overdue balances</strong><span>Trace the amount to its invoice.</span></div><ArrowRight size={17} aria-hidden="true" /></div><div className="home-health-row"><span className="home-health-indicator muted" /><div><strong>Billing periods</strong><span>Review the outcome for each cycle.</span></div><ArrowRight size={17} aria-hidden="true" /></div><div className="home-health-row"><span className="home-health-indicator muted" /><div><strong>Email status</strong><span>Separate queued from accepted.</span></div><ArrowRight size={17} aria-hidden="true" /></div><div className="home-health-caption">Illustrative signals · open the app for actual records</div></div></div></section>
     <section className="home-team home-section" id="team" aria-labelledby="home-team-title"><div className="home-team-heading"><div><p className="home-section-kicker">THE PEOPLE BEHIND CADENTRA</p><h2 id="home-team-title">Built for the people<br />behind every cycle.</h2></div><p>A small team building a clearer way to manage the subscription cycle—from the foundations to the final detail.</p></div><div className="home-people">{people.map(person=><article key={person.name}><h3>{person.name}</h3><p className="home-person-role">{person.role}</p><p>{person.description}</p></article>)}</div></section>
     <section className="home-final-cta"><h2>Bring every<br />cycle together.</h2><a className="home-button" href="/app">Open app<ArrowRight size={19} aria-hidden="true" /></a></section>
