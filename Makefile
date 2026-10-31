@@ -47,10 +47,12 @@ smoke:
 	python3 scripts/smoke.py --origin $(SMOKE_ORIGIN)
 
 test:
+	@test -n "$$TEST_DATABASE_URL" || { printf '%s\n' 'Set an explicitly disposable PostgreSQL TEST_DATABASE_URL before running the full suite.'; exit 2; }
 	python3 scripts/check_pack.py
 	$(UV) run --project backend --frozen pytest backend/tests
 	@if test -f frontend/package.json; then npm --prefix frontend run test; else printf '%s\n' 'Frontend tests not run: foundation not integrated.'; fi
 
 lint:
+	node --check scripts/check_gate_a.mjs
 	$(UV) run --project backend --frozen ruff check backend scripts/smoke.py
 	@if test -f frontend/package.json; then npm --prefix frontend run lint && npm --prefix frontend run typecheck; else printf '%s\n' 'Frontend checks not run: foundation not integrated.'; fi

@@ -64,3 +64,5 @@ Document views derive paid_amount from payments and balance from invoice.total -
 ## Retained rule revisions
 
 Tax and discount resource IDs remain stable parent UUIDs. Resolve the immutable revision applicable at service period_start, separately checking its eligibility window. Revision intervals are nonoverlapping [effective_from,effective_until), with UNIQUE(parent,effective_from). Database guards serialize parent writes, reject overlap and payload/deletion changes, and allow only closing an open predecessor. Create product memberships in the same transaction as their revision. Selected plan/line tax IDs reference stable rules; invoices retain both stable and selected-revision references plus calculation snapshots. Discount usage never resets when a revision changes.
+
+Migration0002 stores discount revision value as NUMERIC(20,4), preserving four-decimal percentage values. A database check requires FIXED values at cent precision; percentage values remain bounded0-100. Downgrade refuses loss of retained precision.

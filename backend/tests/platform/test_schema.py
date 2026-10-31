@@ -11,6 +11,8 @@ from sqlalchemy.exc import IntegrityError
 from app.models import (
     BillingPeriod,
     Customer,
+    DiscountRule,
+    DiscountRuleRevision,
     Invoice,
     Plan,
     Product,
@@ -175,3 +177,36 @@ def test_revision_memberships_must_be_created_with_revision_and_remain_immutable
         db_session.add(TaxRevisionProduct(tax_rule_revision_id=older.id, product_id=another.id))
         db_session.flush()
     assert db_session.get(TaxRuleRevision, older.id) is not None
+
+
+def test_discount_percent_retains_four_places_while_fixed_rules_require_cents(db_session):
+    rules = [DiscountRule(), DiscountRule(), DiscountRule()]
+    db_session.add_all(rules)
+    db_session.flush()
+
+    def candidate(rule, kind, value):
+        return DiscountRuleRevision(
+            discount_rule_id=rule.id,
+            name="Precision rule",
+            effective_from=date(2026, 1, 1),
+            starts_on=date(2026, 1, 1),
+            kind=kind,
+            scope="SUBSCRIPTION",
+            value=Decimal(value),
+        )
+
+    percentage = candidate(rules[0], "PERCENT", "9.9999")
+    db_session.add(percentage)
+    db_session.flush()
+    db_session.refresh(percentage)
+    assert percentage.value == Decimal("9.9999")
+
+    with pytest.raises(IntegrityError), db_session.begin_nested():
+        db_session.add(candidate(rules[1], "FIXED", "0.1234"))
+        db_session.flush()
+
+    fixed = candidate(rules[2], "FIXED", "0.12")
+    db_session.add(fixed)
+    db_session.flush()
+    db_session.refresh(fixed)
+    assert fixed.value == Decimal("0.12")

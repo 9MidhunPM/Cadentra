@@ -288,6 +288,7 @@ class DiscountRule(Record, Base):
 class DiscountRuleRevision(Record, Base):
     __tablename__ = "discount_rule_revisions"
     __table_args__ = (
+        CheckConstraint("kind <> 'FIXED' OR value = round(value, 2)", name="fixed_precision"),
         UniqueConstraint("discount_rule_id", "effective_from"),
         CheckConstraint(
             "effective_until IS NULL OR effective_until > effective_from", name="effective_window"
@@ -307,7 +308,7 @@ class DiscountRuleRevision(Record, Base):
     effective_until: Mapped[date | None] = mapped_column(Date)
     name: Mapped[str] = mapped_column(String(200))
     kind: Mapped[str] = mapped_column(String(16))
-    value: Mapped[Decimal] = mapped_column(MONEY)
+    value: Mapped[Decimal] = mapped_column(Numeric(20, 4))
     scope: Mapped[str] = mapped_column(String(16))
     min_purchase: Mapped[Decimal] = money()
     min_quantity: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

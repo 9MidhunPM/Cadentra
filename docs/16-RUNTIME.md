@@ -71,3 +71,9 @@ The test target runs pack checks and backend tests, then frontend tests if the f
 ## Resolved container references
 
 The Dockerfile pins Python 3.12.13 and uv 0.12.9; PostgreSQL is pinned to 18.6-bookworm. Image builds and Compose execution require a Docker-capable environment and must be recorded separately from native checks. The supported PostgreSQL 18.6 image/tag and volume convention were checked against the [official image documentation](https://hub.docker.com/_/postgres); uv installation follows [its Docker guide](https://docs.astral.sh/uv/guides/integration/docker/). Do not label the container build as verified until it actually runs.
+
+## Verified local Gate A check
+
+With the frontend proxy and API running against an explicitly disposable local demo database, run `node scripts/check_gate_a.mjs`. Install Playwright Chromium first, or set PLAYWRIGHT_CHROMIUM_EXECUTABLE to a compatible installed Chromium. The check only accepts localhost/127.0.0.1 HTTP origins (GATE_A_ORIGIN defaults to http://localhost:5171), creates one fictional customer, verifies real cookie/CSRF/role/session behavior through the proxy and checks customer navigation. Set GATE_A_SCREENSHOT for a local evidence image. It does not prove the full subscription/payment workflow.
+
+The full `make test` requires TEST_DATABASE_URL and refuses to report a complete suite with the PostgreSQL tests silently omitted. Native Gate A was verified with PostgreSQL18.6, migrations0001 and0002, real browser proxy requests and locked frontend build/tests. Docker execution and external SMTP delivery remain unverified.

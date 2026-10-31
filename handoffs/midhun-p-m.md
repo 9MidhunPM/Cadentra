@@ -1,10 +1,10 @@
 # Midhun P M: handoff
 
-Status: BACKEND FOUNDATION CANDIDATE VERIFIED; INTEGRATED GATE A PENDING
+Status: GATE A INTEGRATION VERIFIED; FOUNDATION PR PUBLICATION IN PROGRESS
 
 Role: Platform & Catalog; team coordination and integration
 Branch: feature/platform-foundation
-Implementation commit: resolve this branch's foundation implementation commit from Git history; an evidence follow-up records the exact hash after creation.
+Implementation commit: f6f3f79a024cd4da1bc049f8aecb0d1c68ac9df5; reviewed main integration commit b86e3a3f07f1e484fc25c25c7f60ff318ed9714a; final evidence/precision commit follows.
 
 ## Delivered slice
 
@@ -12,7 +12,7 @@ Shared PostgreSQL ORM (27 tables), static Alembic0001, atomic numbering, retaine
 
 ## Tests actually executed
 
-Full backend PostgreSQL test suite and lint run before implementation commit; exact final result recorded in follow-up. Tests cover signup/login/logout/reset/staff/customer permissions, catalog prices/plans/snapshots, decimal context, malformed CSRF, seed login/idempotency, outbox payload/retry/SMTP adapter behavior and database uniqueness/revision guards. Initial migrations apply to fresh native PostgreSQL18.6 databases; Alembic drift check passes.
+Backend implementation initially passed50PostgreSQL tests; after calendar integration and migration0002 the combined suite passed61tests plus80subtests. Frontend typecheck/lint/build and47unit/component tests pass. A real Chromium browser through localhost:5171 Vite -> localhost:8001 FastAPI -> PostgreSQL passed health200, signup201, login/session200, customer403forcatalog, missingCSRF403, renderedcustomer navigation, logout200 and subsequent401 with zero page errors. Screenshot inspected locally; test accounts are fictional. Tests cover signup/login/logout/reset/staff/customer permissions, catalog prices/plans/snapshots, decimal context, malformed CSRF, seed login/idempotency, outbox payload/retry/SMTP adapter behavior and database uniqueness/revision guards. Migrations0001/0002 apply to isolated native PostgreSQL18.6 databases; Alembic drift check passes.
 
 No real external email, true financial service races, complete product browser journey, benchmark or Docker deployment is claimed. Native runtime uses signed packages under /tmp, no system install.
 
@@ -26,4 +26,4 @@ Frontend foundation PR2 and subscription calendar PR1 reviewed and integrated. B
 
 ## Next dependency
 
-Integrate backend foundation via PR, combine frontend/backend against real PostgreSQL, record Gate A evidence and notify owners. Then persistent subscriptions/billing/reporting proceed from reviewed main. Midhun P M owns identity/catalog feature screens next; other owners retain their modules.
+Merge the reviewed backend foundation PR4 after final suite and notify owners of the exact integrated main. Combined frontend/backend/PostgreSQL Gate A verification has passed. Then persistent subscriptions/billing/reporting proceed from reviewed main. Midhun P M owns identity/catalog feature screens next; other owners retain their modules.
