@@ -6,7 +6,7 @@ Cadentra is the four-person team's application for the **Subscription Management
 
 ## Current checkpoint
 
-The planning pack and teammate startup instructions are ready. The application is not implemented and **Gate A is pending**. Midhun P M owns the first repository setup and shared backend baseline. The approved remote is https://github.com/9MidhunPM/Cadentra. The user authorized one initial planning-pack commit/push to `main`; subsequent application changes use feature branches and PRs.
+The planning pack and teammate startup instructions are ready. The backend foundation now supplies models/migration, identity/customer/catalog APIs and runtime commands. **Gate A is pending combined frontend/API verification**; read the current release handoff before beginning dependent services. Midhun P M owns the first repository setup and shared backend baseline. The approved remote is https://github.com/9MidhunPM/Cadentra. The user authorized one initial planning-pack commit/push to `main`; subsequent application changes use feature branches and PRs.
 
 ## Team and startup prompts
 

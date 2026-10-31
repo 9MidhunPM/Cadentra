@@ -1,27 +1,29 @@
 # Midhun P M: handoff
 
-Status: PLANNING-PACK MIGRATION COMPLETE; APPLICATION NOT STARTED
+Status: GATE A VERIFIED; FOUNDATION PR4 READY FOR MERGE
 
 Role: Platform & Catalog; team coordination and integration
-Setup branch: main (one-time planning-pack initialization authorized by user)
-Next application branch: feature/platform-foundation
-Planning commit: the initial root documentation commit; resolve its exact hash with `git log --max-parents=0 --format=%H`
-Application commit: NONE
+Branch: feature/platform-foundation
+Implementation commit: f6f3f79a024cd4da1bc049f8aecb0d1c68ac9df5; reviewed main integration commit b86e3a3f07f1e484fc25c25c7f60ff318ed9714a; final evidence/precision commit follows.
 
-## Prepared slice
-Four-person ownership documentation, named role instructions/handoffs, functionality-based feature branches and PR startup/delivery instructions. Shared backend and frontend Gate A remain pending.
+## Delivered slice
 
-## Files changed
-Root/team instructions, prompts and handoffs, with supporting pack/index/scripts updates coordinated in this initial planning slice. Inspect the initial commit for the exact complete file list.
+Shared PostgreSQL ORM (27 tables), static Alembic0001, atomic numbering, retained tax/discount revision guards, settings, synchronous request/auth sessions, Actor/role/CSRF/origin dependencies, money/clock/error helpers, health and feature router imports. Identity/customer/catalog APIs persist real records. SMTP outbox distinguishes acceptance from external delivery. Standalone worker refuses unavailable lifecycle/billing services rather than reporting fake success. Compose/native Make targets, non-destructive idempotent demo seed and smoke checker are included.
 
-## Tests actually run
-`python3 scripts/check_pack.py`: PASS (structure, names, links, six arithmetic fixtures, four cadence fixtures, payment/example consistency). `bash -n scripts/preflight.sh`: PASS. `python3 -m py_compile scripts/check_pack.py`: PASS. Preflight completed with exit 0 and unchanged repository-local Git configuration. See PACK_VALIDATION.md for evidence and environment limitations. No application, migration, browser, concurrency, email or deployment checks have run.
+## Tests actually executed
 
-## Required shared changes
-Midhun P M builds the shared backend baseline; Sherin Saji builds shared frontend primitives. Agree stable exports, session/error/amount shapes and same-origin transport, integrate both foundation PRs and verify Gate A together.
+Backend implementation initially passed50PostgreSQL tests; after calendar integration and migration0002 the combined suite passed74tests after pricing integration (calendar checks also exercise80subtests). Frontend typecheck/lint/build and47unit/component tests pass. A real Chromium browser through localhost:5171 Vite -> localhost:8001 FastAPI -> PostgreSQL passed health200, signup201, login/session200, customer403forcatalog, missingCSRF403, renderedcustomer navigation, logout200 and subsequent401 with zero page errors. Screenshot inspected locally; test accounts are fictional. Tests cover signup/login/logout/reset/staff/customer permissions, catalog prices/plans/snapshots, decimal context, malformed CSRF, seed login/idempotency, outbox payload/retry/SMTP adapter behavior and database uniqueness/revision guards. Migrations0001/0002 apply to isolated native PostgreSQL18.6 databases; Alembic drift check passes.
 
-## Known gaps and next dependency
-All application requirements remain unimplemented. Dependency versions, migration, real SMTP and deployment are pending. The documentation baseline permits preparation, not a claim that Gate A passed.
+No real external email, true financial service races, complete product browser journey, benchmark or Docker deployment is claimed. Native runtime uses signed packages under /tmp, no system install.
 
-## Next slice
-Follow prompts/00-BOOTSTRAP.md on feature/platform-foundation. Provide all agreed models, initial migration, helpers/module stubs, health, standalone worker wiring and documented commands, then open the foundation PR.
+## Shared exports
+
+Models: app.models; app.db.base.Base; app.db.session get_session/SessionFactory (no implicit commit). Core: auth Actor/Role/require_actor/require_role; clock get_clock; money money/money_string; errors DomainError. Catalog.service exports get_plan_snapshot/get_product_snapshot/get_product_tax_ids. See API contract for exact shared DTO/date/template/revision semantics.
+
+## Coordination
+
+Frontend foundation PR2 and subscription calendar PR1 reviewed and integrated. Billing pricing PR3 reviewed and integrated with final precision head76c1bd6. Hourly ready-slice/main synchronization requested from all three teammates; merges remain serial and review-gated.
+
+## Next dependency
+
+Merge the reviewed backend foundation PR4 after final suite and notify owners of the exact integrated main. Combined frontend/backend/PostgreSQL Gate A verification has passed. Then persistent subscriptions/billing/reporting proceed from reviewed main. Midhun P M owns identity/catalog feature screens next; other owners retain their modules.

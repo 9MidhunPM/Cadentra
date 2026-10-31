@@ -6,9 +6,9 @@ Cadentra is a proposed unified subscription management platform for the **Subscr
 
 ## Status
 
-This repository currently contains the planning pack only. Features below are planned, not claimed as implemented. Replace this status with verified functionality as work lands.
+The backend foundation implements persistent identity/customer/catalog APIs, shared ORM models, Alembic migrations, explicit worker wiring and an SMTP outbox. The shared frontend foundation is reviewed and integrated; business screens are still placeholders. Integrated Gate A verification is recorded in the release handoff before domain implementation is declared ready.
 
-## Planned product
+## Product scope
 
 - Role-based administration, staff tools and a customer portal.
 - Products, price-adjusting variants and daily/weekly/monthly/yearly plans.
@@ -32,11 +32,11 @@ Dependency versions are not fabricated here. Resolve mutually compatible maintai
 | Noel Biju | Billing & Payments | `prompts/03-BILLING.md` |
 | Sherin Saji | Experience & Reporting | `prompts/04-EXPERIENCE.md` |
 
-Use independent clones and feature-named branches. Open a PR to `main` after checks, or prepare the PR details and ask Midhun P M to create it. The planning pack is ready for onboarding; application Gate A is still pending. See [START_HERE.md](START_HERE.md) for what each person can begin now.
+Use independent clones and feature-named branches. Open a PR to `main` after checks, or prepare the PR details and ask Midhun P M to create it. The team is implementing its feature slices; consult the latest release and contributor handoffs for Gate A evidence. See [START_HERE.md](START_HERE.md) for what each person can begin now.
 
 ## Required implementation commands
 
-Midhun P M must create and verify `make dev`, `make test`, `make lint`, `make seed-demo`, and `make smoke`. These commands do not exist yet. The only executable check included now is:
+The backend now provides `make dev`, `make test`, `make lint`, `make seed-demo`, and `make smoke`. See [runtime instructions](docs/16-RUNTIME.md) for Compose/native prerequisites and explicit disposable test databases. Planning fixtures can also be checked independently:
 
 ```sh
 python3 scripts/check_pack.py
@@ -50,7 +50,7 @@ Fill in only after verification:
 - Approved app/repository name: Cadentra; `9MidhunPM/Cadentra`
 - Deployment URL: not deployed
 - Demonstration video: not recorded
-- Tested commit: not implemented
+- Tested commit: see `handoffs/RELEASE.md` (checks and remaining gaps recorded separately)
 - Implemented requirements and remaining gaps: `docs/15-REQUIREMENTS.md`
 - Team: Midhun P M, Thanushree Suresh, Noel Biju, Sherin Saji; record contributions as they land
 

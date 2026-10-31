@@ -57,9 +57,13 @@ Migration/test impact:
 
 ## Resolved versions
 
-Python: NOT RESOLVED
-Node: NOT RESOLVED
-PostgreSQL: NOT RESOLVED
-Backend lockfile: NOT CREATED
-Frontend lockfile: NOT CREATED
-Container tags/digests: NOT RESOLVED
+Python: 3.12.13
+Node: verified 26.12.1, frontend minimum >=22.12
+PostgreSQL: 18.6 (native signed Arch runtime verified; Compose image pinned 18.6-bookworm)
+Backend lockfile: backend/uv.lock; FastAPI 0.162.0, SQLAlchemy 2.0.55, Alembic 1.20.1, psycopg 3.3.6; all transitives locked
+Frontend lockfile: frontend/package-lock.json from Sherin Saji foundation; React 19.3.1, React Router 8.5.1, Vite 8.3.5, TypeScript 6.0.3
+Container tags/digests: python:3.12.13-slim-bookworm, postgres:18.6-bookworm, uv:0.12.9; container execution remains untested in this shell
+
+## Foundation coordination decisions
+
+2026-10-31: coordinator confirmed typed session/actor/clock/money imports, immutable cycle/pricing DTO boundaries, template/edit/date rules, stable tax/discount identities with retained revisions, issue-date catch-up billing and serial hourly PR integration. See API/domain/data-model documents for exact contracts. Other feature owners retain implementation ownership. Native PostgreSQL test verification is distinct from unperformed Docker/deployment/email tests.
