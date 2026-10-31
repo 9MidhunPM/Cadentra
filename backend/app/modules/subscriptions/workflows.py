@@ -48,7 +48,7 @@ def _subscription(db, actor, identifier, *, lock=True):
         query = query.with_for_update().execution_options(populate_existing=True)
     row = db.scalar(query)
     if row is None:
-        raise DomainError("NOT_FOUND", "Subscription not found.", 404)
+        raise DomainError("NOT_FOUND", "Record not found.", 404)
     require_customer_ownership(actor, row.customer_id)
     if actor.role not in {"ADMIN", "STAFF", "CUSTOMER"}:
         raise DomainError("FORBIDDEN", "Subscription access is forbidden.", 403)

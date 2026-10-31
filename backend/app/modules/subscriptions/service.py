@@ -90,7 +90,7 @@ def get_billable_inputs(db: Session, subscription_id: UUID, cycle_index: int) ->
         raise DomainError("INVALID_CYCLE", "Cycle index must be a nonnegative integer.")
     subscription = db.get(Subscription, subscription_id)
     if subscription is None:
-        raise DomainError("NOT_FOUND", "Subscription not found.", 404)
+        raise DomainError("NOT_FOUND", "Record not found.", 404)
     if subscription.state != "ACTIVE":
         raise DomainError("INVALID_TRANSITION", "Only active subscriptions can be billed.")
     if cycle_index < subscription.next_cycle_index:
@@ -194,7 +194,7 @@ def apply_action(
 
     subscription = db.get(Subscription, subscription_id)
     if subscription is None:
-        raise DomainError("NOT_FOUND", "Subscription not found.", 404)
+        raise DomainError("NOT_FOUND", "Record not found.", 404)
     require_customer_ownership(actor, subscription.customer_id)
     if actor.role not in {"ADMIN", "STAFF", "CUSTOMER"}:
         raise DomainError("FORBIDDEN", "Your role cannot act on subscriptions.", 403)

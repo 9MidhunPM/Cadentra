@@ -1,7 +1,7 @@
 """Permission-checked subscription projections without financial side effects."""
 
 from datetime import date
-from decimal import Context, Decimal, localcontext
+from decimal import Context, Decimal, InvalidOperation, localcontext
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -23,26 +23,69 @@ from app.models import (
 from app.modules.billing.rules import get_applicable_taxes
 from app.modules.catalog.service import get_product_tax_ids
 
-from .calendar import CycleSnapshot, get_cycle_bounds
+from .calendar import CADENCES, CycleSnapshot, get_cycle_bounds
 
-PLAN_FIELDS = frozenset(
-    {
-        "schema_version",
-        "plan_id",
-        "name",
-        "base_fee",
-        "currency",
-        "cadence",
-        "min_quantity",
-        "available_from",
-        "available_until",
-        "allow_pause",
-        "allow_early_close",
-        "allow_renew",
-        "auto_close",
-        "tax_rule_ids",
-    }
-)
+
+def _valid_uuid_string(value):
+    if not isinstance(value, str):
+        return False
+    try:
+        UUID(value)
+        return True
+    except ValueError:
+        return False
+
+
+def safe_plan_projection(snapshot) -> dict:
+    """Copy only correctly typed public fields; never project nested legacy data."""
+    if not isinstance(snapshot, dict):
+        raise DomainError("INVALID_SNAPSHOT", "Subscription pricing snapshot is invalid.")
+    result = {}
+    value = snapshot.get("base_fee")
+    try:
+        if not isinstance(value, str):
+            raise ValueError("Expected decimal string")
+        amount = Decimal(value)
+        if (
+            not amount.is_finite()
+            or amount < 0
+            or amount > Decimal("9999999999999999.99")
+            or amount.as_tuple().exponent < -2
+        ):
+            raise ValueError("Invalid monetary value")
+    except (ValueError, InvalidOperation) as error:
+        raise DomainError(
+            "INVALID_SNAPSHOT", "Subscription pricing snapshot is invalid."
+        ) from error
+    result["base_fee"] = value
+    for key in ("name", "currency"):
+        if isinstance(snapshot.get(key), str):
+            result[key] = snapshot[key]
+    if isinstance(snapshot.get("cadence"), str) and snapshot["cadence"] in CADENCES:
+        result["cadence"] = snapshot["cadence"]
+    if _valid_uuid_string(snapshot.get("plan_id")):
+        result["plan_id"] = snapshot["plan_id"]
+    for key in ("available_from", "available_until"):
+        value = snapshot.get(key)
+        if key == "available_until" and key in snapshot and value is None:
+            result[key] = None
+        elif isinstance(value, str) and len(value) == 10:
+            try:
+                date.fromisoformat(value)
+                result[key] = value
+            except ValueError:
+                pass
+    for key in ("schema_version", "min_quantity"):
+        if type(snapshot.get(key)) is int and snapshot[key] > 0:
+            result[key] = snapshot[key]
+    for key in ("allow_pause", "allow_early_close", "allow_renew", "auto_close"):
+        if type(snapshot.get(key)) is bool:
+            result[key] = snapshot[key]
+    if isinstance(snapshot.get("tax_rule_ids"), list):
+        result["tax_rule_ids"] = [
+            value for value in snapshot["tax_rule_ids"] if _valid_uuid_string(value)
+        ]
+    return result
 
 
 def _pagination(page, page_size):
@@ -81,18 +124,20 @@ def _pause_data(pauses, today: date):
 
 
 def _summary(row, customer_name, gross, pauses, today):
-    plan = {key: value for key, value in row.plan_snapshot.items() if key in PLAN_FIELDS}
+    plan = safe_plan_projection(row.plan_snapshot)
     quotation_valid_days = row.plan_snapshot.get("quotation_valid_days", 7)
     if type(quotation_valid_days) is not int or quotation_valid_days <= 0:
         quotation_valid_days = 7
     bounds = None
+    if row.state in {"CONFIRMED", "ACTIVE"} and "cadence" not in plan:
+        raise DomainError("INVALID_SNAPSHOT", "Subscription scheduling snapshot is invalid.")
     if row.state in {"CONFIRMED", "ACTIVE"} and plan.get("cadence"):
         bounds = get_cycle_bounds(
             CycleSnapshot(row.start_date, row.end_date, plan["cadence"], row.close_effective_on),
             row.next_cycle_index,
         )
     with localcontext(Context(prec=50)):
-        recurring = Decimal(plan.get("base_fee", "0.00")) + gross
+        recurring = Decimal(plan["base_fee"]) + gross
     return {
         "id": str(row.id),
         "number": row.number,
@@ -204,7 +249,7 @@ def subscription_data(db: Session, actor: Actor, row: Subscription) -> dict:
     tax_cache = {}
     product_ids = {}
     result["base_fee_taxes"] = _tax_metadata(
-        db, row.plan_snapshot.get("tax_rule_ids", []), preview_on, tax_cache
+        db, result["plan_snapshot"].get("tax_rule_ids", []), preview_on, tax_cache
     )
     for line, projection in zip(lines, result["lines"], strict=True):
         if line.product_id not in product_ids:
@@ -229,7 +274,7 @@ def subscription_data(db: Session, actor: Actor, row: Subscription) -> dict:
 def get_subscription_for_actor(db: Session, actor: Actor, subscription_id: UUID) -> dict:
     row = db.get(Subscription, subscription_id)
     if row is None:
-        raise DomainError("NOT_FOUND", "Subscription not found.", 404)
+        raise DomainError("NOT_FOUND", "Record not found.", 404)
     return subscription_data(db, actor, row)
 
 

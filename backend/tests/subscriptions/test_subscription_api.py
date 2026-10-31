@@ -380,3 +380,102 @@ def test_omission_is_distinct_from_invalid_explicit_lines(lines):
             schemas.SubscriptionCreate(**payload, lines=lines)
     else:
         assert schemas.SubscriptionCreate(**payload, lines=lines).lines == []
+
+
+def test_customer_plan_projection_drops_nested_legacy_secrets(db_session, client, api_setup):
+    import json
+
+    draft = create(client, api_setup)
+    row = db_session.get(Subscription, draft["id"])
+    safe_tax_id = str(uuid4())
+    snapshot = dict(row.plan_snapshot)
+    snapshot.update(
+        {
+            "base_fee": "025.00",
+            "name": {"internal_cost": "secret-cost-token"},
+            "currency": {"staff_notes": "secret-staff-token"},
+            "plan_id": {"staff_notes": "secret-id-token"},
+            "schema_version": True,
+            "min_quantity": {"internal_cost": "secret-minimum-token"},
+            "allow_pause": {"staff_notes": "secret-policy-token"},
+            "tax_rule_ids": [safe_tax_id, {"staff_notes": "secret-tax-token"}],
+        }
+    )
+    row.plan_snapshot = snapshot
+    db_session.commit()
+    actor = Actor(uuid4(), "CUSTOMER", api_setup.customer.id)
+    detail = queries.get_subscription_for_actor(db_session, actor, row.id)
+    encoded = json.dumps(detail)
+    assert (
+        "secret-" not in encoded and "internal_cost" not in encoded and "staff_notes" not in encoded
+    )
+    projected = detail["plan_snapshot"]
+    assert projected["base_fee"] == "025.00"
+    assert detail["recurring_subtotal"] == "325.00"
+    assert projected["tax_rule_ids"] == [safe_tax_id]
+    assert all(
+        key not in projected
+        for key in ("name", "currency", "plan_id", "schema_version", "min_quantity", "allow_pause")
+    )
+    listed = queries.list_subscriptions(db_session, actor)
+    assert "secret-" not in json.dumps(listed)
+
+
+@pytest.mark.parametrize(
+    "base_fee", [None, {"internal_cost": "private"}, "NaN", "-1.00", "1e100", True]
+)
+def test_invalid_financial_snapshot_is_rejected_not_replaced_with_zero(
+    db_session, client, api_setup, base_fee
+):
+    draft = create(client, api_setup)
+    row = db_session.get(Subscription, draft["id"])
+    row.plan_snapshot = {**row.plan_snapshot, "base_fee": base_fee}
+    db_session.commit()
+    actor = Actor(uuid4(), "CUSTOMER", api_setup.customer.id)
+    with pytest.raises(DomainError) as caught:
+        queries.get_subscription_for_actor(db_session, actor, row.id)
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_SNAPSHOT", 409)
+    assert "private" not in caught.value.message
+
+
+def test_missing_and_foreign_customer_records_have_identical_not_found_errors(
+    db_session, client, api_setup
+):
+    other = Customer(display_name="Private other customer", email=f"{uuid4()}@example.com")
+    db_session.add(other)
+    db_session.commit()
+    draft = create(client, api_setup, customer_id=str(other.id))
+    actor = Actor(uuid4(), "CUSTOMER", api_setup.customer.id)
+    errors = []
+    for identifier in (uuid4(), draft["id"]):
+        with pytest.raises(DomainError) as caught:
+            queries.get_subscription_for_actor(db_session, actor, identifier)
+        errors.append((caught.value.code, caught.value.status_code, caught.value.message))
+    assert errors == [("NOT_FOUND", 404, "Record not found.")] * 2
+
+
+def test_malformed_active_schedule_returns_safe_snapshot_conflict(db_session, client, api_setup):
+    draft = create(client, api_setup)
+    row = db_session.get(Subscription, draft["id"])
+    row.state = "ACTIVE"
+    row.plan_snapshot = {**row.plan_snapshot, "cadence": {"staff_notes": "private-schedule"}}
+    db_session.commit()
+    actor = Actor(uuid4(), "CUSTOMER", api_setup.customer.id)
+    with pytest.raises(DomainError) as caught:
+        queries.get_subscription_for_actor(db_session, actor, row.id)
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_SNAPSHOT", 409)
+    assert "private-schedule" not in caught.value.message
+
+
+def test_empty_snapshot_rejects_detail_and_list_without_inventing_base_fee(
+    db_session, client, api_setup
+):
+    draft = create(client, api_setup)
+    row = db_session.get(Subscription, draft["id"])
+    row.plan_snapshot = {}
+    db_session.commit()
+    for url in (f"/api/v1/subscriptions/{draft['id']}", "/api/v1/subscriptions"):
+        response = client.get(url)
+        assert response.status_code == 409, response.text
+        assert response.json()["error"]["code"] == "INVALID_SNAPSHOT"
+        assert "recurring_subtotal" not in response.json()
