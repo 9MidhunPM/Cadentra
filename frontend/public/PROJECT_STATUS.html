@@ -14,16 +14,16 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
 {
   "project": "Cadentra",
   "subtitle": "Subscription Management System · Brightloop Software",
-  "snapshotUTC": "2026-10-31T11:00:31.207619+00:00",
+  "snapshotUTC": "2026-10-31T11:19:55.131313+00:00",
   "staleAfterMinutes": 15,
-  "headline": "Commerce demo populated. Email delivery verified.",
-  "summary": "The live demo now includes96 fictional customers,80 attributed catalog products,192 subscriptions,624 invoices and843 payments added through normal business services. Both controlled emails arrived. Existing records were preserved; final performance and the separately requested role-testing hub remain in progress.",
+  "headline": "Deadline release: prepared code integrated.",
+  "summary": "Public demo data and both real email receipts are verified. Reviewed invoice-filter fixes, supplied video preview, portal polish and the private role-testing hub are integrated. Final deployment and a short live walkthrough are the only release operations left; the full performance target remains unverified.",
   "coverageLabel": "Local product requirement groups",
   "coverageCaveat": "20 of 23 requirement groups retain scoped local verification; three remain partial for external reset delivery, external invoice delivery and final performance. This is not effort, candidate-release readiness or a universal completion claim. Event obligations remain separate.",
   "currentMain": {
-    "sha": "1f27706bd9ac4e121a79a7cece2c91fdce4747d5",
-    "label": "Reviewed application release anchor",
-    "state": "Importer71af9f6 deployed and reconciled. Three subscription fixes1f27706 owner-published after direct user approval; included with this status release."
+    "sha": "b8885e1",
+    "label": "Combined application source anchor",
+    "state": "All reviewed owner code integrated; this status/handoff commit follows. Deployment verification pending at save time."
   },
   "preparedRoot": {
     "sha": "71af9f6",
@@ -31,9 +31,9 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     "state": "Actual public execution completed. No fictional-contact email was queued; private backup and immutable record preservation verified."
   },
   "deployment": {
-    "state": "Live ·populated demo",
+    "state": "Deadline release ·verification pending",
     "target": "https://cadentra.midhunpm.in",
-    "detail": "Importer deployment4xsR7xxfTrlt5Krf6UZqn completed. Public import added192 subscriptions/624 invoices/843 payments/648 periods; web and worker restarted. Actual public lists contain100 customers/194 subscriptions/626 invoices including preserved records. HTTPS readiness0002; populated desktop/mobile and customer isolation checked. This status release also includes reviewed subscription fixes1f27706."
+    "detail": "The earlier populated demo is live. New combined source includes migration0003, billing filter correction, video and role-testing hub. Private configuration saved; deployment/short walkthrough pending at this checkpoint. Existing volumes and credentials preserved."
   },
   "snapshotNotice": "Saved coordinator snapshot, not live agent telemetry. Reload reads this saved file again; it does not contact teammates or infer activity.",
   "team": [
@@ -41,47 +41,47 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "name": "Midhun P M",
       "role": "Platform · catalog · coordination · deployment",
       "done": "Platform, identity/catalog, deployment, cinematic workspace polish and safe public commerce import; both controlled email receipts verified.",
-      "now": "Populated production and verified desktop1440/mobile390/320 plus customer portal ownership. Bounded helpers reviewed the new role-testing backend; audit/session fixes are in progress in an isolated checkout.",
-      "next": "Review invoice-filter correction, role-hub/UI work and final performance evidence; serialize releases.",
-      "state": "Public import complete ·coordinating closeout"
+      "now": "Reviewed and integrated all prepared code; private configuration saved. Performing final deployment and short live walkthrough.",
+      "next": "Record actual deployment outcome and remaining evidence gaps.",
+      "state": "Final deployment"
     },
     {
       "name": "Thanushree Suresh",
       "role": "Subscriptions · lifecycle · scheduling",
       "done": "Subscription workflows and scoped demo adapter published; refreshed three-fix bundle has62 backend/18 frontend checks.",
-      "now": "Directly user-authorized owner push published1f27706: variant retry, Back/Forward filter synchronization and impossible payment dates.",
-      "next": "Review subscription behavior under the separately approved role-testing hub when its combined candidate is ready.",
-      "state": "Reviewed fixes published"
+      "now": "Subscription fixes and import adapter are published; no pending code edits.",
+      "next": "Preserve branch/handoff and support only release blockers.",
+      "state": "Published"
     },
     {
       "name": "Noel Biju",
       "role": "Billing · invoices · payments",
       "done": "Billing/payment services, responsive invoice UI, scoped import adapter and actual invoice receipt verified.",
-      "now": "Fresh isolated invoice polish adds clear total/paid/balance, focus recovery and payment labels. Investigating the intermittent customer-filter loss exposed by the benchmark.",
-      "next": "Deliver reviewed filter-composition fix and actual-data snapshot UI evidence; owner push after serialized GO.",
-      "state": "Billing UI and filter correction active"
+      "now": "Reviewed billing filter/UI fixes are on main894121f. No pending implementation; bounded source reviews cleared role-hub fixes.",
+      "next": "Only a short deployed read-only billing check remains.",
+      "state": "Published"
     },
     {
       "name": "Sherin Saji",
       "role": "Experience · reports · customer portal",
       "done": "Experience/portal/reports and13 independent read-only import reconciliation checks passed.",
-      "now": "Original benchmark goal stays paused. Fresh scoped role-hub/shared/portal frontend work is isolated from production; no competing database writer.",
-      "next": "Build exact approved hub contract, visible role-testing context, touch-sized portal links and stable invoice IDs.",
-      "state": "Fresh hub/portal UI scope active"
+      "now": "Portal72dd4af and hub3eb4b0b published and integrated.81 focused hub/session/identity and27 portal checks, type/lint/build passed.",
+      "next": "Combined live role-switching and portal walkthrough remains.",
+      "state": "Published"
     }
   ],
   "blockers": [
+    {
+      "level": "Release operation",
+      "title": "Final deployment and live role-testing walkthrough",
+      "detail": "All prepared reviewed code is integrated; private dev configuration saved. Production verification of the combined0003 release is pending at this save.",
+      "action": "Deploy once, check readiness and perform one short controlled walkthrough."
+    },
     {
       "level": "Measured gap",
       "title": "Final performance acceptance is incomplete",
       "detail": "At frozen71af9f6,19 scenarios completed475 browser samples. Scenario20 timed out after17 samples while the customer invoice filter disappeared. Completed-route p95 maxima were1182.8ms warm/1142.5ms fresh; one retained subscription-page sample took9917.8ms.59 scenarios/mobile benchmark capture were not run.",
       "action": "Fix and narrowly verify filter composition, investigate the outlier, then freeze the combined release for remaining measurements. No universal under-two-second claim."
-    },
-    {
-      "level": "Separate requested feature",
-      "title": "Role-testing hub and final UI polish are not deployed",
-      "detail": "Admin plus separate private password, expiring server grants and actual target-account sessions are being implemented in isolated work. Security review found audit and session-boundary issues that must be closed before release.",
-      "action": "Finish focused security/UI review, integrate migration0003 and update readiness/harness expectations; enable privately only after acceptance."
     }
   ],
   "evidence": [
@@ -303,11 +303,9 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     }
   ],
   "nextSteps": [
-    "Finish and review the invoice filter-composition correction exposed by rapid benchmark interactions.",
-    "Investigate the9.9s browser outlier; freeze the combined candidate and complete remaining performance measurements with exact evidence limits.",
-    "Finish the separately approved role-testing backend/frontend, close audit/session review findings, integrate0003 and enable private configuration after acceptance.",
-    "Verify final role-switching behavior, portal touch targets, invoice hierarchy and persistent action outcomes in one combined desktop/mobile round.",
-    "Keep event submission/evaluator/video obligations separate; they remain unverified."
+    "Complete final deployment and short live health/role-testing walkthrough.",
+    "Retain incomplete performance and9.9s outlier evidence; do not claim universal under-two-second performance.",
+    "Preserve the supplied-video limitations and unverified event submission/evaluator/demo-video obligations."
   ],
   "workflow": "Midhun P M reviews an exact feature head against an expected main SHA and gives one serialized GO. The owner fetches/rechecks main and uses a normal SSH push with their own verified identity. No gh/API main publishing, force push or concurrent integration turns.",
   "history": [
