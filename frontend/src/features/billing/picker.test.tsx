@@ -57,10 +57,12 @@ describe('billing product selection', () => {
     }));
   });
 
-  it('keeps revision selections absent from the current page and learns their real names when encountered', async () => {
+  it('resolves off-page and archived revision selection names without visiting their product pages', async () => {
     const rule = { id: 'tax-rule', name: 'Stored tax', rate_percent: '18.0000', active: true, effective_from: '2026-10-31', valid_from: '2026-10-31', product_ids: ['product-125', 'archived-product'] };
     const request = vi.spyOn(apiClient, 'request').mockImplementation(async (path, options) => {
       if (options?.method === 'PATCH') return { data: { ...rule, effective_from: '2026-11-01' } };
+      if (path === '/products/product-125') return { data: catalogue[124] };
+      if (path === '/products/archived-product') return { data: { id: 'archived-product', name: 'Archived legacy product', active: false } };
       const url = new URL(path, 'http://api.test');
       if (url.pathname !== '/products') return { items: [rule], total: 1, page: 1, page_size: 25 };
       const page = Number(url.searchParams.get('page'));
@@ -69,14 +71,13 @@ describe('billing product selection', () => {
     render(<RulePage kind="tax" />);
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Schedule revision' }));
-    expect(screen.getByRole('button', { name: 'Remove selected product product-125' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove selected product archived-product' })).toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: 'Next products' }));
     expect(await screen.findByRole('button', { name: 'Remove selected product Product 125' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Product 125' })).toBeChecked();
-    await user.click(screen.getByRole('button', { name: 'Previous products' }));
-    expect(await screen.findByRole('checkbox', { name: 'Product 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove selected product Product 125' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Remove selected product Archived legacy product' })).toBeInTheDocument();
+    expect(request.mock.calls.some(([path]) => path === '/products/product-125')).toBe(true);
+    expect(request.mock.calls.some(([path]) => path === '/products/archived-product')).toBe(true);
+    expect(request.mock.calls.filter(([path]) => path.startsWith('/products?')).every(([path]) => new URL(path, 'http://api.test').searchParams.get('page') === '1')).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Remove selected product product-125' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove selected product archived-product' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Revision effective from'), { target: { value: '2026-11-01' } });
     const editor = screen.getByRole('heading', { name: 'Schedule a retained revision' }).closest('form');
     if (!editor) throw new Error('The retained revision editor is missing');
@@ -106,4 +107,67 @@ describe('billing product selection', () => {
     expect(await screen.findByText('No matching products. Search another name.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next products' })).toBeDisabled();
   });
+  it('keeps retained IDs through detail loading and failure, then resolves the human label only after explicit retry', async () => {
+    const retainedId = 'archived-off-page-id';
+    const rule = { id: 'tax-with-detail', name: 'Stored membership', rate_percent: '18.0000', active: true, effective_from: '2026-10-31', valid_from: '2026-10-31', product_ids: [retainedId] };
+    let attempts = 0;
+    let rejectDetail: (error: unknown) => void = () => { throw new Error('Detail request not started'); };
+    const request = vi.spyOn(apiClient, 'request').mockImplementation(async (path, options) => {
+      if (options?.method === 'PATCH') return { data: { ...rule, effective_from: '2026-11-01' } };
+      if (path === `/products/${retainedId}`) {
+        attempts += 1;
+        if (attempts === 1) return new Promise((_resolve, reject) => { rejectDetail = reject; });
+        return { data: { id: retainedId, name: 'Archived recovered product', active: false } };
+      }
+      if (path.startsWith('/products?')) return { items: catalogue.slice(0, 100), total: 125, page: 1, page_size: 100 };
+      return { items: [rule], total: 1, page: 1, page_size: 25 };
+    });
+    render(<RulePage kind="tax" />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Schedule revision' }));
+    const unresolved = await screen.findByRole('group', { name: 'Selected product 1' });
+    expect(within(unresolved).getByRole('status')).toHaveTextContent('Loading selected product name');
+    expect(unresolved).not.toHaveTextContent(retainedId);
+    expect(within(unresolved).getByRole('button', { name: 'Remove selected product' })).toBeEnabled();
+    await act(async () => rejectDetail(new ApiError(503, 'UNAVAILABLE', 'Catalogue detail temporarily unavailable.')));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Selected product name unavailable.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Catalogue detail temporarily unavailable.');
+    expect(attempts).toBe(1);
+    expect(screen.getByRole('group', { name: 'Selected product 1' })).not.toHaveTextContent(retainedId);
+    await user.click(screen.getByRole('button', { name: 'Retry product name' }));
+    expect(await screen.findByRole('button', { name: 'Remove selected product Archived recovered product' })).toBeInTheDocument();
+    expect(attempts).toBe(2);
+    fireEvent.change(screen.getByLabelText('Revision effective from'), { target: { value: '2026-11-01' } });
+    const editor = screen.getByRole('heading', { name: 'Schedule a retained revision' }).closest('form');
+    if (!editor) throw new Error('Revision form missing');
+    await user.click(within(editor).getByRole('button', { name: 'Schedule revision' }));
+    await waitFor(() => expect(request.mock.calls.find(([, options]) => options?.method === 'PATCH')?.[1]?.json).toMatchObject({ product_ids: [retainedId] }));
+  });
+
+  it('does not resurrect a removed retained selection when its pending detail lookup completes', async () => {
+    const retainedId = 'pending-selected-id';
+    const rule = { id: 'tax-with-pending-detail', name: 'Stored membership', rate_percent: '18.0000', active: true, effective_from: '2026-10-31', valid_from: '2026-10-31', product_ids: [retainedId] };
+    let finishDetail: (value: unknown) => void = () => { throw new Error('Detail request not started'); };
+    const request = vi.spyOn(apiClient, 'request').mockImplementation(async (path, options) => {
+      if (options?.method === 'PATCH') return { data: { ...rule, effective_from: '2026-11-01' } };
+      if (path === `/products/${retainedId}`) return new Promise(resolve => { finishDetail = resolve; });
+      if (path.startsWith('/products?')) return { items: catalogue.slice(0, 100), total: 125, page: 1, page_size: 100 };
+      return { items: [rule], total: 1, page: 1, page_size: 25 };
+    });
+    render(<RulePage kind="tax" />);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Schedule revision' }));
+    const unresolved = await screen.findByRole('group', { name: 'Selected product 1' });
+    expect(within(unresolved).getByRole('status')).toHaveTextContent('Loading selected product name');
+    await user.click(within(unresolved).getByRole('button', { name: 'Remove selected product' }));
+    await act(async () => finishDetail({ data: { id: retainedId, name: 'Late product label', active: false } }));
+    expect(screen.queryByRole('group', { name: /Selected product/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Late product label')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Revision effective from'), { target: { value: '2026-11-01' } });
+    const editor = screen.getByRole('heading', { name: 'Schedule a retained revision' }).closest('form');
+    if (!editor) throw new Error('Revision form missing');
+    await user.click(within(editor).getByRole('button', { name: 'Schedule revision' }));
+    await waitFor(() => expect(request.mock.calls.find(([, options]) => options?.method === 'PATCH')?.[1]?.json).toMatchObject({ product_ids: [] }));
+  });
+
 });

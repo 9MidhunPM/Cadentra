@@ -1,6 +1,65 @@
 # Noel Biju: handoff
 
-Status: BILLING CORE INTEGRATED; URL DRILLDOWN CORRECTION READY; FINAL T31/T30 CHECKS OPEN
+Status: BILLING CORE AND SEND RECOVERY INTEGRATED; SELECTED-PRODUCT LABEL FIX READY FOR REVIEW
+
+## Current checkpoint: 31 October 2026
+
+Active branch: `feature/billing-product-labels`, based on reviewed main
+`56bd60bac347ece7b23442046e25b8e29d8fa21f`. The earlier closeout and verification
+branches are preserved. Effective local author remains `noel-ult`; Git network
+operations use the assigned `gh-agent3` SSH key without global identity changes.
+
+The invoice URL correction was integrated in `00ffa99`. Main now also includes the
+coordinator's cinematic release (`97b4c9f`, integrated in `5895b04`), including
+actor/invoice-scoped durable invoice-send recovery and status-aware acknowledgements.
+Independent read-only standards/specification reviews found no concrete defect in
+that recovery implementation. Its focused UI/store command,
+`npm test -- --run src/features/billing/sendCommands.test.tsx`, passed all nine tests
+at `dd1fafc` in this checkout. This is mocked recovery evidence, not external email
+delivery or a real lost-acknowledgement browser/API test.
+
+Current coordinator-assigned slice, implemented in
+`6c231caec1d978045bf36af20ad5dcec3117e07d`: resolve retained rule-product names through
+the existing `/products/{id}` endpoint when they are absent from the current page.
+Preserve archived/off-page selections and submitted IDs, provide loading/error/retry
+states, and keep late lookup responses from restoring removed selections. Changes
+are limited to `rules.tsx`, `picker.test.tsx`, and this named handoff. No shared API,
+transport, schema, dependency or routing change is requested.
+
+Executed label-slice checks:
+
+- Existing picker baseline passed three tests. The added off-page/archived-name
+  regression failed before the fix (two passed, one failed), reproducing the bug.
+- `npm --prefix frontend test -- src/features/billing/picker.test.tsx --reporter=dot`
+  passed one file / five tests after the fix. They cover names without page visits,
+  preserved IDs after explicit retry, removal during an outstanding lookup, and
+  the existing page/search/scope behavior. These are mocked catalog UI fixtures.
+- `npm run typecheck` from `frontend/` passed after the completed code/test edits.
+- `./node_modules/.bin/eslint src/features/billing/rules.tsx src/features/billing/picker.test.tsx --max-warnings 0`
+  from `frontend/` passed. `git diff --check` passed.
+- Independent standards and specification reviews found no actionable issue in
+  the scoped code/tests. No broad suite, backend mutation, transport test or live
+  browser claim is added for this bounded frontend fix.
+
+T31's complete persistent browser journey passed; sanitized proof is committed in
+`backend/tests/reporting/evidence/t31-2026-10-31.json` (source `471808e`). The final
+all-page T30 remains incomplete: the coordinator records 55 scenario passes followed
+by an authentication-page timeout, and its owner task is paused. Invoice/rule samples
+that passed do not establish the global gate. Production Resend transport is
+integrated, but private credentials/sender are not configured and external delivery
+remains unverified. Native local invoice/password-reset Mailpit captures are separate
+evidence. No provider secrets or real recipient were added to fixtures.
+
+Remaining follow-up outside this label slice: connect actual committed invoice-send
+recovery to a browser lost-response/navigation/reload probe, and add focused backend
+replay-state/input-normalization coverage. These are not claimed complete by the
+nine mocked recovery tests. No main-push window is authorized yet; send the exact
+tested slice to Midhun P M for review and serialized clearance.
+
+## Historical implementation and evidence
+
+The checkpoints below retain their original source, test counts and limitations;
+their pending-integration statements are superseded by the current checkpoint.
 
 Role: Billing & Payments
 Branch: feature/billing-integration-proof
