@@ -10,6 +10,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException
 
+from app.core.client_ip import resolve_client_ip
+from app.core.config import get_settings
 from app.core.errors import DomainError
 from app.db.session import get_session
 
@@ -22,7 +24,12 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def request_identifier(request: Request, call_next):
         request.state.request_id = str(uuid4())
-        response = await call_next(request)
+        try:
+            request.state.client_ip = resolve_client_ip(request, get_settings())
+        except DomainError as error:
+            response = error_response(request, error.code, error.message, error.status_code)
+        else:
+            response = await call_next(request)
         response.headers["X-Request-ID"] = request.state.request_id
         return response
 
@@ -69,7 +76,7 @@ def create_app() -> FastAPI:
         )
         return error_response(request, "INTERNAL_ERROR", "The request could not be completed.", 500)
 
-    @app.get("/api/v1/health")
+    @app.api_route("/api/v1/health", methods=["GET", "HEAD"])
     def health(db: Annotated[Session, Depends(get_session)]):
         try:
             db.execute(text("SELECT 1"))
