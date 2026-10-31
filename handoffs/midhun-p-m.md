@@ -1,3 +1,15 @@
+# Verified live workspace polish:31 October2026
+
+Application main9c2b057a4fb34c072128d73cbf622b542b37c6b0 is deployed in Dokploy XltDM2jvbKADoIltq6I5s. Root source805aa57/c211d72 and Noel's owner-published invoice layout127bdba were combined without conflicts; the integrated tree passed production build/typecheck and lint. This is visual polish, with no financial/domain/API changes.
+
+Actual HTTPS confirmation in the user-requested signed-in native Chromium browser passes:36px desktop catalog row actions; all six invoice filter fields44px at390px and320px; no document overflow; mobile navigation; reduced-motion opacity1/no transform; zero page exceptions; API ready at migration0002. The combined light overview was visually inspected. API/database remain healthy, one worker and web run, migration/bootstrap exit0. No business records were changed by this audit. Private screenshots/metrics are under /tmp/cadentra-ui-audit. The separate task browser remains signed in for user inspection; credentials are never included in source or screenshots.
+
+Remaining: private Resend password/verified sender and real external delivery; the final complete frozen-source performance run; Thanushree's reviewed subscription correction5324c16 remains unpublished because automatic approval review rejected her owner main push pending direct user authorization in her thread. No alternate-identity workaround was used. Sherin's dc42bef harness passed read-only review; bounded follow-up assertions remain subject to review before execution. Optional hero video and E01–E04 event obligations remain separate.
+
+---
+
+## Earlier checkpoints (historical scope)
+
 # Current coordinator checkpoint: signed-in UI polish
 
 Midhun P M remains the primary coordinator. The user requested an actual native-computer review of the deployed demo. A separate headed Chromium profile was opened through the user desktop session, signed in using the authorized private demo credentials, and inspected on desktop and mobile. No customer, catalog, subscription, invoice or payment records were created or changed by this review.
