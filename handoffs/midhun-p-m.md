@@ -167,3 +167,22 @@ Public bulk import and final performance run remain pending this checkpoint.
 Thanushree's new adapter main push has direct user approval in the root thread;
 its owner integration is serialized before the coordinator's main slice. Older
 three-fix bundle remains separately blocked on its existing owner approval.
+
+
+## Bounded role-testing backend handoff ·31 October2026
+
+Implemented by a bounded helper for Midhun P M in the isolated
+feature/role-testing-backend checkout, baseline71af9f6. Explicit default-off
+demo-instance configuration, migration0003,30minute revocable grants, actual
+target-account sessions and backend role/customer checks remain authoritative.
+Source Admin and linked sessions are revoked by normal login/logout; End uses
+sorted User -> Grant -> refreshed Session locks and returns401 with cleared
+cookies on terminal authority. Two independent reviews cleared the final fixes.
+
+Verification actually executed:18 focused HTTP/PostgreSQL cases passed before
+the final logout adjustment; afterward3 targeted logout cases passed including
+missing-grant-cookie actual HTTP cleanup. These are overlapping runs, not a new
+combined total. Scoped Ruff/whitespace passed. Current readiness tests were
+updated to latest0003 expectations; no further tests run after that constant
+change. No production enablement, private credential transfer or main push
+performed by this helper. Root owns integration/environment/deployment.

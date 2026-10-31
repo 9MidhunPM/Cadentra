@@ -59,6 +59,10 @@ def require_actor(request: Request, db: Annotated[Session, Depends(get_auth_sess
     session, user = row
     if not user.active or session.revoked_at is not None or session.expires_at <= get_clock().now():
         raise DomainError("UNAUTHENTICATED", "Session is invalid or expired.", 401)
+    if session.dev_grant_id is not None:
+        from app.modules.identity.dev_tools import validate_linked
+
+        validate_linked(db, request, session)
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
         require_origin(request)
         csrf = request.headers.get("x-csrf-token", "")

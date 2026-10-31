@@ -1,5 +1,6 @@
 """Account, session and staff/customer endpoints."""
 
+import hmac
 from typing import Annotated
 from uuid import UUID
 
@@ -62,9 +63,14 @@ def signup(payload: schemas.Signup, request: Request, db: Database):
 def login(payload: schemas.Login, request: Request, response: Response, db: Database):
     public_write(request, "login", str(payload.email))
     with db.begin():
+        from .dev_tools import lock_request_users, terminate_request_grant
+        lock_request_users(db, request, login_email=str(payload.email))
         user = service.authenticate(db, str(payload.email), payload.password)
+        terminate_request_grant(db, request)
         session, raw = service.create_session(db, user)
         result = {"actor": service.actor_data(user), "csrf_token": session.csrf_token}
+    from .dev_tools import clear_grant_cookie
+    clear_grant_cookie(response)
     settings = get_settings()
     response.set_cookie(
         settings.session_cookie_name,
@@ -79,7 +85,8 @@ def login(payload: schemas.Login, request: Request, response: Response, db: Data
 
 
 @router.get("/auth/session")
-def session(actor: Authenticated):
+def session(actor: Authenticated, request: Request, db: Database):
+    from .dev_tools import status_data
     return {
         "data": {
             "actor": {
@@ -89,16 +96,31 @@ def session(actor: Authenticated):
                 "customer_id": str(actor.customer_id) if actor.customer_id else None,
             },
             "csrf_token": actor.csrf_token,
+            "dev_tools": status_data(db, request),
         }
     }
 
 
 @router.post("/auth/logout")
-def logout(response: Response, actor: Authenticated, db: Database):
+def logout(request: Request, response: Response, db: Database):
+    from .dev_tools import clear_grant_cookie, terminate_request_grant
+
+    # Revocation-only authentication intentionally does not require live grant
+    # authority: lost/expired developer cookies must never prevent cleanup.
+    require_origin(request)
+    token = request.cookies.get(get_settings().session_cookie_name, "")
+    csrf = request.headers.get("x-csrf-token", "")
     with db.begin():
-        record = db.get(SessionRecord, actor.session_id)
-        if record is not None:
-            record.revoked_at = get_clock().now()
+        record = db.scalar(select(SessionRecord).where(SessionRecord.token_hash == hash_token(token)))
+        if not token or record is None:
+            raise DomainError("UNAUTHENTICATED", "Sign in to continue.", 401)
+        if not csrf or not hmac.compare_digest(csrf.encode("utf-8"), record.csrf_token.encode("utf-8")):
+            raise DomainError("INVALID_CSRF", "Refresh the session and try again.", 403)
+        terminate_request_grant(db, request)
+        # The context helper enforces User -> Grant -> Session ordering before
+        # revoking its linked rows. This final update also covers ordinary logins.
+        record.revoked_at = get_clock().now()
+    clear_grant_cookie(response)
     settings = get_settings()
     response.delete_cookie(
         settings.session_cookie_name,

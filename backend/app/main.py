@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from typing import Annotated
 from uuid import uuid4
 
@@ -16,21 +17,36 @@ from app.core.errors import DomainError
 from app.db.session import get_session
 
 logger = logging.getLogger(__name__)
-EXPECTED_SCHEMA_REVISION = "0002"
+EXPECTED_SCHEMA_REVISION = "0003"
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Cadentra API", version="0.1.0")
+    @asynccontextmanager
+    async def lifespan(application):
+        from app.modules.identity.dev_tools import reconcile_configuration
+        reconcile_configuration()
+        yield
+
+    app = FastAPI(title="Cadentra API", version="0.1.0", lifespan=lifespan)
 
     @app.middleware("http")
     async def request_identifier(request: Request, call_next):
+        from app.modules.identity.dev_audit import prepare_attempt, record_outcome
+
         request.state.request_id = str(uuid4())
+        attempt = None
         try:
             request.state.client_ip = resolve_client_ip(request, get_settings())
+            attempt = prepare_attempt(request)
+            response = await call_next(request)
         except DomainError as error:
             response = error_response(request, error.code, error.message, error.status_code)
+            record_outcome(attempt, error.status_code)
+        except Exception as error:
+            record_outcome(attempt, 500, type(error).__name__)
+            raise
         else:
-            response = await call_next(request)
+            record_outcome(attempt, response.status_code)
         response.headers["X-Request-ID"] = request.state.request_id
         return response
 
@@ -92,12 +108,14 @@ def create_app() -> FastAPI:
 
     from app.modules.billing.router import router as billing_router
     from app.modules.catalog.router import router as catalog_router
+    from app.modules.identity.dev_tools import router as dev_tools_router
     from app.modules.identity.router import router as identity_router
     from app.modules.reporting.router import router as reporting_router
     from app.modules.subscriptions.router import router as subscriptions_router
 
     for router in (
         identity_router,
+        dev_tools_router,
         catalog_router,
         subscriptions_router,
         billing_router,

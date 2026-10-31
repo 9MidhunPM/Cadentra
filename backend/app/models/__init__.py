@@ -4,6 +4,7 @@ from .schema import (
     AuditEvent,
     BillingPeriod,
     Customer,
+    DevAccessGrant,
     DiscountRedemption,
     DiscountRevisionProduct,
     DiscountRule,
@@ -34,6 +35,7 @@ from .schema import (
 
 __all__ = [
     "Customer",
+    "DevAccessGrant",
     "User",
     "SessionRecord",
     "PasswordResetToken",
