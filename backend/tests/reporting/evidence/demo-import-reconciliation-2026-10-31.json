@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "scope": "new disposable import test database only",
+  "read_only": true,
+  "authentication": "in-process ADMIN dependency override; not production auth/network proof",
+  "cohort": {
+    "subscriptions": 192,
+    "states": {
+      "CLOSED": 24,
+      "DRAFT": 24,
+      "ACTIVE": 96,
+      "CONFIRMED": 24,
+      "QUOTATION": 24
+    },
+    "invoice_states": {
+      "DRAFT": 30,
+      "CANCELLED": 30,
+      "CONFIRMED": 190,
+      "PAID": 374
+    },
+    "invoices": 624,
+    "payments": 843,
+    "billing_periods": 648,
+    "invoiced_gross": "4562091.00",
+    "cash_received": "3217491.20",
+    "outstanding": "1344599.80",
+    "outbound_emails": 0
+  },
+  "summaries": {
+    "global": {
+      "as_of": "2026-10-31",
+      "range_from": "2026-04-01",
+      "range_to": "2026-11-01",
+      "currency": "INR",
+      "active_subscriptions": 84,
+      "invoiced_gross_in_range": "4562091.00",
+      "cash_received_in_range": "3217491.20",
+      "outstanding_now": "1344599.80",
+      "overdue_now": "1250732.20",
+      "overdue_invoice_count": 177
+    },
+    "sample_customer": {
+      "as_of": "2026-10-31",
+      "range_from": "2026-04-01",
+      "range_to": "2026-11-01",
+      "currency": "INR",
+      "active_subscriptions": 1,
+      "invoiced_gross_in_range": "31770.00",
+      "cash_received_in_range": "22239.00",
+      "outstanding_now": "9531.00",
+      "overdue_now": "9531.00",
+      "overdue_invoice_count": 3
+    }
+  },
+  "checks": [
+    "cohort IDs/states/financial counts/no-email independently reconciled",
+    "global summary exact SQL/API equality",
+    "global DAILY series exact SQL/API equality",
+    "global MONTHLY series exact SQL/API equality",
+    "global CycleGuard OVERDUE count/source projection",
+    "global CycleGuard BILLING_DUE count/source projection",
+    "global CycleGuard EMAIL_FAILED count/source projection",
+    "sample_customer summary exact SQL/API equality",
+    "sample_customer DAILY series exact SQL/API equality",
+    "sample_customer MONTHLY series exact SQL/API equality",
+    "sample_customer CycleGuard OVERDUE count/source projection",
+    "sample_customer CycleGuard BILLING_DUE count/source projection",
+    "sample_customer CycleGuard EMAIL_FAILED count/source projection"
+  ],
+  "production_writes": false,
+  "provider_operations": false
+}
