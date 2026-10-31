@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { mockFeatureReads } from './fixtures'
 
 test.beforeEach(async ({ page }) => {
+  await mockFeatureReads(page)
   await page.route('**/api/v1/auth/session', route => route.fulfill({ json: { data: {
     actor: { id: 'test-staff', name: 'Experience tester', role: 'STAFF', customer_id: null }, csrf_token: 'fixture-csrf',
   } } }))
@@ -15,6 +17,7 @@ test('Graphite Mint defaults dark and Sage preference persists after reload', as
   await page.screenshot({ path: testInfo.outputPath('graphite-mint.png'), fullPage: true })
   await page.getByRole('button', { name: 'Switch to light mode' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#f2f4ef')
   await expect(page.locator('body')).toHaveCSS('color', 'rgb(32, 39, 34)')
   await expect(page.getByRole('button', { name: 'Switch to dark mode' }).locator('svg')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Switch to dark mode' }).locator(':scope > span')).toHaveCSS('opacity', '1')
