@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { apiClient, ApiError, getErrorMessage, type ListResponse, type ResourceResponse } from '../../lib';
 import { Button, DataTable, DateLabel, EmptyState, ErrorPanel, FormField, LoadingSkeleton, Money, PageHeader, StatusBadge, SubscriptionStepper } from '../../components/ui';
 import { fieldError, SubscriptionForm } from './forms';
-import type { Subscription, TaxRuleReference, Template } from './types';
+import type { Plan, Subscription, TaxRuleReference, Template } from './types';
 import { useResource } from './useResource';
+import { allRecords } from './api';
 
 const states = ['DRAFT', 'QUOTATION', 'CONFIRMED', 'ACTIVE', 'CLOSED'];
 function OptionalDate({ value }: { value?: string | null }) { return value ? <DateLabel value={value} /> : <span>—</span>; }
@@ -41,11 +42,22 @@ export function SubscriptionList() {
 export function TemplateList() {
   const [page, setPage] = useState(1); const [retry, setRetry] = useState(0);
   const resource = useResource<ListResponse<Template>>(`/quotation-templates?page=${page}&page_size=25`, retry);
+  const [plans, setPlans] = useState<{ names: Record<string, string>; loading: boolean; error?: unknown }>({ names: {}, loading: true });
+  useEffect(() => {
+    const controller = new AbortController();
+    allRecords<Plan>('/plans', controller.signal).then(rows => {
+      if (!controller.signal.aborted) setPlans({ names: Object.fromEntries(rows.map(plan => [plan.id, plan.name])), loading: false });
+    }).catch((error: unknown) => {
+      if (!controller.signal.aborted) setPlans({ names: {}, loading: false, error });
+    });
+    return () => controller.abort();
+  }, [retry]);
   return <div className="subscription-stack"><PageHeader title="Quotation templates" description="Reusable plans and product selections. Editing a template never changes an existing quotation." actions={<div className="ui-actions"><Link className="subscription-link" to="/subscriptions">Subscriptions</Link><Link className="ui-button ui-button--primary" to="/subscriptions/templates/new">New template</Link></div>} />
     {resource.loading && <LoadingSkeleton label="Loading templates" />}{resource.error !== undefined && <ErrorPanel message={getErrorMessage(resource.error)} onRetry={() => setRetry(value => value + 1)} />}
+    {plans.error !== undefined && <ErrorPanel title="Cannot load plan names" message={getErrorMessage(plans.error)} onRetry={() => setRetry(value => value + 1)} />}
     {resource.data && <DataTable caption="Quotation templates" rows={resource.data.items} getRowKey={row => row.id} page={page} pageSize={25} total={resource.data.total} onPageChange={setPage} emptyTitle="Create your first quotation template" columns={[
       { key: 'name', header: 'Template', render: row => <Link className="subscription-link" to={`/subscriptions/templates/${row.id}/edit`}>{row.name}</Link> },
-      { key: 'plan', header: 'Plan', render: row => row.plan_id },
+      { key: 'plan', header: 'Plan', render: row => plans.names[row.plan_id] ?? (plans.loading ? 'Loading plan…' : 'Plan unavailable') },
       { key: 'validity', header: 'Validity', render: row => `${row.valid_days} days` },
       { key: 'lines', header: 'Product lines', render: row => row.lines.length },
     ]} />}

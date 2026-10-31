@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient } from '../../lib';
-import { ActionForm, SubscriptionDetail, SubscriptionList } from './pages';
+import { ActionForm, SubscriptionDetail, SubscriptionList, TemplateList } from './pages';
 import { NewSubscription } from './forms';
 import type { Subscription } from './types';
 
@@ -118,6 +118,21 @@ describe('subscription staff forms', () => {
     expect(screen.getByText(/stored invoice amounts are authoritative/)).toBeInTheDocument();
     expect(screen.getByText('Line amount · before tax and discounts')).toBeInTheDocument();
     expect(screen.queryByText('INR 842.40')).not.toBeInTheDocument();
+  });
+
+
+  it('resolves template plan names and never uses raw identifiers as primary plan text', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+      const path = String(input);
+      if (path.startsWith('/api/v1/plans?')) return response(list([{ id: 'plan-1', name: 'Monthly seats' }]));
+      if (path.startsWith('/api/v1/quotation-templates?')) return response(list([{ id: 'template-1', name: 'Seat offer', plan_id: 'plan-1', valid_days: 14, lines: [] }, { id: 'template-2', name: 'Archived offer', plan_id: 'unavailable-plan-uuid', valid_days: 7, lines: [] }]));
+      throw new Error(`Unexpected test request ${path}`);
+    }));
+    render(<MemoryRouter><TemplateList /></MemoryRouter>);
+    await screen.findByText('Monthly seats');
+    expect(screen.getByText('Plan unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('plan-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('unavailable-plan-uuid')).not.toBeInTheDocument();
   });
 
 });
