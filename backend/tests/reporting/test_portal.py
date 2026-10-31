@@ -5,6 +5,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import event, func, select
 
 from app.core.auth import Actor, Role
 from app.core.clock import get_clock
@@ -12,9 +13,13 @@ from app.core.config import get_settings
 from app.core.errors import DomainError
 from app.core.security import hash_token
 from app.models import (
+    AuditEvent,
     BillingPeriod,
     Customer,
+    EmailOutbox,
     Invoice,
+    InvoiceLine,
+    InvoiceLineTax,
     Payment,
     Plan,
     Product,
@@ -351,3 +356,179 @@ def test_oversized_page_returns_validation_error_instead_of_database_overflow(
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
     assert "bigint" not in response.text
+
+
+@pytest.fixture
+def detailed_invoice(portal_records, db_session):
+    invoice = portal_records["invoices"][0]
+    invoice.customer_snapshot = {
+        "display_name": '<img src=x onerror="alert(1)">',
+        "email": "alice@portal.example",
+        "billing_address": {"city": "Kochi"},
+        "staff_notes": "SECRET_CUSTOMER_NOTES",
+    }
+    invoice.seller_snapshot = {"name": "<script>alert(2)</script>", "private_note": "SECRET_SELLER"}
+    invoice.calculation_snapshot = {
+        "subtotal": "4680.00",
+        "tax_total": "758.16",
+        "lines": [
+            {"gross": "4680.00", "internal_cost": "SECRET_COST", "staff_notes": "SECRET_NESTED"}
+        ],
+    }
+    invoice.cancellation_reason = "SECRET_CANCELLATION"
+    line = InvoiceLine(
+        invoice_id=invoice.id,
+        stable_line_key="product:0",
+        description='<svg onload="alert(3)">',
+        quantity=3,
+        unit_price=Decimal("1560.00"),
+        gross=Decimal("4680.00"),
+        discount=Decimal("468.00"),
+        taxable_amount=Decimal("4212.00"),
+        tax_total=Decimal("758.16"),
+        total=Decimal("4970.16"),
+        source_snapshot={"cost": "SECRET_LINE_COST"},
+    )
+    db_session.add(line)
+    db_session.flush()
+    db_session.add(
+        InvoiceLineTax(
+            invoice_line_id=line.id,
+            name_snapshot="Illustrative tax",
+            rate_snapshot=Decimal("18.00"),
+            amount=Decimal("758.16"),
+        )
+    )
+    db_session.commit()
+    return invoice
+
+
+def test_invoice_detail_delegates_real_billing_projection(client, portal_records, detailed_invoice):
+    sign_in(client, portal_records)
+    response = client.get(f"/api/v1/portal/invoices/{detailed_invoice.id}")
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "private, no-store"
+    data = response.json()["data"]
+    assert data["total"] == "4970.16"
+    assert data["paid_amount"] == "2000.00" and data["balance_due"] == "2970.16"
+    assert data["collection_status"] == "PARTIALLY_PAID"
+    assert data["lines"][0]["taxes"][0]["amount"] == "758.16"
+    assert len(data["payments"]) == 2
+    assert all(
+        set(payment) == {"id", "invoice_id", "method", "amount", "paid_on"}
+        for payment in data["payments"]
+    )
+    assert data["calculation_snapshot"]["lines"] == [{"gross": "4680.00"}]
+    assert "cancellation_reason" not in data
+    assert "SECRET" not in response.text
+
+
+def test_invoice_print_escapes_dynamic_html_and_retains_owner_security_headers(
+    client, portal_records, detailed_invoice
+):
+    sign_in(client, portal_records)
+    response = client.get(f"/api/v1/portal/invoices/{detailed_invoice.id}/print")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert response.headers["cache-control"] == "private, no-store"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["content-security-policy"] == (
+        "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'"
+    )
+    assert "&lt;script&gt;alert(2)&lt;/script&gt;" in response.text
+    assert "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;" in response.text
+    assert "&lt;svg onload=&quot;alert(3)&quot;&gt;" in response.text
+    assert (
+        "<script>" not in response.text
+        and "<img " not in response.text
+        and "<svg " not in response.text
+    )
+    assert "4970.16" in response.text and "2970.16" in response.text
+    assert "SECRET" not in response.text
+
+
+@pytest.mark.parametrize("suffix", ["", "/print"])
+def test_invoice_foreign_and_missing_records_are_indistinguishable(client, portal_records, suffix):
+    sign_in(client, portal_records)
+    failures = []
+    for identifier in (portal_records["invoices"][2].id, uuid4()):
+        response = client.get(f"/api/v1/portal/invoices/{identifier}{suffix}")
+        assert response.status_code == 404
+        error = response.json()["error"]
+        failures.append((error["code"], error["message"]))
+    assert failures[0] == failures[1] == ("NOT_FOUND", "Invoice not found.")
+
+
+@pytest.mark.parametrize("suffix", ["", "/print"])
+@pytest.mark.parametrize("role", ["ADMIN", "STAFF"])
+def test_portal_invoice_endpoints_reject_staff(client, portal_records, role, suffix):
+    sign_in(client, portal_records, role)
+    response = client.get(f"/api/v1/portal/invoices/{portal_records['invoices'][0].id}{suffix}")
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize("suffix", ["", "/print"])
+def test_portal_invoice_endpoints_require_authentication(client, suffix):
+    assert client.get(f"/api/v1/portal/invoices/{uuid4()}{suffix}").status_code == 401
+
+
+@pytest.mark.parametrize("suffix", ["", "/print"])
+def test_portal_invoice_endpoints_reject_customer_override(client, portal_records, suffix):
+    sign_in(client, portal_records)
+    response = client.get(
+        f"/api/v1/portal/invoices/{portal_records['invoices'][0].id}{suffix}?customer_id={portal_records['customers'][0].id}"
+    )
+    assert response.status_code == 422
+
+
+def test_invoice_reads_never_write_financial_outbox_or_audit_state(
+    client, portal_records, detailed_invoice, db_session, db_connection
+):
+    sign_in(client, portal_records)
+    counts_before = [
+        db_session.scalar(select(func.count()).select_from(model))
+        for model in (Invoice, Payment, EmailOutbox, AuditEvent)
+    ]
+    statements = []
+
+    def capture(_connection, _cursor, statement, _parameters, _context, _executemany):
+        statements.append(statement.lstrip().split()[0].upper())
+
+    event.listen(db_connection, "before_cursor_execute", capture)
+    try:
+        for suffix in ("", "/print"):
+            assert (
+                client.get(f"/api/v1/portal/invoices/{detailed_invoice.id}{suffix}").status_code
+                == 200
+            )
+    finally:
+        event.remove(db_connection, "before_cursor_execute", capture)
+    assert statements and set(statements) <= {"SELECT", "SAVEPOINT", "RELEASE", "ROLLBACK"}
+    counts_after = [
+        db_session.scalar(select(func.count()).select_from(model))
+        for model in (Invoice, Payment, EmailOutbox, AuditEvent)
+    ]
+    assert counts_after == counts_before
+    db_session.refresh(detailed_invoice)
+    assert detailed_invoice.status == "CONFIRMED" and detailed_invoice.total == Decimal("4970.16")
+
+
+def test_invoice_detail_omits_private_nested_address_fields(
+    client, portal_records, detailed_invoice, db_session
+):
+    detailed_invoice.customer_snapshot = {
+        **detailed_invoice.customer_snapshot,
+        "billing_address": {"city": "Kochi", "staff_notes": "SECRET_CUSTOMER_ADDRESS"},
+    }
+    detailed_invoice.seller_snapshot = {
+        **detailed_invoice.seller_snapshot,
+        "address": {"city": "Kochi", "internal_cost": "SECRET_SELLER_ADDRESS"},
+    }
+    db_session.commit()
+    sign_in(client, portal_records)
+    response = client.get(f"/api/v1/portal/invoices/{detailed_invoice.id}")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["customer_snapshot"]["billing_address"]["city"] == "Kochi"
+    assert data["seller_snapshot"]["address"]["city"] == "Kochi"
+    assert "SECRET" not in response.text

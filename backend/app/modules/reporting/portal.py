@@ -3,12 +3,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.core.auth import Actor, Role, require_role
 from app.core.errors import DomainError
 from app.db.session import get_session
+from app.modules.billing.service import get_invoice_for_actor, render_invoice_for_actor
 from app.modules.reporting import portal_service
 
 
@@ -49,3 +51,21 @@ def get_subscription(subscription_id: UUID, actor: CustomerActor, db: Database):
 @router.get("/invoices")
 def get_invoices(actor: CustomerActor, db: Database, page: Page = 1, page_size: PageSize = 25):
     return portal_service.invoices(db, actor, page, page_size)
+
+
+@router.get("/invoices/{invoice_id}")
+def get_invoice(invoice_id: UUID, actor: CustomerActor, db: Database, response: Response):
+    response.headers["Cache-Control"] = "private, no-store"
+    return {"data": get_invoice_for_actor(db, actor, invoice_id)}
+
+
+@router.get("/invoices/{invoice_id}/print", response_class=HTMLResponse)
+def print_invoice(invoice_id: UUID, actor: CustomerActor, db: Database):
+    return HTMLResponse(
+        render_invoice_for_actor(db, actor, invoice_id),
+        headers={
+            "Cache-Control": "private, no-store",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
