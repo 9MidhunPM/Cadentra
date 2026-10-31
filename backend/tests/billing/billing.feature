@@ -1,4 +1,5 @@
-# Prepared acceptance scenarios; NOT RUN against application services.
+# Readable acceptance scenarios; not executed by a BDD runner.
+# Actual unit/PostgreSQL/browser coverage is recorded in README.md and the handoff.
 Feature: Billing preserves money, historical policy and payment history
   Background:
     Given financial writes use the shared actor and business clock
@@ -143,4 +144,5 @@ Feature: Billing preserves money, historical policy and payment history
     And its invoice number, recipient and amount match the persisted snapshot
     And evidence records the tested commit, send time and receipt result
     And private addresses, credentials and message content stay out of public artifacts
-    # NOT RUN. SMTP acceptance or a local capture cannot pass this scenario.
+    # SKIPPED by user until real SMTP is configured. Local Mailpit capture is verified.
+    # SMTP acceptance or local capture cannot establish this external-delivery scenario.
