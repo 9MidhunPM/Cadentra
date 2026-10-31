@@ -1,6 +1,6 @@
 # Deployment and runtime checklist
 
-Proposed single-host deployment using Docker Compose, compatible with an existing reverse-proxy platform such as the user's Dokploy/Traefik environment. No server or domain has been changed by this pack. Do not modify live wildcard routing or other services without explicit approval.
+Proposed single-host deployment using Docker Compose, compatible with an existing reverse-proxy platform such as the user's Dokploy/Traefik environment. The user has authorized the demo: a separate Cadentra Dokploy project andcadentra.midhunpm.in domain are prepared; actual deployment/live verification is pending. No unrelated service or wildcard routing was changed. Do not modify live wildcard routing or other services without explicit approval.
 
 ## Required services
 
