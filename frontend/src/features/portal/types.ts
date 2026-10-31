@@ -9,7 +9,19 @@ export interface SubscriptionRecord {
   close_effective_on: string | null;
   revision: number;
 }
+export interface TaxMetadata {
+  id: string;
+  name: string;
+  rate_percent: string;
+}
 export interface SubscriptionDetail extends SubscriptionRecord {
+  prior_subscription_id: string | null;
+  expired: boolean;
+  recurring_subtotal: string;
+  recurring_subtotal_basis: string;
+  base_fee_taxes: TaxMetadata[];
+  tax_preview_on: string;
+  tax_preview_basis: string;
   payment_terms_days: number;
   quotation_valid_until?: string | null;
   plan_snapshot: {
@@ -23,13 +35,16 @@ export interface SubscriptionDetail extends SubscriptionRecord {
     description: string;
     quantity: number;
     unit_price: string;
+    line_total: string;
+    taxes: TaxMetadata[];
   }[];
   next_billing_date?: string | null;
   paused?: boolean;
-  pause_intervals?: { starts_on: string; ends_on: string | null }[];
-  current_pause?: { starts_on: string; ends_on: string | null } | null;
+  pause_interval: { starts_on: string; ends_on: string | null } | null;
+  pause_effective_on: string | null;
+  resume_effective_on: string | null;
   allowed_actions?: string[];
-  invoices: { id: string; number: string }[];
+  invoice_references: { id: string; number: string; status: string }[];
 }
 export interface InvoiceRecord {
   id: string;

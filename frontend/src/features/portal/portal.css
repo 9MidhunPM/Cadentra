@@ -151,24 +151,10 @@
 .portal-balance {
   font-weight: 650;
 }
-.portal-schedule,
 .portal-document-list {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-.portal-schedule li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
-}
-.portal-schedule li span {
-  display: flex;
-  gap: 8px;
-  color: var(--color-muted);
 }
 .portal-document-list li + li {
   border-top: 1px solid var(--color-border);
@@ -284,4 +270,13 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
+}
+
+/* Keep the live region mounted before its first announcement. */
+.portal-announcement:empty {
+  margin: 0;
+}
+.portal-notice:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
