@@ -5,7 +5,7 @@ import { dirname } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
-import { checkedOrigin, digest, readManifest, runtimeInputs, tmpPath, type NativeEvidence } from './performance-server'
+import { checkedOrigin, PERFORMANCE_INGRESS_HEADERS, digest, readManifest, runtimeInputs, tmpPath, type NativeEvidence } from './performance-server'
 
 type Json = Record<string, unknown>
 type Storage = Awaited<ReturnType<BrowserContext['storageState']>>
@@ -36,7 +36,10 @@ const metadataPath = tmpPath(process.env.CADENTRA_PERFORMANCE_SERVER_METADATA, '
 const native: NativeEvidence = JSON.parse(readFileSync(metadataPath, 'utf8'))
 if (native.test_only !== true || native.serving !== 'native-nginx-static' || native.origin !== origin
   || native.api_origin !== 'http://127.0.0.1:8004' || native.database !== fixture.database || native.schema !== fixture.schema || native.dataset_run !== fixture.run
-  || native.docker_verified !== false || native.server_stopped) throw new Error('Native server and fixture provenance do not match')
+  || native.production_config !== 'nginx.production.conf' || native.api_environment !== 'test'
+  || native.ingress_fixture?.original_peer !== '10.0.1.20' || native.ingress_fixture?.native_peer !== '127.0.0.1'
+  || native.ingress_fixture?.cf_connecting_ip !== PERFORMANCE_INGRESS_HEADERS['CF-Connecting-IP']
+  || native.docker_verified !== false || native.traefik_verified !== false || native.production_deployment_verified !== false || native.server_stopped) throw new Error('Native server and fixture provenance do not match')
 const repo = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
 const inputs = runtimeInputs(repo)
 if (inputs.source_sha256 !== native.inputs.source_sha256 || inputs.dist_sha256 !== native.inputs.dist_sha256
@@ -74,7 +77,7 @@ const report: Json = existing || {
     'Only authentication setup creates sessions. No financial, lifecycle, catalog, rule or account mutation latency is measured.',
     'Reset uses a public invalid form sentinel; no real token, reset mutation or email delivery is verified.',
     'Catalog/configuration tables have their recorded small fixture counts; these are not5000-product stress tests.',
-    'Native NGINX/static/API/PostgreSQL evidence does not verify Docker image execution or deployment.',
+    'Strict production NGINX uses a native loopback trusted-peer adaptation and public fixture CF header; API remains APP_ENV=test. This does not verify real Traefik/Cloudflare, production API-peer enforcement, Docker or deployment.',
   ],
   routes: {}, gaps: [], captures: [],
 }
@@ -477,10 +480,10 @@ routes.push({ key: 'overview-chart-data', actor: 'staff', path: '/overview',
 async function contextFor(browser: Browser, actor: ActorKey, mobile = false) {
   const device = mobile ? devices['iPhone 13'] : { viewport: { width: 1497, height: 1049 } }
   const credentials = actor === 'anonymous' ? undefined : fixture.actors[actor]
-  const context = await browser.newContext({ ...device, baseURL: origin, storageState: credentials?.storage_state })
+  const context = await browser.newContext({ ...device, baseURL: origin, extraHTTPHeaders: PERFORMANCE_INGRESS_HEADERS, storageState: credentials?.storage_state })
   try {
     if (credentials && !credentials.storage_state) {
-      const response = await context.request.post(apiPath('/auth/login'), { headers: { Origin: origin },
+      const response = await context.request.post(apiPath('/auth/login'), { headers: { ...PERFORMANCE_INGRESS_HEADERS, Origin: origin },
         data: { email: credentials.email, password: credentials.password } })
       expect(response.status()).toBe(200)
       credentials.storage_state = await context.storageState()
@@ -558,7 +561,7 @@ async function sample(context: BrowserContext, route: Route, capture?: string) {
     const measurements: Record<string, { elapsed_ms: number; status: number; content_type: string }> = {}
     for (const api of apis) {
       const before = performance.now()
-      const response = await context.request.get(api.path)
+      const response = await context.request.get(api.path, { headers: PERFORMANCE_INGRESS_HEADERS })
       const value = api.html ? await response.text() : await response.json()
       const elapsed = performance.now() - before
       expect(response.status()).toBe(api.status ?? 200)
@@ -609,7 +612,7 @@ for (const route of routes) {
       for (let index = 0; index < 20; index++) { raw.push({ mode: 'warm', ...await sample(context, route) }); save() }
       const storageState = await context.storageState()
       for (let index = 0; index < 5; index++) {
-        const cold = await browser.newContext({ baseURL: origin, viewport: { width: 1497, height: 1049 }, storageState })
+        const cold = await browser.newContext({ baseURL: origin, extraHTTPHeaders: PERFORMANCE_INGRESS_HEADERS, viewport: { width: 1497, height: 1049 }, storageState })
         try { raw.push({ mode: 'cold', ...await sample(cold, route) }); save() }
         finally { await cold.close() }
       }

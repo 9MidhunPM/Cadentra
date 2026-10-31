@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { checkedOrigin, tmpPath } from './e2e/performance-server'
+import { checkedOrigin, PERFORMANCE_INGRESS_HEADERS, tmpPath } from './e2e/performance-server'
 
 const run = process.env.CADENTRA_PERFORMANCE_RUN
 if (!run || !/^[a-zA-Z0-9_-]{1,80}$/.test(run)) throw new Error('Set a unique safe CADENTRA_PERFORMANCE_RUN')
@@ -17,7 +17,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: 'list',
-  use: { baseURL: checkedOrigin(), trace: 'off', screenshot: 'only-on-failure' },
+  use: { baseURL: checkedOrigin(), extraHTTPHeaders: PERFORMANCE_INGRESS_HEADERS, trace: 'off', screenshot: 'only-on-failure' },
   projects: [{ name: 'static-performance', use: { ...devices['Desktop Chrome'], viewport: { width: 1497, height: 1049 } } }],
   // Deliberately no webServer: the separately owned native server must already
   // serve the recorded production build. This suite must never start Vite.
