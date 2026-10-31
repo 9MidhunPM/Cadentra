@@ -20,11 +20,16 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import get_clock
 from app.core.config import get_settings
-from app.models import EmailOutbox
+from app.core.demo_contacts import is_demo_contact
+from app.models import EmailOutbox, Invoice, User
 
 
 class InvalidPayload(ValueError):
     """Persisted email content is incomplete or unsuitable for this template."""
+
+
+class DemoContactSuppressed(InvalidPayload):
+    """Imported fictional contacts must never reach SMTP."""
 
 
 class SMTPNotConfigured(smtplib.SMTPException):
@@ -141,6 +146,17 @@ def dispatch_pending(db: Session, limit: int | None = None) -> dict[str, int]:
         record.attempts += 1
         record.status = "SENDING"
         try:
+            customer_id = None
+            if record.kind == "INVOICE":
+                customer_id = db.scalar(
+                    select(Invoice.customer_id).where(Invoice.id == record.aggregate_id)
+                )
+            elif record.kind == "RESET":
+                customer_id = db.scalar(
+                    select(User.customer_id).where(User.id == record.aggregate_id)
+                )
+            if is_demo_contact(db, customer_id=customer_id, recipient=record.recipient):
+                raise DemoContactSuppressed("Delivery is disabled for imported demo contacts")
             message = build_message(record)
             send_message(message)
         except (InvalidPayload, smtplib.SMTPException, OSError) as error:

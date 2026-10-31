@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import Actor, require_customer_ownership
 from app.core.clock import get_clock
+from app.core.demo_contacts import is_demo_contact
 from app.core.errors import DomainError
 from app.core.money import money, money_string
 from app.core.pagination import safe_offset
@@ -454,6 +455,12 @@ def send_invoice(db, actor, invoice_id, request_key):
     _operator(actor)
     with db.begin():
         invoice = _invoice(db, actor, invoice_id, lock=True)
+        snapshot = invoice.customer_snapshot
+        recipient = snapshot.get("email") if isinstance(snapshot, dict) else None
+        if is_demo_contact(db, customer_id=invoice.customer_id, recipient=recipient):
+            raise DomainError(
+                "DEMO_EMAIL_DISABLED", "Email is disabled for imported demo contacts.", 409
+            )
         dedupe = f"INVOICE:{invoice.id}:{request_key}"
         existing = db.scalar(select(EmailOutbox).where(EmailOutbox.dedupe_key == dedupe))
         if existing:
