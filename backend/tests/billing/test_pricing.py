@@ -136,6 +136,18 @@ class PricingAcceptanceTests(unittest.TestCase):
         self.assertEqual(str(result.lines[0].gross), "0.00")
         self.assertEqual(str(result.total), "0.00")
 
+    def test_percentages_respect_stored_rate_precision(self):
+        # Unlimited precision can round onto a half-cent before quantization.
+        beyond_storage = Decimal("9." + "9" * 60)
+        with self.assertRaises(ValueError):
+            PricingLine("L1", 1, Decimal("0.05"), (beyond_storage,))
+        with self.assertRaises(ValueError):
+            SelectedDiscount("PERCENT", beyond_storage, frozenset({"L1"}))
+        line = PricingLine("L1", 1, Decimal("0.05"), (Decimal("9.9999"),))
+        self.assertEqual(calculate_invoice((line,)).tax_total, ZERO)
+        rule = SelectedDiscount("PERCENT", Decimal("9.9999"), frozenset({"L1"}))
+        self.assertEqual(calculate_invoice((line,), rule).discount_total, ZERO)
+
     def test_multiple_tax_amounts_are_rounded_separately(self):
         result = calculate_invoice((PricingLine(
             "L1", 1, Decimal("0.05"), (Decimal("10"), Decimal("10")),

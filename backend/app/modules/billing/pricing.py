@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from decimal import Context, Decimal, ROUND_DOWN, ROUND_HALF_UP, localcontext
 
 CENT = Decimal("0.01")
+RATE_QUANTUM = Decimal("0.0001")
 ZERO = Decimal("0.00")
 MAX_MONEY = Decimal("9999999999999999.99")
 
@@ -27,6 +28,11 @@ def _money(value: Decimal) -> Decimal:
     return value.quantize(CENT, rounding=ROUND_HALF_UP)
 
 
+def _has_scale(value: Decimal, quantum: Decimal) -> bool:
+    with localcontext(Context(prec=50, rounding=ROUND_HALF_UP)):
+        return value == value.quantize(quantum)
+
+
 @dataclass(frozen=True, slots=True)
 class PricingLine:
     stable_line_key: str
@@ -40,15 +46,16 @@ class PricingLine:
         if type(self.quantity) is not int or self.quantity <= 0:
             raise ValueError("Quantity must be a positive integer")
         _nonnegative_decimal(self.unit_price, "Unit price")
-        with localcontext(Context(prec=50, rounding=ROUND_HALF_UP)):
-            if self.unit_price > MAX_MONEY or self.unit_price != self.unit_price.quantize(CENT):
-                raise ValueError("Unit price must fit NUMERIC(18,2)")
+        if self.unit_price > MAX_MONEY or not _has_scale(self.unit_price, CENT):
+            raise ValueError("Unit price must fit NUMERIC(18,2)")
         if not isinstance(self.tax_rates, tuple):
             raise ValueError("Tax rates must be an immutable tuple")
         for rate in self.tax_rates:
             _nonnegative_decimal(rate, "Tax rate")
             if rate > 100:
                 raise ValueError("Tax rate must be at most 100 percent")
+            if not _has_scale(rate, RATE_QUANTUM):
+                raise ValueError("Tax rate must fit four fractional digits")
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +70,8 @@ class SelectedDiscount:
         _nonnegative_decimal(self.value, "Discount value")
         if self.kind == "PERCENT" and self.value > 100:
             raise ValueError("Percentage discount must be at most 100")
+        if self.kind == "PERCENT" and not _has_scale(self.value, RATE_QUANTUM):
+            raise ValueError("Percentage discount must fit four fractional digits")
         if not isinstance(self.eligible_line_keys, frozenset) or any(
             not isinstance(key, str) or not key.strip() for key in self.eligible_line_keys
         ):
