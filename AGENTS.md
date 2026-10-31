@@ -3,7 +3,7 @@
 ## Purpose and authority
 Build the Subscription Management System described in `references/Subscription_Management_System.pdf`.
 Cadentra is the approved project name. Read `docs/00-SOURCES.md` before treating a design choice as an organiser rule.
-The initial commit contains a planning pack; application implementation and Gate A remain pending until verified.
+The initial commit established the planning pack. Current implementation and integrated Gate A evidence are recorded in handoffs/RELEASE.md; never infer readiness from a scaffold alone.
 
 ## Required reading
 Read `START_HERE.md`, your explicitly assigned `team/*/AGENTS.md`, `docs/05-API-CONTRACT.md`, and the relevant sections of `docs/06-DOMAIN-RULES.md`.
@@ -29,6 +29,7 @@ Use feature names in branches, without participant names. Role files specify the
 The user authorized a one-time initial planning-pack commit/push to establish `main`. All subsequent application work goes through feature branches and PRs targeting `main`; do not push application changes directly to `main`.
 After tests and handoff review, push the feature branch with its upstream and open a PR. Use an already-authorized GitHub session/CLI account only after confirming the intended repository and account. If PR creation is unavailable, prepare the title, description, validation results and comparison link, then ask Midhun P M to create it.
 PRs record delivered behavior, exact checks, known gaps, dependencies and shared-change requests. Midhun P M reviews and integrates small slices, preserving accurate contribution history.
+The user requests hourly integration checkpoints during active work. Keep tested feature slices ready, report exact heads/checks/dependencies, and incorporate reviewed main into feature branches at least hourly. Midhun P M serializes reviewed PR merges; incomplete or failing slices are not merged merely to meet the clock.
 The user selected this PR workflow. Organiser compatibility remains unverified; record later clarification without presenting it as already obtained.
 
 ## Credentials and destructive actions
