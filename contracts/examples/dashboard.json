@@ -1,0 +1,22 @@
+{
+  "data": {
+    "as_of": "2026-10-31",
+    "range_from": "2026-10-01",
+    "range_to": "2026-11-01",
+    "currency": "INR",
+    "active_subscriptions": 1,
+    "invoiced_gross_in_range": "4970.16",
+    "cash_received_in_range": "2000.00",
+    "outstanding_now": "2970.16",
+    "overdue_now": "0.00",
+    "overdue_invoice_count": 0,
+    "metric_basis": {
+      "date_range": "[from,to)",
+      "invoiced": "confirmed/paid, tax-inclusive by invoice_date",
+      "cash": "recorded payments by paid_on",
+      "outstanding": "present confirmed unpaid balances",
+      "active": "present active, in-term and unpaused"
+    },
+    "is_example": true
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "data": {
+    "id": "30000000-0000-4000-8000-000000000001",
+    "number": "INV-000001",
+    "subscription_id": "20000000-0000-4000-8000-000000000001",
+    "customer_id": "10000000-0000-4000-8000-000000000001",
+    "status": "CONFIRMED",
+    "collection_status": "PARTIALLY_PAID",
+    "currency": "INR",
+    "invoice_date": "2026-10-31",
+    "due_date": "2026-11-07",
+    "period_start": "2026-10-31",
+    "period_end": "2026-11-30",
+    "customer_snapshot": {
+      "display_name": "Example Workshop",
+      "email": "customer@example.invalid",
+      "billing_address": {
+        "city": "Demo City"
+      }
+    },
+    "seller_snapshot": {
+      "name": "Brightloop Software"
+    },
+    "lines": [
+      {
+        "id": "40000000-0000-4000-8000-000000000001",
+        "stable_line_key": "L1",
+        "description": "Brightloop Suite / Odoo variant",
+        "product_id": "50000000-0000-4000-8000-000000000001",
+        "variant_id": "60000000-0000-4000-8000-000000000001",
+        "quantity": 3,
+        "unit_price": "1560.00",
+        "gross": "4680.00",
+        "discount": "468.00",
+        "taxable_amount": "4212.00",
+        "tax_total": "758.16",
+        "total": "4970.16",
+        "taxes": [
+          {
+            "name": "Illustrative tax",
+            "rate_percent": "18.00",
+            "amount": "758.16"
+          }
+        ]
+      }
+    ],
+    "subtotal": "4680.00",
+    "discount_total": "468.00",
+    "tax_total": "758.16",
+    "total": "4970.16",
+    "paid_amount": "2000.00",
+    "balance_due": "2970.16",
+    "payments": [
+      {
+        "id": "70000000-0000-4000-8000-000000000001",
+        "method": "BANK_TRANSFER",
+        "amount": "2000.00",
+        "paid_on": "2026-10-31",
+        "note": "Example partial payment"
+      }
+    ],
+    "email_status": "NOT_REQUESTED",
+    "calculation_snapshot": {
+      "plan_base_fee": "0.00",
+      "product_base_unit": "1000.00",
+      "variant_delta": "560.00",
+      "quantity": 3,
+      "discount_kind": "PERCENT",
+      "discount_value": "10.00",
+      "discount_reason": "Eligible subscription rule, minimum quantity met",
+      "tax_policy": "after_discount_noncompounding",
+      "rounding": "ROUND_HALF_UP",
+      "is_example": true
+    }
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "purpose": "Proposed contract fixtures only; not evidence that an application is implemented.",
+  "currency": "INR",
+  "rounding": "ROUND_HALF_UP",
+  "cases": [
+    {
+      "id": "canonical_variant_percentage_tax",
+      "base_fee": "0.00",
+      "base_tax_rates": [],
+      "lines": [
+        {
+          "key": "L1",
+          "product_id": "P1",
+          "price": "1000.00",
+          "variant_delta": "560.00",
+          "quantity": 3,
+          "tax_rates": [
+            "18.00"
+          ]
+        }
+      ],
+      "discount": {
+        "kind": "PERCENT",
+        "value": "10.00",
+        "eligible_keys": [
+          "L1"
+        ]
+      },
+      "expected": {
+        "subtotal": "4680.00",
+        "discount": "468.00",
+        "tax": "758.16",
+        "total": "4970.16",
+        "line_discounts": [
+          "468.00"
+        ]
+      }
+    },
+    {
+      "id": "fixed_discount_capped_at_base",
+      "base_fee": "0.00",
+      "base_tax_rates": [],
+      "lines": [
+        {
+          "key": "L1",
+          "product_id": "P1",
+          "price": "100.00",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": [
+            "18.00"
+          ]
+        }
+      ],
+      "discount": {
+        "kind": "FIXED",
+        "value": "150.00",
+        "eligible_keys": [
+          "L1"
+        ]
+      },
+      "expected": {
+        "subtotal": "100.00",
+        "discount": "100.00",
+        "tax": "0.00",
+        "total": "0.00",
+        "line_discounts": [
+          "100.00"
+        ]
+      }
+    },
+    {
+      "id": "product_scoped_fixed_discount",
+      "base_fee": "0.00",
+      "base_tax_rates": [],
+      "lines": [
+        {
+          "key": "L1",
+          "product_id": "P1",
+          "price": "500.00",
+          "variant_delta": "0.00",
+          "quantity": 2,
+          "tax_rates": [
+            "18.00"
+          ]
+        },
+        {
+          "key": "L2",
+          "product_id": "P2",
+          "price": "1000.00",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": []
+        }
+      ],
+      "discount": {
+        "kind": "FIXED",
+        "value": "200.00",
+        "eligible_keys": [
+          "L1"
+        ]
+      },
+      "expected": {
+        "subtotal": "2000.00",
+        "discount": "200.00",
+        "tax": "144.00",
+        "total": "1944.00",
+        "line_discounts": [
+          "200.00",
+          "0.00"
+        ]
+      }
+    },
+    {
+      "id": "largest_remainder_and_line_tax_rounding",
+      "base_fee": "0.00",
+      "base_tax_rates": [],
+      "lines": [
+        {
+          "key": "L1",
+          "product_id": "P1",
+          "price": "0.05",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": [
+            "10.00"
+          ]
+        },
+        {
+          "key": "L2",
+          "product_id": "P2",
+          "price": "0.05",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": [
+            "10.00"
+          ]
+        },
+        {
+          "key": "L3",
+          "product_id": "P3",
+          "price": "0.05",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": [
+            "10.00"
+          ]
+        }
+      ],
+      "discount": {
+        "kind": "FIXED",
+        "value": "0.01",
+        "eligible_keys": [
+          "L1",
+          "L2",
+          "L3"
+        ]
+      },
+      "expected": {
+        "subtotal": "0.15",
+        "discount": "0.01",
+        "tax": "0.02",
+        "total": "0.16",
+        "line_discounts": [
+          "0.01",
+          "0.00",
+          "0.00"
+        ]
+      }
+    },
+    {
+      "id": "plan_base_fee_charged_once",
+      "base_fee": "100.00",
+      "base_tax_rates": [
+        "18.00"
+      ],
+      "lines": [
+        {
+          "key": "L1",
+          "product_id": "P1",
+          "price": "1000.00",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": [
+            "18.00"
+          ]
+        }
+      ],
+      "discount": null,
+      "expected": {
+        "subtotal": "1100.00",
+        "discount": "0.00",
+        "tax": "198.00",
+        "total": "1298.00",
+        "line_discounts": [
+          "0.00",
+          "0.00"
+        ]
+      }
+    },
+    {
+      "id": "multiple_noncompounding_taxes",
+      "base_fee": "0.00",
+      "base_tax_rates": [],
+      "lines": [
+        {
+          "key": "L1",
+          "product_id": "P1",
+          "price": "100.00",
+          "variant_delta": "0.00",
+          "quantity": 1,
+          "tax_rates": [
+            "9.00",
+            "9.00"
+          ]
+        }
+      ],
+      "discount": null,
+      "expected": {
+        "subtotal": "100.00",
+        "discount": "0.00",
+        "tax": "18.00",
+        "total": "118.00",
+        "line_discounts": [
+          "0.00"
+        ]
+      }
+    }
+  ],
+  "payment_case": {
+    "invoice_total": "4970.16",
+    "payments": [
+      "2000.00",
+      "2970.16"
+    ],
+    "expected_balances": [
+      "2970.16",
+      "0.00"
+    ],
+    "expected_states": [
+      "CONFIRMED",
+      "PAID"
+    ]
+  },
+  "cadence_cases": [
+    {
+      "anchor": "2027-01-31",
+      "cadence": "MONTHLY",
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "expected": [
+        "2027-01-31",
+        "2027-02-28",
+        "2027-03-31",
+        "2027-04-30"
+      ]
+    },
+    {
+      "anchor": "2024-02-29",
+      "cadence": "YEARLY",
+      "indices": [
+        0,
+        1,
+        4
+      ],
+      "expected": [
+        "2024-02-29",
+        "2025-02-28",
+        "2028-02-29"
+      ]
+    },
+    {
+      "anchor": "2026-12-31",
+      "cadence": "DAILY",
+      "indices": [
+        0,
+        1,
+        2
+      ],
+      "expected": [
+        "2026-12-31",
+        "2027-01-01",
+        "2027-01-02"
+      ]
+    },
+    {
+      "anchor": "2026-12-28",
+      "cadence": "WEEKLY",
+      "indices": [
+        0,
+        1,
+        2
+      ],
+      "expected": [
+        "2026-12-28",
+        "2027-01-04",
+        "2027-01-11"
+      ]
+    }
+  ]
+}

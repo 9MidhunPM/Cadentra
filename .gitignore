@@ -1,0 +1,30 @@
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Frontend and browser artifacts
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Local workspace artifacts
+.codex/
+.agents/
+*.log
+.DS_Store
