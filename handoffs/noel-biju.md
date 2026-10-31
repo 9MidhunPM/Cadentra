@@ -1,149 +1,93 @@
 # Noel Biju: handoff
 
-Status: PURE INVOICE CALCULATOR READY; INTEGRATED GATE A PENDING
+Status: FINANCIAL API INTEGRATED; TRANSACTIONAL ISSUER READY; BILLING UI UNDER FINAL REVIEW
 
 Role: Billing & Payments
-Branch: feature/billing-payments
-Baseline: 766cb2664ded48afcb1012001565cbbf65c68142
-Setup commit: ca07fe256f66147fa8baca0bd40649e6c690f19f
-Prepared-test commit: 813091d7819310a5e4b23a62938e72a018e979b9
-Pricing implementation commit: d380643f4b1b4d844d4bc51f66d70c8f24498532
-Stored-percentage precision fix: 9d7ebc2ba4c5327a81443005f5d6f843fdcc60ef
+Branch: feature/billing-period-runtime
+Reviewed baseline: 0b257c8 (Gate A, immutable getter, financial API, privacy/fixture fixes)
+Issuer implementation: 41dffac6a826930198e53242ed3b5e0e94cd619e
 
-## Delivered slice
-Created the billing feature branch from the reviewed main baseline. Preserved the
-existing Git author configuration and authenticated the requested gh-agent3 SSH
-key as noel-ult. The setup commit was pushed successfully using that key.
+## Delivered and integrated
 
-Prepared nine additional pricing fixtures, an executable standard-library check
-against the existing planning reference, application acceptance scenarios and
-real PostgreSQL race/rollback protocols. The 15 total pricing fixtures include
-the six canonical cases. The preparation commit contained no application code.
+- Setup ca07fe256f66147fa8baca0bd40649e6c690f19f verified the existing noel-ult author and gh-agent3 SSH account and pushed the requested initial test checkpoint.
+- Pricing d380643f4b1b4d844d4bc51f66d70c8f24498532 and precision fix 9d7ebc2ba4c5327a81443005f5d6f843fdcc60ef calculate immutable Decimal results against all 15 vectors. Shared money helper is now adopted.
+- Financial API 7fb055d305b782a458929696543c9cc529f66019 implements retained tax/discount revisions, permission-checked invoice queries/actions, idempotent manual payments, queued email and escaped print.
+- Privacy 73cdbcccb88b364ceacdb7e53a3d8d10e57f26a9 explicitly whitelists public party/address scalars; nested private fields cannot pass through customer DTOs or print reuse.
+- Fixture fix 5d8ce044e19f1f0bdbec00ab37b88c7a77ce35ef removes only its generated invoice-race UUID graph from an explicitly disposable test database.
 
-The coordinator then explicitly released the independent pure-pricing slice
-before integrated Gate A, while deferring rule selection/persistence/cursor/API
-work. Implemented immutable Decimal inputs/results, one preselected capped
-discount, stable-key largest-remainder cent allocation, per-tax rounding and
-NUMERIC(18,2) bounds. Inputs already contain the base line and variant-adjusted
-unit prices. The calculator does not add either charge or select rules itself.
+These slices went through coordinator-created PRs, preserving actual commit authors. No global authentication or identity settings changed. All pushes use the verified gh-agent3 SSH key.
 
-## Files changed
-- backend/tests/billing/pricing_cases.json
-- backend/tests/billing/check_prepared_cases.py
-- backend/tests/billing/billing.feature
-- backend/tests/billing/CONCURRENCY.md
-- backend/tests/billing/README.md
-- backend/tests/billing/test_pricing.py
-- backend/app/modules/billing/pricing.py
-- handoffs/noel-biju.md
+## Ready issuer slice
 
-## Tests actually run
-- `python3 scripts/check_pack.py`: PASS (planning structure, six arithmetic
-  fixtures, four cadence fixtures and payment/example consistency only).
-- `bash scripts/preflight.sh`: exit 0; Docker unavailable in this environment.
-- SSH authentication with gh-agent3: GitHub identified noel-ult. GitHub's
-  expected no-shell exit status was 1. Setup commit push succeeded.
-- `python3 backend/tests/billing/check_prepared_cases.py`: PASS, three
-  fixture/reference checks, covering 15 arithmetic vectors, stable-key allocation
-  under reordered lines, finite decimal text and fixture immutability. This does
-  not import or exercise an application pricing service.
-- `python3 -m py_compile backend/tests/billing/check_prepared_cases.py`: PASS.
-- `git diff --check` and staged whitespace checks: PASS.
-- Independent standards/specification reviews: no remaining findings after
-  adding the multi-product base-fee fixture and external-mail receipt scenario.
-- `PYTHONPATH=backend python3 -m unittest discover -s backend/tests/billing -p
-  test_pricing.py -v`: PASS, 13 actual calculator unit tests including all 15
-  vectors, immutable inputs/results, line/tax sums, stable-key allocation,
-  independent caller precision/rounding, zero normalization, stored-rate precision
-  and invalid values. A focused boundary audit demonstrated half-cent drift for
-  unconstrained 60-digit percentages. Its rejection regression failed before the
-  fix, then passed; tax/percentage rates now match NUMERIC(9,4) precision.
-  The initial test-first run failed because the pricing module did not yet exist;
-  the implementation now passes. These tests do not call the planning oracle.
-- `python3 -m py_compile backend/app/modules/billing/pricing.py
-  backend/tests/billing/test_pricing.py`: PASS.
-- Both independent reviews found no remaining findings in the pricing slice.
+The issuer locks each subscription, reuses durable outcomes before requesting current inputs, and commits period, invoice/line/tax snapshots, redemption/counter and financial cursor together. Paused periods receive durable PAUSED outcomes. Cancelled periods are never automatically replaced.
 
-Expected canonical totals: subtotal 4680.00, discount 468.00, tax 758.16, total
-4970.16. Planned payments 2000.00 and 2970.16 leave balances 2970.16 and 0.00.
-Application payment, concurrency, API, browser and external-delivery tests are
-NOT RUN. PostgreSQL race protocols are prepared, not passing evidence.
+Bounded batches count failed attempts and persist traversal continuation in append-only BILLING_BATCH audit records, as approved by Midhun P M. Traversal wraps once and survives process restart; it is separate from next_cycle_index. Failed financial periods remain unresolved and discoverable.
 
-## Manual verification
-Workspace/SSH/branch push verified. Application verification not performed.
+Tax revisions are evaluated at period_start. Product memberships come from Catalog.get_product_tax_ids through the subscription getter, without repricing; the base fee keeps the explicit stable IDs in plan_snapshot["tax_rule_ids"]. Inputs contain exactly one BASE line and already variant-adjusted product unit prices.
 
-## Required shared changes
-Coordinator confirmed the following planning agreements through TUI; Midhun P M
-owns recording the shared contract/model/migration changes:
+Invoice creation uses the shared business clock, preserving original service periods. Due date adds payment terms to actual issue date; replay/confirmation does not reset stored dates. Public run-due accepts no as_of, limit or authoritative money overrides.
 
-- Keep stable tax/discount UUID identities. Add immutable effective-dated rule
-  revisions owning configuration/product membership, and selected revision FKs
-  on invoice discount and line-tax snapshots. Shared discount uses_count remains
-  on the stable parent; revisions do not reset it. Serialize edits on the parent,
-  enforce nonoverlapping [effective_from, effective_until) intervals and unique
-  parent/effective_from; PATCH dates begin no earlier than the next business day.
-  Retain separate eligibility windows. This supports historical catch-up.
-- invoice_date is actual creation business date in Asia/Kolkata; due_date adds
-  subscription payment terms. Keep original period bounds and preserve stored
-  invoice/due dates on replay and confirmation. Worker as_of is a cutoff, not an
-  arbitrary production invoice-date override. Tests inject the shared clock.
-- Subscription inputs have exactly one flattened BASE line and already-adjusted
-  product unit_price, immutable bounds, product quantities and stable selected
-  tax IDs. Billing resolves tax revisions and chooses discounts at period_start.
-  Reuse an existing period outcome before requesting current subscription inputs;
-  due-date filtering belongs to billing/worker, not an implicit getter clock.
-- Foundation imports/types await the integrated Gate A baseline. Proposed shared
-  imports are app.core.auth Actor/require_actor/require_role, app.db.session
-  get_session/SessionFactory, app.core.clock get_clock, app.core.money money and
-  app.core.errors DomainError. No competing stubs are created here.
-- The independently released calculator currently uses an isolated Decimal
-  context and HALF_UP quantization locally. Adopt the shared money helper after
-  its reviewed foundation lands, retaining precision independence and bounds.
+## Owned files
 
-Pure pricing exports: frozen PricingLine(stable_line_key, quantity, unit_price,
-tax_rates), SelectedDiscount(kind, value, eligible_line_keys), LineCalculation and
-InvoiceCalculation. calculate_invoice(tuple[PricingLine, ...], discount=None)
-returns Decimal line/invoice totals. Its adapter must retain exactly one BASE
-line; subscription inputs keep product identity separately for eligibility.
+Implementation: backend/app/modules/billing/ (pricing, rules, invoices, issuance, router and stable service exports).
+Tests: backend/tests/billing/ (actual pricing/rule/invoice/issuance/API/race tests plus prepared reference assets).
+UI: frontend/src/features/billing/ is implemented in the working tree and remains outside this issuer commit until final review is complete.
+Handoff: handoffs/noel-biju.md.
 
-Coordinator clarified tax membership: Catalog.get_product_tax_ids(db,
-product_id, effective_date) resolves revision-owned product membership at each
-period_start. Thanushree's getter supplies those period-specific stable IDs,
-without repricing. Base-fee selection instead uses explicit stable plan_tax_ids
-frozen in the confirmed plan snapshot; applicable rate revisions are resolved
-per period. The added scenarios record both boundaries and remain NOT RUN.
+No shared models, migrations, dependency manifests, central frontend routes or other owners' handoffs were edited.
 
-## Known gaps and next dependency
-Database-backed invoice and UI implementation await the integrated, verified
-Gate A baseline. Docker is unavailable in this shell. The coordinator reports a
-running temporary native PostgreSQL 18.6 server and passing initial-migration
-tests in his clone; this billing clone has not configured its own database or run
-database tests. No invoice/payment schemas or safe print functions are implemented yet.
-The agreed future invoice-query/print services must enforce actor ownership,
-omit costs/private staff notes, and escape printable HTML. Send returns a queued
-outbox result; local capture or SMTP acceptance is not external delivery proof.
+## Tests actually executed
 
-The GitHub CLI account is 9MidhunPM while the verified push key is noel-ult. No
-account switching was performed. PR creation is delegated to the coordinator
-using the prepared details below.
+- Planning-pack/reference checks passed; these are not application verification.
+- Actual pricing suite: 13 tests, including 15 vectors, per-tax rounding, stable-key allocation, immutability, ambient precision and invalid/storage-bound values.
+- Rules: 22 actual PostgreSQL/API tests passed, covering admin-only writes, retained revisions, minimums, caps, scopes, date windows and zero-benefit selection.
+- Invoice/payment tests: 14 actual PostgreSQL tests passed after the privacy/fixture patch, including three genuine two-connection payment capacity/replay/cancellation races, zero-total confirmation, partial/full settlement, overpayment/date/key conflicts, print, CSRF/roles and outbox deduplication.
+- Issuance: 9 actual PostgreSQL tests passed. They cover golden snapshots/dates/replay, full charge for shortened periods, flushed-before-commit rollback/retry, two independent connections for same-period issuance and the last capped discount use, paused catch-up, actual SQLSTATE 23505 rollback/reload and bounded-failure progress in a fresh interpreter.
+- Full backend: 146 tests and 121 subtests passed from a fresh generated UUID schema migrated to the reviewed Alembic head. Previously retained public test rows were left untouched. Each committed issuance fixture migrates and drops only its own generated schema after workers finish; no public truncation, database drops or disabled integrity triggers.
+- Run-due HTTP tests verify real role/CSRF guards, strict empty payloads and server-owned clock/batch size.
+- Ruff, Python compilation and whitespace checks passed for the reviewed backend slices. Independent standards/specification review findings on batch limits and starvation were corrected before the issuer commit.
 
-## Next slice
-After Gate A, incorporate reviewed main and the shared money helper, then
-implement atomic due-period issuance and real PostgreSQL races before
-rule/payment/UI completion. Both fixture sets already pass against the actual
-calculator. Use atomic commits and checkpoint active work
-at least every 30 minutes, as requested by the user. Incorporate reviewed main
-at least hourly while active and coordinate integration with Midhun P M.
+Exact normal test command with isolated PostgreSQL environment:
+`backend/.venv/bin/pytest backend/tests/billing -q`.
+Full-suite command inside the clean migrated-schema harness:
+`backend/.venv/bin/pytest backend/tests -q`.
 
-## Prepared PR
+Canonical subtotal 4680.00, discount 468.00, tax 758.16, total 4970.16.
+Payments 2000.00 and 2970.16 leave balances 2970.16 and 0.00.
+The cap race creates one 4970.16 invoice and one undiscounted 5522.40 invoice, with one redemption/counter increment. Same-period contention creates exactly one period and invoice.
 
-Title: Calculate immutable invoice totals and prepare billing acceptance coverage
+## Native/browser and mail evidence
 
-The billing workstream now calculates immutable invoice totals with Decimal,
-deterministic capped discount allocation and separately rounded taxes. Thirteen
-actual unit tests cover 15 fixtures and precision/validation boundaries. Prepared
-acceptance specifications cover invoice/payment, rule history, permissions,
-print/email and true two-connection PostgreSQL races. Integrated issuance and
-database safety remain unimplemented. Checks and limitations are recorded above.
+Own Python 3.12.13 environment and isolated PostgreSQL 18.6 application/test databases are verified at migration 0002. Docker is absent in this shell.
 
-Target: main. [Create comparison](https://github.com/9MidhunPM/Cadentra/compare/main...feature/billing-payments?expand=1).
+Actual Chromium desktop/mobile billing flow passed against the API and persistent ACTIVE-subscription fixture: create 18% product tax and 10% discount, run due, confirm, record the canonical two payments, reload Paid/zero balance, queue email, print and verify staff read-only rules. No relevant console/page errors, framework overlays or page overflow were observed. This is billing from a prepared ACTIVE fixture, not a claim that the full catalog/lifecycle journey ran.
+
+The actual invoice outbox dispatch reported processed=1, accepted_by_smtp=1, failed=0. The message appeared in the native local Mailpit web inbox with the correct invoice number, total, paid amount and balance. Only fictional recipients were used in visual fixtures. Evidence/scripts/screenshots stay under /tmp, outside the public repository.
+
+User explicitly deferred external delivery until a real SMTP provider is configured. Real SMTP remains environment-configurable with no committed credentials. Midhun P M owns Compose/Mailpit/standalone-outbox wiring and password-reset verification. Native capture is verified; Docker Compose execution is not claimed.
+
+## Stable interfaces
+
+- app.modules.billing.service.get_invoice_for_actor(db, actor, invoice_id) returns plain safe JSON-ready detail.
+- render_invoice_for_actor(db, actor, invoice_id) returns escaped printable HTML.
+- list_invoices_for_actor(db, actor, ...) returns the normal paginated envelope.
+- CUSTOMER actors can use these helpers only for their own records; foreign IDs return 404. Staff routes remain ADMIN/STAFF only.
+- CONFIRMED collection labels are UNPAID or PARTIALLY_PAID; PAID/DRAFT/CANCELLED remain their status, and overdue is a separate boolean.
+- run_due(session_factory, as_of, limit) is the worker interface. Optional actor context attributes an explicit staff run; financial operations own their transactions.
+- Email requests return 202/outbox status. SENT means SMTP acceptance, not verified external delivery.
+
+## Remaining work and integration needs
+
+Publish/integrate the ready issuer, finish the billing UI review fixes and commit its tests. Joint T13/T34 worker/lifecycle closure and billing-versus-policy race verification awaits the reviewed subscription action service. Coordinate the complete persisted browser journey and performance evidence with Sherin Saji. Do not mark the whole billing workstream complete from arithmetic or API tests alone.
+
+Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. SSH-only pushes remain selected; the coordinator creates/reviews/merges PRs through its existing account.
+
+## Prepared issuer PR
+
+Title: Issue recurring invoices atomically with bounded fair catch-up
+
+Create exactly one durable outcome per subscription cycle, preserving immutable prices/taxes/discounts and safe retries. Bound work including failures, retain fair traversal progress across restarts, and expose the authenticated run-due action through the shared clock.
+
+Validation: 9 actual PostgreSQL issuance tests, 2 HTTP boundary tests, the clean-schema 146-test backend run, Ruff and independent reviews passed. Billing UI, joint full lifecycle/worker/browser verification and performance are separate remaining slices.
+
+Target main: https://github.com/9MidhunPM/Cadentra/compare/main...feature/billing-period-runtime
