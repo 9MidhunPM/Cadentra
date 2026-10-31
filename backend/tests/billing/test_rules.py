@@ -283,3 +283,91 @@ def test_tax_validity_uses_period_start_and_exclusive_end(db_session):
     rule_id = UUID(created["id"])
     assert rules.get_applicable_taxes(db_session, (rule_id,), TODAY)
     assert rules.get_applicable_taxes(db_session, (rule_id,), TODAY + timedelta(days=1)) == ()
+
+
+@pytest.mark.parametrize(
+    ("period_offset", "eligible"),
+    [(1, False), (2, True), (3, True), (4, False), (5, False)],
+    ids=["before-start", "inclusive-start", "inside-window", "exclusive-end", "expired"],
+)
+def test_discount_period_validity_boundaries_preserve_uses(db_session, period_offset, eligible):
+    product = Product(
+        name="Validity boundary",
+        product_type="SERVICE",
+        sales_price=Decimal("100.00"),
+        cost_price=Decimal("0.00"),
+    )
+    db_session.add(product)
+    db_session.commit()
+    created = rules.write_rule(
+        db_session,
+        ADMIN,
+        discount(
+            scope="PRODUCTS",
+            product_ids=[product.id],
+            starts_on=TODAY + timedelta(days=2),
+            ends_on=TODAY + timedelta(days=4),
+            usage_limit=3,
+        ),
+        False,
+    )
+    rule_id = UUID(created["id"])
+    parent = db_session.get(DiscountRule, rule_id)
+    parent.uses_count = 1
+    db_session.commit()
+    selected = rules.choose_discount(
+        db_session,
+        TODAY + timedelta(days=period_offset),
+        (rules.DiscountLine("PRODUCT", product.id, 1, Decimal("100.00")),),
+    )
+    if eligible:
+        assert selected is not None and selected.rule_id == rule_id
+    else:
+        assert selected is None or selected.rule_id != rule_id
+    assert db_session.get(DiscountRule, rule_id).uses_count == 1
+
+
+@pytest.mark.parametrize(
+    ("gross", "eligible"),
+    [("99.99", False), ("100.00", True), ("100.01", True)],
+    ids=["below-minimum", "exact-minimum", "above-minimum"],
+)
+def test_discount_minimum_uses_eligible_product_gross(db_session, gross, eligible):
+    product = Product(
+        name="Purchase boundary",
+        product_type="SERVICE",
+        sales_price=Decimal("100.00"),
+        cost_price=Decimal("0.00"),
+    )
+    db_session.add(product)
+    db_session.commit()
+    created = rules.write_rule(
+        db_session,
+        ADMIN,
+        discount(
+            scope="PRODUCTS",
+            product_ids=[product.id],
+            min_purchase="100.00",
+            min_quantity=1,
+            usage_limit=3,
+        ),
+        False,
+    )
+    rule_id = UUID(created["id"])
+    parent = db_session.get(DiscountRule, rule_id)
+    parent.uses_count = 1
+    db_session.commit()
+    selected = rules.choose_discount(
+        db_session,
+        TODAY,
+        (
+            rules.DiscountLine("BASE", None, 1, Decimal("1000.00")),
+            rules.DiscountLine("PRODUCT", product.id, 1, Decimal(gross)),
+        ),
+    )
+    if eligible:
+        assert selected is not None and selected.rule_id == rule_id
+        assert selected.discount.eligible_line_keys == frozenset({"PRODUCT"})
+    else:
+        assert selected is None or selected.rule_id != rule_id
+    assert db_session.get(DiscountRule, rule_id).uses_count == 1
