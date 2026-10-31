@@ -1,7 +1,30 @@
 # Subscription acceptance cases
 
-Status: CALENDAR, BILLING INPUTS, LIFECYCLE, API, ACTUAL WORKER AND ACTION RACE
-TESTS PASS; JOINT PAYMENT/CUSTOMER-PORTAL BROWSER JOURNEY REMAINS IN INTEGRATION.
+Status: CALENDAR, BILLING INPUTS, LIFECYCLE, API, WORKER, ACTION RACE AND RETAINED
+JOINT T31 EVIDENCE PASS; CURRENT THREE-FIX SLICE HAS TARGETED CHECKS BELOW.
+
+## Current subscription audit refresh (31 October 2026)
+
+Candidate `feature/subscription-threefix-refresh` is based on current main `71af9f6`.
+Its six runtime/test files match the previously reviewed `5324c16` tree; coordinator
+main/deployment changes since then are preserved. The scoped fixes cover variant
+retry without lost form values, URL-backed filters across Back/Forward while
+preserving unapplied edits, and pre-confirmation rejection of invoice due dates
+outside the supported calendar range.
+
+Rerun commands and results for the current candidate:
+
+- With `APP_ENV=test` and both database URLs set to the disposable PostgreSQL test
+  database, `cd backend && .venv/bin/python -m pytest tests/subscriptions/test_workflows.py -q`:
+  **62 passed in 5.42s**.
+- `cd frontend && npm test -- --run src/features/subscriptions/forms.test.tsx src/features/subscriptions/subscriptions.test.tsx`:
+  **18 passed**.
+- Ruff for the changed backend workflow/test and `git diff --check`: pass.
+- Full backend/frontend suites were not rerun for this refreshed candidate; the
+  focused checks cover the affected workflows and UI fixes.
+
+The separate demo-history importer is on main at `6984150` and has its own four
+focused PostgreSQL tests; those results are in the Thanushree handoff.
 
 Gate A was released on reviewed main 5b78567. Set DATABASE_URL and
 TEST_DATABASE_URL to this workspace's isolated databases before database tests.
@@ -11,9 +34,9 @@ TEST_DATABASE_URL to this workspace's isolated databases before database tests.
 Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions -q` from the
 repository root, with DATABASE_URL and TEST_DATABASE_URL set to the same isolated
 PostgreSQL `*_test` database with reviewed migrations applied. The current owned
-suite contains 124 tests and 80 subtests on reviewed main 382fa2b plus this slice:
+suite contained 124 tests and 80 subtests on reviewed main 382fa2b plus its slice:
 10 calendar, 25 billing-input, 52 workflow, 27 API, four worker and six race tests.
-The full integrated backend run passed 314 tests and 121 subtests in 59.25s,
+The historical full integrated backend run passed 314 tests and 121 subtests in 59.25s,
 including all 124 owned cases, against cadentra_subscriptions_integration_test.
 
 Workflow/API tests exercise real templates, copied defaults, quoted price and

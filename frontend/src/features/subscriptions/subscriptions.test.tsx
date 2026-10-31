@@ -1,6 +1,6 @@
 /** Test-only API fixtures. These checks do not establish backend/browser integration. */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient } from '../../lib';
 import { ActionForm, SubscriptionDetail, SubscriptionList, TemplateList } from './pages';
@@ -133,6 +133,49 @@ describe('subscription staff forms', () => {
     expect(screen.getByText('Plan unavailable')).toBeInTheDocument();
     expect(screen.queryByText('plan-1')).not.toBeInTheDocument();
     expect(screen.queryByText('unavailable-plan-uuid')).not.toBeInTheDocument();
+  });
+
+
+  it('keeps URL history filters and controls aligned without discarding edits on pagination or retry', async () => {
+    let failNext = false;
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const path = String(input);
+      if (failNext) { failNext = false; return response({ error: { code: 'UNAVAILABLE', message: 'List unavailable.' } }, 503); }
+      const params = new URL(path, 'http://localhost').searchParams;
+      return response({ items: [{ ...record, customer_name: params.get('q') }], total: 50, page: Number(params.get('page')), page_size: 25 });
+    });
+    vi.stubGlobal('fetch', fetcher);
+    const router = createMemoryRouter([{ path: '/subscriptions', element: <SubscriptionList /> }], { initialEntries: ['/subscriptions?q=Alpha&state=DRAFT&page=1'] });
+    render(<RouterProvider router={router} />);
+    await screen.findByText('Alpha');
+    expect(screen.getByLabelText('Search subscriptions')).toHaveValue('Alpha');
+    expect(screen.getByLabelText('State')).toHaveValue('DRAFT');
+    fireEvent.change(screen.getByLabelText('Search subscriptions'), { target: { value: 'Beta' } });
+    fireEvent.change(screen.getByLabelText('State'), { target: { value: 'ACTIVE' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
+    await screen.findByText('Beta');
+    await act(async () => { await router.navigate(-1); });
+    await screen.findByText('Alpha');
+    expect(screen.getByLabelText('Search subscriptions')).toHaveValue('Alpha');
+    expect(screen.getByLabelText('State')).toHaveValue('DRAFT');
+    await act(async () => { await router.navigate(1); });
+    await screen.findByText('Beta');
+    expect(screen.getByLabelText('Search subscriptions')).toHaveValue('Beta');
+    expect(screen.getByLabelText('State')).toHaveValue('ACTIVE');
+    fireEvent.change(screen.getByLabelText('Search subscriptions'), { target: { value: 'Unsaved search' } });
+    fireEvent.change(screen.getByLabelText('State'), { target: { value: 'QUOTATION' } });
+    failNext = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByText('List unavailable.');
+    expect(screen.getByLabelText('Search subscriptions')).toHaveValue('Unsaved search');
+    expect(screen.getByLabelText('State')).toHaveValue('QUOTATION');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await screen.findByText('Beta');
+    expect(screen.getByLabelText('Search subscriptions')).toHaveValue('Unsaved search');
+    expect(screen.getByLabelText('State')).toHaveValue('QUOTATION');
+    const request = new URL(String(fetcher.mock.calls.at(-1)?.[0]), 'http://localhost');
+    expect(Object.fromEntries(request.searchParams)).toMatchObject({ q: 'Beta', state: 'ACTIVE', page: '2' });
+    expect(router.state.location.search).toContain('q=Beta');
   });
 
 });

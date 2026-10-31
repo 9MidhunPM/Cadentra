@@ -7,6 +7,7 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.auth import Actor
 from app.core.errors import DomainError
@@ -14,6 +15,7 @@ from app.models import (
     AuditEvent,
     BillingPeriod,
     Customer,
+    Invoice,
     Plan,
     Product,
     Subscription,
@@ -21,6 +23,7 @@ from app.models import (
     SubscriptionPause,
     User,
 )
+from app.modules.billing import issuance
 from app.modules.subscriptions import workflows as w
 
 
@@ -92,6 +95,110 @@ def reject(code, call):
     with pytest.raises(DomainError) as caught:
         call()
     assert caught.value.code == code
+
+
+@pytest.mark.parametrize("operation", ["create", "edit", "renew"])
+@pytest.mark.parametrize("terms", [2_147_483_647, "one_day_over"])
+def test_unrepresentable_terms_leave_mutable_records_and_audits_unchanged(
+    db_session, setup, operation, terms
+):
+    row = None
+    end = setup.payload["end_date"]
+    if operation == "edit":
+        row = w.create_subscription(db_session, setup.actor, setup.payload)
+    elif operation == "renew":
+        row = active(db_session, setup)
+        end = date(2027, 8, 1)
+    if terms == "one_day_over":
+        terms = (date.max - max(setup.clock.today(), end)).days + 1
+    subscription_ids = set(db_session.scalars(select(Subscription.id)))
+    audit_ids = set(db_session.scalars(select(AuditEvent.id)))
+    before = (row.state, row.payment_terms_days, row.revision) if row else None
+    with pytest.raises(DomainError) as caught:
+        if operation == "create":
+            w.create_subscription(
+                db_session, setup.actor, {**setup.payload, "payment_terms_days": terms}
+            )
+        elif operation == "edit":
+            w.edit_subscription(db_session, setup.actor, row.id, {"payment_terms_days": terms})
+        else:
+            w.apply_action_record(
+                db_session,
+                setup.actor,
+                row.id,
+                "renew",
+                {"start_date": date(2027, 5, 1), "end_date": end, "payment_terms_days": terms},
+            )
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_PAYMENT_TERMS", 422)
+    assert "payment_terms_days" in caught.value.fields
+    assert set(db_session.scalars(select(Subscription.id))) == subscription_ids
+    assert set(db_session.scalars(select(AuditEvent.id))) == audit_ids
+    if row:
+        assert (row.state, row.payment_terms_days, row.revision) == before
+
+
+@pytest.mark.parametrize("today", [date(2027, 2, 10), date(2027, 6, 1)])
+def test_supported_terms_boundary_can_confirm_and_issue_real_invoice(
+    db_session, db_connection, setup, monkeypatch, today
+):
+    setup.clock.today = lambda: today
+    issue_day = max(today, setup.payload["end_date"])
+    terms = (date.max - issue_day).days
+    row = w.create_subscription(
+        db_session, setup.actor, {**setup.payload, "payment_terms_days": terms}
+    )
+    for action, payload in (
+        ("issue-quotation", {"valid_days": 7}),
+        ("confirm", {}),
+        ("activate", {}),
+    ):
+        w.apply_action_record(db_session, setup.actor, row.id, action, payload)
+    setup.clock.today = lambda: issue_day
+    monkeypatch.setattr(issuance, "get_clock", lambda: setup.clock)
+
+    def factory():
+        return Session(bind=db_connection, join_transaction_mode="create_savepoint")
+
+    result = issuance.issue_due_period(factory, row.id, 0, issue_day, setup.actor)
+    invoice = db_session.get(Invoice, result.invoice_id)
+    assert result.disposition == "INVOICED"
+    assert (invoice.invoice_date, invoice.due_date, invoice.total) == (
+        issue_day,
+        date.max,
+        Decimal("300.00"),
+    )
+    replay = issuance.issue_due_period(factory, row.id, 0, issue_day, setup.actor)
+    assert replay.invoice_id == result.invoice_id
+
+
+@pytest.mark.parametrize("legacy_terms", [True, False], ids=["legacy-quotation", "clock-advanced"])
+def test_confirmation_rechecks_terms_before_locking_and_allows_revision(
+    db_session, setup, legacy_terms
+):
+    setup.clock.today = lambda: date(2027, 6, 1)
+    terms = (date.max - setup.clock.today()).days
+    row = w.create_subscription(
+        db_session, setup.actor, {**setup.payload, "payment_terms_days": terms}
+    )
+    w.apply_action_record(db_session, setup.actor, row.id, "issue-quotation", {"valid_days": 7})
+    if legacy_terms:
+        # Existing quotations may predate validation; leave them editable through revise.
+        row.payment_terms_days = 2_147_483_647
+        db_session.flush()
+    else:
+        setup.clock.today = lambda: date(2027, 6, 2)
+    revision = row.revision
+    audit_ids = set(db_session.scalars(select(AuditEvent.id)))
+    with pytest.raises(DomainError) as caught:
+        w.apply_action_record(db_session, setup.actor, row.id, "confirm", {})
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_PAYMENT_TERMS", 422)
+    assert row.state == "QUOTATION" and row.revision == revision
+    assert set(db_session.scalars(select(AuditEvent.id))) == audit_ids
+    w.apply_action_record(db_session, setup.actor, row.id, "revise", {})
+    w.edit_subscription(db_session, setup.actor, row.id, {"payment_terms_days": 14})
+    w.apply_action_record(db_session, setup.actor, row.id, "issue-quotation", {"valid_days": 7})
+    w.apply_action_record(db_session, setup.actor, row.id, "confirm", {})
+    assert row.state == "CONFIRMED" and row.payment_terms_days == 14
 
 
 def test_template_copy_and_quote_price_isolation(db_session, setup):
@@ -478,7 +585,6 @@ def test_template_copy_and_edit_use_one_coherent_locked_version(monkeypatch):
 
     from sqlalchemy import create_engine, delete, text
     from sqlalchemy.engine import make_url
-    from sqlalchemy.orm import Session
 
     from app.models import QuotationTemplate, QuotationTemplateLine
 
