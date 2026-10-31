@@ -4,6 +4,8 @@ Midhun P M accepted ownership of the user-requested scroll-driven homepage film.
 The implementation commit is `a8c6612b0e6bb2cd69a686b6840f90595fe4ea66`, based
 on main `1e87dfef4039798f72d202273e2cfa429a5fd1e4`. Runtime changes are confined
 to the homepage component and stylesheet plus `frontend/public/assets/home/hero-film.mp4`.
+The candidate also includes reviewed main `894121f44e47c384838a953d18caa5a38fa72e07`
+after Noel's serialized billing integration; the homepage source is unchanged.
 
 The film is a 1280x720, 60fps, 600-frame, all-intra H.264 interpolation of the
 provided 24fps original, 12,458,939 bytes. Source frames contain generated text
