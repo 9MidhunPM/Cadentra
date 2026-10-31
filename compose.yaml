@@ -62,6 +62,19 @@ services:
       timeout: 5s
       retries: 6
 
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    profiles: ["web"]
+    ports:
+      - "127.0.0.1:${WEB_PORT:-5171}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    # Immutable non-root static image; /api is proxied to api:8001 unchanged.
+
   worker:
     <<: *backend
     command: ["python", "-m", "app.worker"]
@@ -71,8 +84,9 @@ services:
         condition: service_completed_successfully
       mailpit:
         condition: service_started
-    restart: "no"
-    # Explicitly enable once lifecycle, billing and outbox services are integrated.
+    restart: unless-stopped
+    # Explicit profile runs one supervised lifecycle/billing/outbox worker.
+    # Keep replicas at one; database locks/uniqueness remain authoritative.
 
 volumes:
   database:

@@ -5,9 +5,9 @@ API_PORT ?= 8001
 WEB_PORT ?= 5171
 SMOKE_ORIGIN ?= http://127.0.0.1:$(API_PORT)
 
-.PHONY: help dev db-up migrate native-migrate backend-dev frontend-dev worker worker-native seed-demo seed-demo-native smoke test lint sync mail-up outbox outbox-native
+.PHONY: help dev db-up migrate native-migrate backend-dev frontend-dev worker worker-native seed-demo seed-demo-native smoke test lint sync mail-up outbox outbox-native web full-app
 help:
-	@printf '%s\n' 'make dev: Compose database+migration+API (frontend-dev in another terminal)' 'make sync/backend-dev/native-migrate: native Python against supplied DATABASE_URL' 'make test/lint: backend+pack; frontend checks when integrated' 'make worker: explicit Compose worker (fails until domain services exist)' 'make seed-demo: explicit non-destructive Compose demo seed' 'make mail-up: loopback-only Mailpit capture inbox/SMTP' 'make outbox-native: dispatch one bounded SMTP batch against native database'
+	@printf '%s\n' 'make dev: Compose database+migration+API (frontend-dev in another terminal)' 'make sync/backend-dev/native-migrate: native Python against supplied DATABASE_URL' 'make test/lint: backend+pack; frontend checks when integrated' 'make worker: one supervised Compose lifecycle/billing/outbox worker' 'make web: immutable static frontend and API dependencies' 'make full-app: immutable frontend, API and one supervised worker' 'make seed-demo: explicit non-destructive Compose demo seed' 'make mail-up: loopback-only Mailpit capture inbox/SMTP' 'make outbox-native: dispatch one bounded SMTP batch against native database'
 
 sync:
 	$(UV) sync --project backend --frozen
@@ -32,7 +32,7 @@ frontend-dev:
 	API_PORT=$(API_PORT) npm --prefix frontend run dev -- --host 127.0.0.1 --port $(WEB_PORT)
 
 worker:
-	docker compose --profile worker run --rm worker
+	docker compose --profile worker up -d worker
 
 worker-native:
 	$(UV) run --project backend --frozen python -m app.worker
@@ -65,3 +65,9 @@ outbox:
 
 outbox-native:
 	$(UV) run --project backend --frozen python -m app.core.outbox --once
+
+web:
+	docker compose --profile web up --build -d web
+
+full-app:
+	docker compose --profile web --profile worker up --build -d web worker

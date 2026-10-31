@@ -1,0 +1,122 @@
+# Dokploy Git provider: repository root, Compose path ./compose.dokploy.yaml.
+# Configure the private environment in Dokploy; publish only web:8080 as a domain.
+x-backend-environment: &backend-environment
+  APP_ENV: production
+  APP_ORIGIN: ${APP_ORIGIN:?Set the HTTPS app origin in the private Dokploy environment}
+  ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set explicit HTTPS allowed origins privately}
+  SESSION_COOKIE_SECURE: "true"
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cadentra}:${POSTGRES_PASSWORD:?Set the database password privately}@db:5432/${POSTGRES_DB:-cadentra_demo}
+  BUSINESS_TIMEZONE: ${BUSINESS_TIMEZONE:-Asia/Kolkata}
+  BUSINESS_CURRENCY: INR
+  SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-86400}
+  RESET_TOKEN_TTL_SECONDS: ${RESET_TOKEN_TTL_SECONDS:-1800}
+  SMTP_HOST: ${COMPOSE_SMTP_HOST:-mailpit}
+  SMTP_PORT: ${SMTP_PORT:-1025}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-noreply@example.invalid}
+  SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+  WORKER_POLL_SECONDS: ${WORKER_POLL_SECONDS:-30}
+  WORKER_BATCH_SIZE: ${WORKER_BATCH_SIZE:-100}
+
+x-backend: &backend
+  build:
+    context: ./backend
+    dockerfile: Dockerfile
+  environment: *backend-environment
+  init: true
+
+services:
+  db:
+    image: postgres:18.6-bookworm
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cadentra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set the database password privately}
+      POSTGRES_DB: ${POSTGRES_DB:-cadentra_demo}
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.33.0
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+    volumes:
+      - mailcapture:/data
+    restart: unless-stopped
+    # Private capture only. No ports, relay, public domain or shared Traefik network.
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  bootstrap:
+    <<: *backend
+    environment:
+      <<: *backend-environment
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:?Set the generated demo admin email privately}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:?Set a generated compliant demo admin password privately}
+    command: ["python", "-m", "app.seed", "--demo"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+    # Repeated runs preserve existing data/passwords. Credentials never enter Git.
+
+  api:
+    <<: *backend
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/v1/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+    # Exactly one service instance; do not add a second native worker.
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - default
+      - dokploy-network
+    restart: unless-stopped
+    # Dokploy Domains routes HTTPS only to this service's internal port 8080.
+
+volumes:
+  database:
+  mailcapture:
+
+networks:
+  default:
+  dokploy-network:
+    external: true

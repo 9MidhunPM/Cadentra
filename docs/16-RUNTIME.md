@@ -24,13 +24,13 @@ make smoke
 
 Vite forwards /api unchanged to the configured API_PORT. Browser requests use the frontend origin; cookies and CSRF remain same-origin. Production frontend assets and proxy belong to the frontend foundation/release integration and are not fabricated by this backend image.
 
-Worker activation is explicit after the lifecycle, billing and outbox services are integrated:
+Worker activation is explicit; the integrated lifecycle, billing and outbox services run in one supervised Compose service:
 
 ```sh
 make worker
 ```
 
-Before those services exist this command exits with a clear unavailable-service error. It does not idle and pretend to process financial jobs. Only one worker service should be active. Restarting it relies on each financial service's committed period keys/row locks, not on the process being unique. The worker never starts inside an API process.
+The worker validates its service exports before performing a tick and exits clearly if an integration is missing. Compose supervises this explicitly selected service with restart: unless-stopped. Repeating make worker reuses the same service instead of creating a second one-off process. Keep one replica and do not additionally run worker-native against the same workspace. Financial correctness still relies on committed period keys and row locks. The worker never starts inside an API process.
 
 ## Native PostgreSQL path
 
@@ -97,3 +97,29 @@ The explicit `python -m app.core.outbox --once [--limit N]` command commits one 
 Open the inbox at http://127.0.0.1:8025 (or MAILPIT_WEB_PORT). Verify the intended fictional recipient, subject, content and actual reset/invoice action. Capture evidence must distinguish composition, SMTP acceptance, web inbox visibility, and external delivery. External delivery remains skipped until a real provider is configured and tested.
 
 For systems without Docker, the official native release can run from a task-owned temporary directory after verifying its published SHA-256 digest. Bind both listeners explicitly to loopback, set a task-owned database, and disable version checks/reverse DNS. Stop the native server before using Compose on the same ports. The native launch used for this integration was `/tmp/cadentra-mailpit-1.33.0/mailpit --database /tmp/cadentra-mailpit-1.33.0/mailpit.db --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025 --disable-version-check --smtp-disable-rdns`. The pinned version and binary checksum came from the [official release](https://github.com/axllent/mailpit/releases/tag/v1.33.0); container tag conventions and ports follow the [official Docker guide](https://mailpit.axllent.org/docs/install/docker/). This does not verify a Docker build or external email delivery.
+
+
+## Immutable frontend and full application packaging
+
+After the reviewed frontend-production package is integrated, the optional web profile builds frontend/Dockerfile from the frontend directory, installs its committed npm lock and copies only built assets into the digest-pinned non-root NGINX image. Port8080 inside the image maps only to loopback WEB_PORT (default5171). NGINX sends /api unchanged to api:8001, preserves API errors and authentication headers, and uses Docker DNS to handle API replacement. Neither PostgreSQL nor Mailpit is made public.
+
+```sh
+# Immutable web frontend plus healthy API/database/migrations/mail capture:
+make web
+# The same stack plus exactly one supervised financial/outbox worker:
+make full-app
+```
+
+The default make dev remains the API/native-Vite development path. The web profile is optional and never starts merely because make dev runs. The worker profile is also explicit; full-app selects both profiles. Both web and worker use unless-stopped supervision after selection. No target scales services, deletes volumes or changes another project's containers.
+
+Set APP_ORIGIN and ALLOWED_ORIGINS to the exact browser origin, including WEB_PORT when using local HTTP, and keep SESSION_COOKIE_SECURE=false only for that local development path. Defaults are http://localhost:5171; changing WEB_PORT without updating the origin settings breaks session-origin/CSRF checks. Rebuild/recreate configured services after changing environment. For an authorized HTTPS deployment behind an external reverse proxy, use the real HTTPS APP_ORIGIN/ALLOWED_ORIGINS, APP_ENV=production and SESSION_COOKIE_SECURE=true. The loopback web binding is deliberate; this task does not modify host routing, firewall, cloud services or domains. Configure real SMTP locally before claiming external delivery.
+
+Frontend production routing/reference evidence is committed under frontend/production-evidence/ by its owner: native NGINX checks cover SPA links, immutable assets, API errors, request headers and dynamic upstream DNS. Password-reset query tokens are protected with no-referrer HTML headers and disabled frontend access logging. Those protocol fixtures and native checks do not verify image build/entrypoint permissions or actual Compose networking. Docker execution remains UNVERIFIED until a Docker-capable environment runs the exact integrated commit.
+
+## Dokploy deployment artifact
+
+`compose.dokploy.yaml` is the root-level deployment variant for the authorized demo; `compose.yaml` remains local development packaging. Select the Git repository/root and `./compose.dokploy.yaml` in Dokploy. All seven services run without profiles: PostgreSQL, capture, migration, demo bootstrap, API, one worker and static web. None publishes a host port. Dokploy's HTTPS domain targets only web:8080; other services stay on the private application network. No capture inbox is public.
+
+Use Dokploy's private environment for exact HTTPS APP_ORIGIN/ALLOWED_ORIGINS, URL-safe database credentials, generated fictional admin credentials, and optional real SMTP settings. Production mode and secure cookies are enforced by the artifact. Bootstrap starts after migration and must finish successfully before API/worker; it is idempotent and prints creation counts rather than credentials. Admin credentials are injected only into bootstrap. Retained PostgreSQL/capture volumes survive redeployments; no cleanup/reset is automatic. Changing the seeded password environment does not rotate an existing account's password.
+
+A host equivalent is `docker compose --env-file <private-env-file> -f compose.dokploy.yaml up --build -d`. Actual build/Traefik/TLS/startup/session/financial-flow checks remain the coordinator's deployment evidence; the presence of this artifact alone is not a deployment result. See docs/12-DEPLOYMENT.md for the target-domain procedure.
