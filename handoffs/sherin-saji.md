@@ -119,3 +119,14 @@ Implementation: bbb5ffc31160ab8204caf0109269fca58c9139d9
 Both Overview overdue links retain only the applied customer_id. Unsubmitted customer/date edits do not affect navigation; from/to remain absent because overdue is current-state data. This pairs with Noel Biju's reviewed URL-filter support. No financial calculations, backend endpoints or policy changes.
 
 Executed: red-before-fix regression, eight reporting tests, typecheck, scoped lint, production build and diff checks pass. Existing bundle warning remains recorded. No browser/database mutations performed by this slice. Ready for exact code review and a serialized owner SSH integration window.
+
+## Production ingress identity hardening
+
+Branch: feature/frontend-trusted-ingress; implementation and native evidence: 0306d16.
+Reviewed main baseline: 0b131db. Coordinator requested a separate production configuration; development nginx.conf remains byte-identical (SHA256 96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99).
+
+CADENTRA_TRUSTED_INGRESS=true selects nginx.production.conf through the nonroot entrypoint. Unset/false selects development; all other values, including explicit empty, fail closed. The entrypoint writes only its /tmp runtime directory and leaves configuration files unchanged. Production trusts the exact original Traefik peer10.0.1.20, requires one valid CF-Connecting-IP and an actual realip rewrite, then overwrites X-Cadentra-Client-IP with the canonical address. It removes X-Forwarded-For, Forwarded, X-Real-IP and CF-Connecting-IP before the API. Static/SPA/cache/referrer behavior and Origin/Cookie/CSRF/API errors remain preserved. There is no HTTP health bypass.
+
+Executed: 26 native NGINX1.30.6 realip checks, including raw duplicate/mixed-case CF headers, invalid/missing/comma/port addresses, canonical IPv6, spoofed internal headers, wrong original peer, no rewrite, SPA/assets/cache/gzip and nonroot selector tests. Shell syntax and whitespace checks pass. All task listeners stopped; no database touched. Exact source/binary hashes, command, adaptations and official build sources are in frontend/e2e/evidence/trusted-ingress-native.md and its JSON.
+
+Integration dependency: production Compose must explicitly pass CADENTRA_TRUSTED_INGRESS=true; Midhun P M confirmed this in reviewed main. The coordinator owns the actual Cloudflare allowlist, exact private API peer and --no-proxy-headers configuration. Native protocol fixtures and immutable-source simulation do not verify Docker execution, a read-only root mount, real Traefik/Cloudflare, or deployment. Final T30 waits for the settled reviewed runtime.

@@ -1,0 +1,223 @@
+{
+  "fixture_only": true,
+  "real_traefik_cloudflare_docker_api_or_database_verified": false,
+  "base": "00ffa99",
+  "uid": 1000,
+  "nginx_version": "nginx version: nginx/1.30.6\nbuilt by gcc 16.2.1 20260810 (GCC) \nconfigure arguments: --prefix=/tmp/cadentra-agent4-nginx-native/runtime --with-http_gzip_static_module --with-threads --with-http_realip_module",
+  "nginx_binary_sha256": "f6e74e621129abb4e0241e720c94b19b3087a83d147c605d3e1e6a0fea54472b",
+  "source_hashes": {
+    "nginx.conf": "96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99",
+    "nginx.production.conf": "1c79339cccf34fe7fae0a0a3f4bf2a73843790bf55ab53badfe7fc8167c2e549",
+    "docker-entrypoint.sh": "05845bdfe5c00004152a6a2e079e044f58e1dd199889dc50b277edd428a2b813",
+    "Dockerfile": "89da48a85738e3ef1dfa67e96c70bb51ddc48b3bee1b412e5fe7079b0acbcb72"
+  },
+  "checks": [
+    {
+      "case": "missing_cf_and_direct_http_health",
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "valid_ip",
+      "input": "198.51.100.7",
+      "forwarded": [
+        "198.51.100.7"
+      ],
+      "status": 200
+    },
+    {
+      "case": "valid_ip",
+      "input": "2001:0DB8:0000:0000:0000:0000:0000:0001",
+      "forwarded": [
+        "2001:db8::1"
+      ],
+      "status": 200
+    },
+    {
+      "case": "valid_ip",
+      "input": "::ffff:192.0.2.1",
+      "forwarded": [
+        "::ffff:192.0.2.1"
+      ],
+      "status": 200
+    },
+    {
+      "case": "spoofed_internal_overwritten_once_and_forwarding_stripped",
+      "status": 200,
+      "origin_cookie_csrf_body_query_preserved": true
+    },
+    {
+      "case": "reject_0",
+      "raw_cf_values": [],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_1",
+      "raw_cf_values": [
+        ""
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_2",
+      "raw_cf_values": [
+        "not-an-ip"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_3",
+      "raw_cf_values": [
+        "999.1.1.1"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_4",
+      "raw_cf_values": [
+        "001.2.3.4"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_5",
+      "raw_cf_values": [
+        "1.2.3"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_6",
+      "raw_cf_values": [
+        "198.51.100.7:443"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_7",
+      "raw_cf_values": [
+        "[2001:db8::1]:443"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_8",
+      "raw_cf_values": [
+        "2001:db8::gg"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_9",
+      "raw_cf_values": [
+        "1:2:3:4:5:6:7:8:9"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_10",
+      "raw_cf_values": [
+        "::ffff:001.2.3.4"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_11",
+      "raw_cf_values": [
+        "198.51.100.7, 203.0.113.9"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_12",
+      "raw_cf_values": [
+        "198.51.100.7",
+        "198.51.100.7"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_13",
+      "raw_cf_values": [
+        "198.51.100.7",
+        "2001:db8::1"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "reject_14",
+      "raw_cf_values": [
+        "127.0.0.1"
+      ],
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "wrong_original_peer",
+      "status": 403,
+      "upstream_calls": 0
+    },
+    {
+      "case": "spa_assets_cache_gzip_errors_cookie_referrer_preserved",
+      "passed": true
+    },
+    {
+      "case": "selector",
+      "value": null,
+      "selected": "nginx.development.conf",
+      "nonroot_config_test": true
+    },
+    {
+      "case": "selector",
+      "value": "false",
+      "selected": "nginx.development.conf",
+      "nonroot_config_test": true
+    },
+    {
+      "case": "selector",
+      "value": "true",
+      "selected": "nginx.production.conf",
+      "nonroot_config_test": true
+    },
+    {
+      "case": "unknown_selector_values_fail_closed",
+      "passed": true
+    }
+  ],
+  "adaptations": [
+    "Exact trusted Traefik peer10.0.1.20 replaced only with127.0.0.1 in native policy; wrong peer127.0.0.2 tested.",
+    "Listener/static/MIME/runtime paths and API/DNS protocol fixture destinations use task-owned loopback/temp resources.",
+    "Selector config directory and MIME/runtime paths adapted under/tmp; source files0444 and directory0555; process nonroot.",
+    "No actual read-only-rootfs mount or container execution; immutable configuration simulation only."
+  ],
+  "healthcheck": "No HTTP bypass. Missing identity returns403; use coordinator-approved local config/process health contract.",
+  "runtime_directory": "/tmp/cadentra-trusted-ingress-qg1az8b7",
+  "servers_stopped": true,
+  "official_image_source_review": {
+    "image": "nginx/nginx-unprivileged:1.30.6-alpine@sha256:2daef144b574804198caccc4041819fa1801ecd5df2252a39646bfa2b1ff3bea",
+    "dockerfile": "https://github.com/nginx/docker-nginx-unprivileged/blob/main/stable/alpine-slim/Dockerfile",
+    "package_source": "https://github.com/nginx/pkg-oss/blob/1.30.6-1/alpine/Makefile",
+    "finding": "Image source installs nginx1.30.6-r1; official Alpine package BASE_CONFIGURE_ARGS includes --with-http_realip_module. Actual pinned-image execution remains unverified."
+  },
+  "method_notes": {
+    "raw_duplicates": "http.client.putheader called separately for each duplicate CF/internal identity field; no dictionary coalescing.",
+    "validation": "Strict IPv4/mixed IPv6 shapes plus realip parsing; successful changed-address rewrite required. Original peer checked independently.",
+    "selector": "Unset/false uses untouched dev; true uses separate production config; any other value including empty exits64.",
+    "readonly": "NonrootUID1000, readonly config fixtures0444/directory0555; writes only task-local/tmp runtime. Not a Docker readonly-rootfs execution.",
+    "early_failure": "A test-local enumerate variable shadowed expected HTML bytes; corrected without relaxing ingress logic."
+  }
+}
