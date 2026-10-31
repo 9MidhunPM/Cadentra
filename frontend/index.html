@@ -9,6 +9,7 @@
     <script>
       try { document.documentElement.dataset.theme = localStorage.getItem('cadentra:theme') === 'light' ? 'light' : 'dark'; }
       catch { document.documentElement.dataset.theme = 'dark'; }
+      document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'light' ? '#f2f4ef' : '#171b1a';
     </script>
   </head>
   <body>

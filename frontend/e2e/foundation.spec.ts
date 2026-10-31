@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
+import { mockFeatureReads } from './fixtures'
 
 // Foundation-only fixtures. These do not prove real authentication or Gate A.
 async function session(page: Page, role: 'ADMIN' | 'STAFF' | 'CUSTOMER' = 'ADMIN') {
+  await mockFeatureReads(page)
   await page.route('**/api/v1/auth/session', route => route.fulfill({ json: {
     data: { actor: { id: 'test-actor', name: 'Foundation tester', role, customer_id: role === 'CUSTOMER' ? 'test-customer' : null }, csrf_token: 'test-csrf' },
   } }))
@@ -13,13 +15,12 @@ async function navigate(page: Page, label: string) {
   await page.getByRole('navigation').getByRole('link', { name: label, exact: true }).click()
 }
 
-test('staff shell imports every feature and keeps placeholders honest', async ({ page }, testInfo) => {
+test('staff shell imports every feature route', async ({ page }, testInfo) => {
   await session(page)
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible()
-  await expect(page.getByText('Not implemented', { exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('overview.png'), fullPage: true })
   for (const label of ['Customers', 'Products', 'Plans', 'Subscriptions', 'Quotation templates', 'Invoices', 'Taxes', 'Discounts', 'Staff settings']) {
     await navigate(page, label)
@@ -63,6 +64,7 @@ test('anonymous users reach identity placeholder instead of a fake session', asy
 })
 
 test('backend failures remain visible and retry restores the session', async ({ page }) => {
+  await mockFeatureReads(page)
   let healthy = false
   await page.route('**/api/v1/auth/session', route => route.fulfill(healthy ? { json: { data: { actor: { id: 'test', name: 'Tester', role: 'ADMIN', customer_id: null }, csrf_token: 'csrf' } } } : { status: 503, json: { error: { code: 'UNAVAILABLE', message: 'Service temporarily unavailable' } } }))
   await page.goto('/')
