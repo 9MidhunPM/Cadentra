@@ -47,7 +47,7 @@ export function InvoiceList() {
     } catch (failure) { setError(failure); }
     finally { lock.current = false; setPending(false); }
   }
-  return <section><PageHeader eyebrow="Billing" title="Invoices" description="Stored charges, payments and outstanding balances." actions={<Button pending={pending} onClick={() => void runDue()}>Run due billing</Button>} />
+  return <section className="billing-invoice-list"><PageHeader eyebrow="Billing" title="Invoices" description="Stored charges, payments and outstanding balances." actions={<Button pending={pending} onClick={() => void runDue()}>Run due billing</Button>} />
     <form className="billing-filters" onSubmit={event => event.preventDefault()}>
       <FormField id="invoice-customer-search" label="Find customer"><input value={customerSearch} onChange={event => setCustomerSearch(event.target.value)} /></FormField>
       <FormField id="invoice-customer" label="Customer"><select value={filters.customer_id} onChange={event => updateQuery({ customer_id: event.target.value })}><option value="">All customers</option>{filters.customer_id && !customers.data?.items.some(customer => customer.id === filters.customer_id) && <option value={filters.customer_id}>Selected customer</option>}{customers.data?.items.map(customer => <option key={customer.id} value={customer.id}>{customer.display_name}</option>)}</select></FormField>
@@ -59,14 +59,14 @@ export function InvoiceList() {
     {customers.error != null && <ErrorPanel title="Customer search unavailable" message={getErrorMessage(customers.error)} onRetry={customers.reload} />}
     {message && <p role="status">{message}</p>}{error != null && <ErrorPanel message={getErrorMessage(error)} />}
     {resource.loading && <LoadingSkeleton label="Loading invoices" />}{resource.error != null && <ErrorPanel message={getErrorMessage(resource.error)} onRetry={resource.reload} />}
-    {resource.data && <DataTable rows={resource.data.items} getRowKey={row => row.id} page={page} pageSize={resource.data.page_size} total={resource.data.total} onPageChange={setPage} caption="Invoices" emptyTitle="No invoices match these filters" columns={[
-      { key: 'number', header: 'Invoice', render: row => <Link to={`/billing/invoices/${row.id}`}>{row.number}</Link> },
-      { key: 'customer', header: 'Customer', render: row => row.customer_snapshot?.display_name ?? row.customer_id },
+    {resource.data && <div className="billing-invoice-table" data-empty={resource.data.items.length === 0}><DataTable rows={resource.data.items} getRowKey={row => row.id} page={page} pageSize={resource.data.page_size} total={resource.data.total} onPageChange={setPage} caption="Invoices" emptyTitle="No invoices match these filters" columns={[
+      { key: 'number', header: 'Invoice', render: row => <Link className="billing-invoice-link" to={`/billing/invoices/${row.id}`}>{row.number}</Link> },
+      { key: 'customer', header: 'Customer', render: row => <span className="billing-invoice-customer">{row.customer_snapshot?.display_name ?? row.customer_id}</span> },
       { key: 'status', header: 'Status', render: row => <><StatusBadge status={row.collection_status || row.status} />{row.overdue && <StatusBadge status="OVERDUE" />}</> },
       { key: 'due', header: 'Due', render: row => <DateLabel value={row.due_date} /> },
       { key: 'total', header: 'Total', render: row => <Money amount={row.total} currency={row.currency} /> },
       { key: 'balance', header: 'Balance', render: row => <Money amount={row.balance_due} currency={row.currency} /> },
-    ]} />}
+    ]} /></div>}
   </section>;
 }
 
