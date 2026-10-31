@@ -1,0 +1,28 @@
+{
+  "fixture_only": true,
+  "real_application_or_database_verified": false,
+  "docker_verified": false,
+  "nginx": "1.30.6 native source build",
+  "origin": "http://127.0.0.1:8080",
+  "checks": [
+    "Exact production server config parses on NGINX1.30.6",
+    "Root/deep-link/query SPA fallback and HTML no-store; /apiary stays a client route",
+    "Real built hashed JS served with correct MIME and immutable one-year cache",
+    "Static JS gzip and Vary behavior preserve built bytes",
+    "Missing asset returns real uncached404 without SPA fallback",
+    "Exact /api and /api/ preserve URI/query, upstream418/404/503 JSON, cache and Set-Cookie headers",
+    "Host including port, Origin, Cookie, CSRF header, POST method and body preserved",
+    "NGINX upstream resolve refreshes API address after simulated DNS/container replacement"
+  ],
+  "adaptations": [
+    "Task-local wrapper supplies MIME/PID/log/temp paths.",
+    "Static root points to isolated worktree dist.",
+    "Listen address is loopback; occupied8080 would use an unused ephemeral port.",
+    "Docker DNS address and upstream port use loopback DNS/HTTP protocol fixtures."
+  ],
+  "limitations": [
+    "Container build/entrypoint/user101 filesystem and actual Compose DNS/network unverified.",
+    "No real API login, billing, portal or database operations were run."
+  ],
+  "config_sha256": "96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99"
+}

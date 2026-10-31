@@ -77,3 +77,20 @@ Existing author sherin745 <sherinsaji2006@gmail.com> is preserved. gh-agent4 aut
 Prepared PR title: Add committed reporting and customer portal reads
 Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/reporting-portal
 Description: Adds PostgreSQL-backed current/range metrics and zero-filled series, ownership-scoped customer portal reads, and the approved dark/light reporting and portal screens. Includes real cookie/API/PostgreSQL tests and separate unmocked browser evidence. Record the final tested head/check counts before publication. Lifecycle delegation, complete financial browser flow and large-data timings remain explicit follow-up requirements until verified.
+
+## Parallel production frontend package
+
+Branch: feature/frontend-production
+Reviewed base: 48c7896 (isolated worktree; portal lifecycle work continues separately)
+Implementation/evidence commit: 88da93d
+Coordinator request: owned frontend static build/server on8080, SPA fallback, same-origin /api -> api:8001 with upstream404 preserved. Compose and runtime documentation remain Midhun P M's scope.
+
+Added frontend/Dockerfile, nginx.conf and .dockerignore. Locked multi-stage Node build copies only dist into digest-pinned non-root NGINX1.30.6. API paths/query/header/body and error semantics are preserved; no API cache. Dynamic Docker DNS handles API replacement. HTML avoids stale chunk manifests; hashed assets get immutable cache and gzip, with real missing-asset404. Access logs are off; explicit no-referrer headers on both HTML locations prevent reset-link tokens entering upstream/error logs.
+
+Executed: clean npm ci/build with unchanged lock, signed official native NGINX build/config validation, eight HTTP/DNS protocol checks, and real Chromium upstream-disconnect502 privacy proof with a policy-removed control. Independent review found the Referer logging issue; the fixed/control browser evidence proves its resolution while preserving Origin. Results and exact adaptations are committed under frontend/production-evidence/; official registry/signing/maintainer links are in its README.
+
+Unverified: Docker build/entrypoint/user filesystem, actual Compose network/DNS and production deployment. Protocol fixtures are not successful real login/reset/billing evidence. All task-native servers stopped; no database/cloud/global-install operations performed by packaging.
+
+Prepared PR title: Package the frontend for static same-origin serving
+Description: Adds a locked production build and non-root static server on8080, preserving SPA links, API errors and authenticated headers. Native routing/DNS and Chromium referrer/error-path checks pass; Docker execution remains unverified. The coordinator wires Compose and runtime docs separately.
+Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/frontend-production
