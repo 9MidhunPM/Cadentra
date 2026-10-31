@@ -2,19 +2,26 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes, useRoutes } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient, ApiError } from '../../lib';
 import { InvoiceDetail, InvoiceList, PaymentForm } from './invoices';
 import { RulePage } from './rules';
 import { getRoutes } from './index';
 import type { Invoice } from './types';
+import { paymentStorageKey } from './paymentCommands';
 
-const session = vi.hoisted(() => ({ role: 'STAFF' }));
+const session = vi.hoisted(() => ({ role: 'STAFF', actorId: 'staff', loggedIn: true }));
+let actorSerial = 0;
+beforeEach(() => { session.actorId = `billing-test-actor-${++actorSerial}`; session.loggedIn = true; });
 vi.mock('../../lib', async importOriginal => ({
   ...await importOriginal<typeof import('../../lib')>(),
-  useSession: () => ({ actor: { id: 'staff', role: session.role, name: 'Staff', customer_id: null } }),
+  useSession: () => ({ actor: session.loggedIn ? { id: session.actorId, role: session.role, name: 'Staff', customer_id: null } : null }),
 }));
 afterEach(() => { vi.restoreAllMocks(); session.role = 'STAFF'; });
+function bodyOf(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object') throw new Error('Missing payment request body');
+  return Object.fromEntries(Object.entries(value));
+}
 const invoice: Invoice = { id: 'inv', number: 'INV-1', customer_id: 'customer', status: 'CONFIRMED', collection_status: 'UNPAID', currency: 'INR', invoice_date: '2026-10-31', due_date: '2026-11-07', period_start: '2026-10-31', period_end: '2026-11-30', subtotal: '4680.00', discount_total: '468.00', tax_total: '758.16', total: '4970.16', paid_amount: '0.00', balance_due: '4970.16', payments: [] };
 
 async function fillPayment() {
@@ -33,17 +40,18 @@ describe('billing feature interactions', () => {
   });
 
   it('preserves payment payload and idempotency key after an uncertain result', async () => {
-    const request = vi.spyOn(apiClient, 'request').mockRejectedValueOnce(new ApiError(0, 'NETWORK_ERROR', 'Cannot reach server')).mockResolvedValueOnce({ data: { id: 'payment' } });
+    const request = vi.spyOn(apiClient, 'request').mockRejectedValueOnce(new ApiError(0, 'NETWORK_ERROR', 'Cannot reach server'));
     const saved = vi.fn();
     render(<PaymentForm invoice={invoice} onSaved={saved} />);
     const user = await fillPayment();
     await user.click(screen.getByRole('button', { name: 'Record payment' }));
     expect(await screen.findByText(/result is uncertain/)).toBeInTheDocument();
     expect(screen.getByLabelText('Amount')).toBeDisabled();
-    const first = request.mock.calls[0][1]?.json;
+    const first = bodyOf(request.mock.calls[0][1]?.json);
+    request.mockResolvedValueOnce({ data: { id: 'payment' } }).mockResolvedValueOnce({ data: { ...invoice, payments: [{ id: 'payment', invoice_id: invoice.id, ...first }] } });
     await user.click(screen.getByRole('button', { name: 'Retry same payment' }));
     await waitFor(() => expect(saved).toHaveBeenCalledOnce());
-    expect(request).toHaveBeenCalledTimes(2);
+    expect(request).toHaveBeenCalledTimes(3);
     expect(request.mock.calls[1][1]?.json).toEqual(first);
     expect(first).toMatchObject({ amount: '2000.00', paid_on: '2026-10-31', note: 'Received by transfer', method: 'BANK_TRANSFER' });
     expect(first).not.toHaveProperty('total');
@@ -56,6 +64,8 @@ describe('billing feature interactions', () => {
     await user.click(screen.getByRole('button', { name: 'Record payment' }));
     expect(screen.getByRole('button', { name: 'Retry same payment' })).toBeDisabled();
     expect(request).toHaveBeenCalledOnce();
+    const body = bodyOf(request.mock.calls[0][1]?.json);
+    request.mockResolvedValue({ data: { ...invoice, payments: [{ id: 'payment', invoice_id: invoice.id, ...body }] } });
     finish({ data: { id: 'payment' } });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Record payment' })).toBeEnabled());
   });
@@ -280,6 +290,111 @@ describe('billing feature interactions', () => {
     finishOldRead(empty);
     await waitFor(() => expect(screen.getByText('Created while away')).toBeInTheDocument());
     expect(request.mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(1);
+  });
+
+  it('retains a pending payment across unmount and reconciles late success before allowing another', async () => {
+    let finishPost: (value: unknown) => void = () => undefined;
+    let finishRead: (value: unknown) => void = () => undefined;
+    const post = new Promise<unknown>(resolve => { finishPost = resolve; });
+    const history = new Promise<unknown>(resolve => { finishRead = resolve; });
+    const request = vi.spyOn(apiClient, 'request').mockReturnValueOnce(post).mockReturnValueOnce(history);
+    const saved = vi.fn();
+    const view = render(<PaymentForm invoice={invoice} onSaved={saved} />);
+    const user = await fillPayment();
+    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    const body = bodyOf(request.mock.calls[0][1]?.json);
+    view.rerender(<div>Away from invoice</div>);
+    view.rerender(<PaymentForm invoice={invoice} onSaved={saved} />);
+    expect(screen.getByLabelText('Amount')).toHaveValue('2000.00');
+    expect(screen.getByLabelText('Amount')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retry same payment' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Check retained payment history' })).not.toBeInTheDocument();
+    finishPost({ data: { id: 'payment' } });
+    expect(await screen.findByText(/fresh payment-history read must verify/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry same payment' })).toBeDisabled();
+    finishRead({ data: { ...invoice, paid_amount: '2000.00', balance_due: '2970.16', payments: [{ id: 'payment', invoice_id: invoice.id, ...body }] } });
+    await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+    expect(screen.getByRole('button', { name: 'Record payment' })).toBeEnabled();
+    expect(request.mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(1);
+  });
+
+  it('retains an uncertain command across remount and retries exactly the same partial payment', async () => {
+    const request = vi.spyOn(apiClient, 'request').mockRejectedValueOnce(new ApiError(0, 'NETWORK_ERROR', 'Lost acknowledgement'));
+    const view = render(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    const user = await fillPayment();
+    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    expect(await screen.findByText(/result is uncertain/)).toBeInTheDocument();
+    const body = bodyOf(request.mock.calls[0][1]?.json);
+    view.rerender(<div>Away</div>);
+    view.rerender(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    expect(screen.getByLabelText('Amount')).toHaveValue('2000.00');
+    expect(screen.getByLabelText('Amount')).toBeDisabled();
+    request.mockResolvedValueOnce({ data: { id: 'payment' } }).mockResolvedValueOnce({ data: { ...invoice, payments: [{ id: 'payment', invoice_id: invoice.id, ...body }] } });
+    await user.click(screen.getByRole('button', { name: 'Retry same payment' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Record payment' })).toBeEnabled());
+    expect(request.mock.calls[1][1]?.json).toEqual(body);
+  });
+
+  it('does not expose a previous actor command after logout or actor change', async () => {
+    vi.spyOn(apiClient, 'request').mockRejectedValue(new ApiError(0, 'NETWORK_ERROR', 'Lost acknowledgement'));
+    const view = render(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    const user = await fillPayment();
+    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    expect(await screen.findByText(/result is uncertain/)).toBeInTheDocument();
+    session.loggedIn = false;
+    view.rerender(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    expect(screen.queryByLabelText('Amount')).not.toBeInTheDocument();
+    session.loggedIn = true; session.actorId = 'another-actor';
+    view.rerender(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    expect(screen.getByLabelText('Amount')).toHaveValue('');
+    expect(screen.queryByText(/result is uncertain/)).not.toBeInTheDocument();
+  });
+
+  it('fails closed before POST when session storage cannot retain the payment', async () => {
+    const request = vi.spyOn(apiClient, 'request');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Storage unavailable'); });
+    render(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    const user = await fillPayment();
+    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    expect(await screen.findByText(/Payment storage is unavailable or invalid/)).toBeInTheDocument();
+    expect(request).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Record payment' })).toBeDisabled();
+  });
+
+  it('does not clear an uncertain payment key after a definitively rejected replay', async () => {
+    const request = vi.spyOn(apiClient, 'request').mockRejectedValueOnce(new ApiError(0, 'NETWORK_ERROR', 'Lost acknowledgement')).mockRejectedValueOnce(new ApiError(403, 'FORBIDDEN', 'Replay not permitted'));
+    render(<PaymentForm invoice={invoice} onSaved={() => undefined} />);
+    const user = await fillPayment();
+    await user.click(screen.getByRole('button', { name: 'Record payment' }));
+    expect(await screen.findByText(/result is uncertain/)).toBeInTheDocument();
+    const first = bodyOf(request.mock.calls[0][1]?.json);
+    await user.click(screen.getByRole('button', { name: 'Retry same payment' }));
+    expect(await screen.findByText('Replay not permitted')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit rejected payment' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Amount')).toBeDisabled();
+    request.mockRejectedValueOnce(new ApiError(422, 'VALIDATION_ERROR', 'Replay validation failed'));
+    await user.click(screen.getByRole('button', { name: 'Retry same payment' }));
+    await screen.findByText('Replay validation failed');
+    expect(request.mock.calls[1][1]?.json).toEqual(first);
+    expect(request.mock.calls[2][1]?.json).toEqual(first);
+    expect(screen.queryByRole('button', { name: 'Edit rejected payment' })).not.toBeInTheDocument();
+  });
+
+  it('recovers a retained full settlement after reload renders an already-paid invoice', async () => {
+    const command = { method: 'BANK_TRANSFER', amount: '4970.16', paid_on: '2026-10-31', note: 'Settlement', external_reference: null, request_key: 'settlement-key' };
+    const scope = { actor: session.actorId, invoice: invoice.id };
+    sessionStorage.setItem(paymentStorageKey(scope), JSON.stringify({ ...scope, command }));
+    const paid = { ...invoice, status: 'PAID', balance_due: '0.00', paid_amount: '4970.16', payments: [{ id: 'settled', invoice_id: invoice.id, ...command }] };
+    vi.spyOn(apiClient, 'request').mockResolvedValue({ data: paid });
+    render(<MemoryRouter initialEntries={['/billing/invoices/inv']}><Routes><Route path="/billing/invoices/:id" element={<InvoiceDetail />} /></Routes></MemoryRouter>);
+    expect(await screen.findByText(/result is uncertain/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Amount')).toHaveValue('4970.16');
+    expect(screen.getByLabelText('Amount')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Record payment' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Check retained payment history' }));
+    await waitFor(() => expect(screen.queryByLabelText('Amount')).not.toBeInTheDocument());
+    expect(sessionStorage.getItem(paymentStorageKey(scope))).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Record payment' })).not.toBeInTheDocument();
   });
 
 });

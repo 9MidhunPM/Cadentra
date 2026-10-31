@@ -1,9 +1,11 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { apiClient, ApiError, getErrorMessage, type ListResponse, type ResourceResponse } from '../../lib';
+import { apiClient, getErrorMessage, type ListResponse, type ResourceResponse } from '../../lib';
 import { Button, ConfirmDialog, DataTable, DateLabel, ErrorPanel, FormField, LoadingSkeleton, Money, PageHeader, StatusBadge } from '../../components/ui';
 import { fieldError, useResource } from './resource';
 import type { BillingRun, Invoice } from './types';
+import { PaymentForm } from './payments';
+export { PaymentForm };
 
 export function InvoiceList() {
   const [page, setPage] = useState(1);
@@ -50,39 +52,6 @@ export function InvoiceList() {
   </section>;
 }
 
-interface PaymentDraft { method: string; amount: string; paid_on: string; note: string; external_reference: string }
-export function PaymentForm({ invoice, onSaved }: { invoice: Invoice; onSaved: () => void }) {
-  const [draft, setDraft] = useState<PaymentDraft>({ method: 'BANK_TRANSFER', amount: '', paid_on: '', note: '', external_reference: '' });
-  const [attempt, setAttempt] = useState<(PaymentDraft & { request_key: string }) | null>(null);
-  const [pending, setPending] = useState(false);
-  const lock = useRef(false);
-  const [error, setError] = useState<unknown>(null);
-  const [knownRejection, setKnownRejection] = useState(false);
-  async function submit(event: FormEvent) {
-    event.preventDefault(); if (lock.current) return;
-    const body = attempt ?? { ...draft, request_key: crypto.randomUUID() };
-    setAttempt(body); lock.current = true; setPending(true); setError(null); setKnownRejection(false);
-    try {
-      await apiClient.request(`/invoices/${invoice.id}/payments`, { method: 'POST', json: { ...body, external_reference: body.external_reference || null } });
-      setAttempt(null); setDraft({ ...draft, amount: '', note: '', external_reference: '' }); onSaved();
-    } catch (failure) {
-      setError(failure);
-      setKnownRejection(failure instanceof ApiError && failure.status >= 400 && failure.status < 500 && failure.status !== 408);
-    } finally { lock.current = false; setPending(false); }
-  }
-  return <form className="billing-card" onSubmit={event => void submit(event)}><h2>Record a manual payment</h2><p className="ui-muted">Remaining balance: <Money amount={invoice.balance_due} currency={invoice.currency} />. This records a payment already received.</p>
-    <fieldset disabled={pending || attempt !== null} className="billing-form-grid">
-      <FormField error={fieldError(error, 'method')} id="payment-method" label="Payment method"><select value={draft.method} onChange={event => setDraft({ ...draft, method: event.target.value })}>{['MANUAL', 'BANK_TRANSFER', 'UPI', 'CASH', 'CARD_EXTERNAL', 'OTHER'].map(method => <option key={method}>{method}</option>)}</select></FormField>
-      <FormField error={fieldError(error, 'amount')} id="payment-amount" label="Amount" hint={`Enter ${invoice.currency} as a decimal amount.`}><input inputMode="decimal" pattern="[0-9]+([.][0-9]{1,2})?" required value={draft.amount} onChange={event => setDraft({ ...draft, amount: event.target.value })} /></FormField>
-      <FormField error={fieldError(error, 'paid_on')} id="payment-date" label="Payment date"><input type="date" required value={draft.paid_on} onChange={event => setDraft({ ...draft, paid_on: event.target.value })} /></FormField>
-      <FormField error={fieldError(error, 'external_reference')} id="payment-reference" label="External reference (optional)"><input value={draft.external_reference} onChange={event => setDraft({ ...draft, external_reference: event.target.value })} /></FormField>
-      <FormField error={fieldError(error, 'note')} id="payment-note" label="Payment note" hint="Do not enter card data or bank credentials."><textarea required value={draft.note} onChange={event => setDraft({ ...draft, note: event.target.value })} /></FormField>
-    </fieldset>
-    {error != null && <ErrorPanel message={getErrorMessage(error)} />}{attempt && error != null && !knownRejection && <p role="status">The result is uncertain. Check the payment history or retry this same request; its amount and request key are preserved.</p>}
-    <div className="ui-actions"><Button type="submit" pending={pending}>{attempt ? 'Retry same payment' : 'Record payment'}</Button>{knownRejection && <Button variant="secondary" onClick={() => { setAttempt(null); setError(null); setKnownRejection(false); }}>Edit rejected payment</Button>}</div>
-  </form>;
-}
-
 export function InvoiceDetail() {
   const { id = '' } = useParams();
   return <InvoiceRecord key={id} id={id} />;
@@ -119,7 +88,7 @@ function InvoiceRecord({ id }: { id: string }) {
       <h2>Stored invoice lines</h2><p className="ui-muted billing-scroll-hint">Scroll the line table horizontally to view every charge.</p><div className="ui-table-panel"><div className="ui-table-scroll" role="region" aria-label="Stored invoice lines" tabIndex={0}><table className="ui-table billing-invoice-lines"><caption className="ui-sr-only">Stored invoice lines</caption><thead><tr><th>Description</th><th>Quantity</th><th>Unit price</th><th>Discount</th><th>Tax</th><th>Total</th></tr></thead><tbody>{invoice.lines?.map(line => <tr key={line.id}><td>{line.description}{line.taxes?.map((tax, index) => <small className="billing-tax" key={index}>{tax.name} ({tax.rate_percent}%): <Money amount={tax.amount} currency={invoice.currency} /></small>)}</td><td>{line.quantity}</td><td><Money amount={line.unit_price} currency={invoice.currency} /></td><td><Money amount={line.discount} currency={invoice.currency} /></td><td><Money amount={line.tax_total} currency={invoice.currency} /></td><td><Money amount={line.total} currency={invoice.currency} /></td></tr>)}</tbody></table></div></div>
       <dl className="billing-totals">{([['Subtotal', invoice.subtotal], ['Discount', invoice.discount_total], ['Tax', invoice.tax_total], ['Total', invoice.total], ['Paid', invoice.paid_amount], ['Balance due', invoice.balance_due]] as const).map(([label, amount]) => <div key={label}><dt>{label}</dt><dd><Money amount={amount} currency={invoice.currency} /></dd></div>)}</dl>
       <h2>Payment history</h2><DataTable rows={invoice.payments ?? []} columns={[{ key: 'date', header: 'Paid on', render: row => <DateLabel value={row.paid_on} /> }, { key: 'method', header: 'Method', render: row => row.method }, { key: 'amount', header: 'Amount', render: row => <Money amount={row.amount} currency={invoice.currency} /> }]} getRowKey={row => row.id} page={1} pageSize={Math.max(1, invoice.payments?.length ?? 0)} total={invoice.payments?.length ?? 0} onPageChange={() => undefined} caption="Payments" emptyTitle="No payments recorded" />
-      {invoice.status === 'CONFIRMED' && <PaymentForm invoice={invoice} onSaved={resource.reload} />}
+      {['CONFIRMED', 'PAID'].includes(invoice.status) && <PaymentForm invoice={invoice} onSaved={detail => resource.replace({ data: detail })} />}
       {['DRAFT', 'CONFIRMED'].includes(invoice.status) && (invoice.payments?.length ?? 0) === 0 && <div className="billing-card"><h2>Cancel invoice</h2><FormField error={fieldError(error, 'reason')} id="cancel-reason" label="Cancellation reason"><textarea value={reason} onChange={event => setReason(event.target.value)} /></FormField><ConfirmDialog title="Cancel this invoice?" description="This preserves the period and discount history. It cannot be automatically invoiced again." trigger={<Button variant="danger" disabled={pending || !reason.trim()}>Cancel invoice</Button>} onConfirm={() => action('cancel')} /></div>}
     </>}
   </section>;
