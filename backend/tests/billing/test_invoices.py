@@ -1,8 +1,9 @@
 """Actual PostgreSQL invoice operations; fixture setup is rolled back after tests."""
 
+from copy import deepcopy
 from datetime import date, timedelta
 from decimal import Decimal
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from pydantic import ValidationError
@@ -13,6 +14,7 @@ from app.core.auth import Actor
 from app.core.clock import get_clock
 from app.core.errors import DomainError
 from app.models import (
+    AuditEvent,
     BillingPeriod,
     Customer,
     EmailOutbox,
@@ -391,3 +393,187 @@ def test_staff_http_auth_csrf_and_customer_restrictions(invoice_case, client):
         client.post(url + "/confirm", headers={"X-CSRF-Token": "invoice-fixture-csrf"}).status_code
         == 403
     )
+
+
+def _persisted_columns(record):
+    return {
+        column.name: deepcopy(getattr(record, column.name)) for column in record.__table__.columns
+    }
+
+
+def _send_contract_state(db, invoice_id, actor_id):
+    """Capture real persisted rows, including the original queued envelope."""
+    return {
+        "invoices": [
+            _persisted_columns(row)
+            for row in db.scalars(
+                select(Invoice).where(Invoice.id == invoice_id).order_by(Invoice.id)
+            )
+        ],
+        "payments": [
+            _persisted_columns(row)
+            for row in db.scalars(
+                select(Payment).where(Payment.invoice_id == invoice_id).order_by(Payment.id)
+            )
+        ],
+        "outbox": [
+            _persisted_columns(row)
+            for row in db.scalars(
+                select(EmailOutbox)
+                .where(EmailOutbox.aggregate_id == invoice_id)
+                .order_by(EmailOutbox.id)
+            )
+        ],
+        "queue_audit": [
+            _persisted_columns(row)
+            for row in db.scalars(
+                select(AuditEvent)
+                .where(AuditEvent.entity_id == invoice_id, AuditEvent.action == "EMAIL_QUEUED")
+                .order_by(AuditEvent.id)
+            )
+        ],
+        "audit": [
+            _persisted_columns(row)
+            for row in db.scalars(
+                select(AuditEvent)
+                .where(AuditEvent.actor_user_id == actor_id)
+                .order_by(AuditEvent.id)
+            )
+        ],
+    }
+
+
+@pytest.mark.parametrize("status", ["SENDING", "SENT", "FAILED"])
+def test_send_replay_preserves_envelope_and_transport_state_after_payment(invoice_case, status):
+    iid, actor, _, factory = invoice_case
+    with factory() as db:
+        invoices.confirm_invoice(db, actor, iid)
+    with factory() as db:
+        queued = invoices.send_invoice(db, actor, iid, "retained-send")
+    assert queued["status"] == "PENDING"
+    outbox_id = UUID(queued["outbox_id"])
+    with factory() as db:
+        original = _persisted_columns(db.get(EmailOutbox, outbox_id))
+    # Represent observable dispatcher states without invoking SMTP. Persisting
+    # SENDING here verifies billing's read/replay contract, not crash recovery.
+    next_attempt = get_clock().now() + timedelta(minutes=7)
+    with factory() as db, db.begin():
+        outbox = db.get(EmailOutbox, outbox_id)
+        outbox.status = status
+        outbox.attempts = 3
+        outbox.next_attempt_at = next_attempt
+        outbox.last_error = "SMTPServerDisconnected" if status == "FAILED" else None
+    with factory() as db:
+        payment, replay = invoices.record_payment(db, actor, iid, payload("100.00", "after-send"))
+    assert not replay and payment["amount"] == "100.00"
+    with factory() as db:
+        current = invoices.get_invoice_for_actor(db, actor, iid)
+        current_html = invoices.render_invoice_for_actor(db, actor, iid)
+        before = _send_contract_state(db, iid, actor.id)
+    assert current["balance_due"] == "4870.16"
+    assert "4870.16" in current_html and current_html != original["payload"]["html"]
+    assert len(before["queue_audit"]) == 1
+    assert len(before["invoices"]) == len(before["payments"]) == len(before["outbox"]) == 1
+    envelope = before["outbox"][0]
+    for field in (
+        "id",
+        "kind",
+        "aggregate_id",
+        "recipient",
+        "subject",
+        "payload",
+        "dedupe_key",
+        "created_at",
+    ):
+        assert envelope[field] == original[field]
+    assert envelope["attempts"] == 3
+    assert envelope["next_attempt_at"] == next_attempt
+    assert envelope["last_error"] == ("SMTPServerDisconnected" if status == "FAILED" else None)
+    with factory() as db:
+        repeated = invoices.send_invoice(db, actor, iid, "retained-send")
+    assert repeated == {"outbox_id": queued["outbox_id"], "status": status, "email_status": status}
+    with factory() as db:
+        after = _send_contract_state(db, iid, actor.id)
+    assert after == before, (
+        "Replay must not rebuild email from the changed balance or reset retries"
+    )
+
+
+@pytest.fixture
+def staff_send_client(invoice_case, client):
+    from app.core.config import get_settings
+    from app.core.security import hash_token
+    from app.models import SessionRecord
+
+    iid, actor, _, factory = invoice_case
+    with factory() as db:
+        invoices.confirm_invoice(db, actor, iid)
+    with factory() as db, db.begin():
+        db.add(
+            SessionRecord(
+                user_id=actor.id,
+                token_hash=hash_token("send-contract-fixture-token"),
+                csrf_token="send-contract-fixture-csrf",
+                expires_at=get_clock().now() + timedelta(hours=1),
+            )
+        )
+    client.cookies.set(get_settings().session_cookie_name, "send-contract-fixture-token")
+    return iid, actor, factory, client, {"X-CSRF-Token": "send-contract-fixture-csrf"}
+
+
+@pytest.mark.parametrize("key", ["normalized-key", "k" * 128])
+def test_http_send_normalizes_key_and_accepts_128_character_boundary(staff_send_client, key):
+    iid, actor, factory, client, headers = staff_send_client
+    endpoint = f"/api/v1/invoices/{iid}/send"
+    first = client.post(endpoint, json={"request_key": f"  {key}  "}, headers=headers)
+    assert first.status_code == 202
+    queued = first.json()["data"]
+    assert queued["status"] == "PENDING"
+    with factory() as db:
+        before = _send_contract_state(db, iid, actor.id)
+    assert len(before["outbox"]) == len(before["queue_audit"]) == 1
+    assert before["outbox"][0]["dedupe_key"] == f"INVOICE:{iid}:{key}"
+    assert len(before["outbox"][0]["dedupe_key"]) <= 200
+    second = client.post(endpoint, json={"request_key": key}, headers=headers)
+    assert second.status_code == 202 and second.json()["data"] == queued
+    with factory() as db:
+        assert _send_contract_state(db, iid, actor.id) == before
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {},
+        {"request_key": ""},
+        {"request_key": "   "},
+        {"request_key": "k" * 129},
+        {"request_key": 17},
+        {"request_key": True},
+        {"request_key": None},
+        {"request_key": ["key"]},
+        {"request_key": "valid", "total": "0.00"},
+    ],
+    ids=[
+        "missing",
+        "empty",
+        "whitespace",
+        "overlength",
+        "integer",
+        "boolean",
+        "null",
+        "array",
+        "extra",
+    ],
+)
+def test_http_send_rejects_invalid_keys_without_financial_or_queue_side_effects(
+    staff_send_client, body
+):
+    iid, actor, factory, client, headers = staff_send_client
+    with factory() as db:
+        before = _send_contract_state(db, iid, actor.id)
+    assert len(before["invoices"]) == 1 and not before["payments"] and not before["outbox"]
+    assert not before["queue_audit"]
+    response = client.post(f"/api/v1/invoices/{iid}/send", json=body, headers=headers)
+    assert response.status_code == 422
+    with factory() as db:
+        assert _send_contract_state(db, iid, actor.id) == before
