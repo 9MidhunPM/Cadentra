@@ -18,7 +18,7 @@ A quoted unit price is a snapshot. Product costs are internal and excluded from 
 
 `DRAFT -> QUOTATION -> CONFIRMED -> ACTIVE -> CLOSED`
 
-DRAFT may be edited and issued as QUOTATION. QUOTATION may be revised back to DRAFT or confirmed before its validity deadline. CONFIRMED becomes ACTIVE on/after start_date, by explicit staff action or lifecycle worker. Never skip required states. CLOSED is terminal; renewal creates a new linked DRAFT instead of reopening the old record.
+DRAFT may be edited and issued as QUOTATION. QUOTATION may be revised back to DRAFT or confirmed only when today is strictly before its exclusive quotation_valid_until business date. CONFIRMED becomes ACTIVE on/after start_date, by explicit staff action or lifecycle worker. Never skip required states. CLOSED is terminal; renewal creates a new linked DRAFT instead of reopening the old record.
 
 Pause is not a sixth lifecycle state: it is a separate schedule interval shown as an ACTIVE subscription with a “Paused” collection/service label. Invoice overdue/partial-paid labels similarly do not alter the required main invoice states.
 
@@ -99,3 +99,13 @@ Do not attach a new unverified signup to a staff-created customer record merely 
 Treat tax/discount rate changes as effective-dated revisions rather than retroactive mutation of historical policy. Existing invoices remain immutable; a worker catching up an old service period uses the applicable retained rule revision. If revisioning cannot be completed, disclose the limitation instead of claiming historically accurate catch-up across edited rules.
 
 Payment paid_on must not be in the future under the real business clock. A backdated entry is an explicit staff action recorded with its separate created_at timestamp. Notes must not contain card data or bank credentials.
+
+## 13. Recorded Gate A clarifications
+
+Quotation validity uses an exclusive business DATE: issue_date + positive valid_days. Availability is evaluated against requested service start on [available_from,available_until). Template plan must match; omitted lines copy it, explicit lines override and are validated, null is rejected. State-specific edit and typed snapshot contracts are in docs/05-API-CONTRACT.md.
+
+Late billing keeps original period bounds but sets invoice_date to creation business date and due_date to invoice_date + payment_terms_days. Those dates are immutable on retries and confirmation. as_of is an internal processing cutoff, not an arbitrary public invoice-date input.
+
+Tax/discount revisions use stable parent IDs and immutable dated payloads/membership. PATCH effective_from is at least the next business day; backdated/overlapping edits are rejected. Eligibility dates remain independent. Billing resolves service-period revisions; discount caps use the stable parent counter across all versions.
+
+Resume edge: a wholly unapplied pending pause may be cancelled with an audit event rather than persisted as a zero-length interval. Once a PAUSED outcome exists, preserve the interval/outcome history and resume at the first unprocessed original boundary on or after today. Product tax memberships are period-specific lookups over retained revisions; quoted prices remain frozen. The base fee retains explicitly selected stable plan tax IDs, resolving their rates by service period.

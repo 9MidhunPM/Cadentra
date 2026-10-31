@@ -4,10 +4,11 @@ Callers supply exactly one base-fee line and product unit prices with variant
 adjustments already applied. Eligibility, rule selection and usage reservation
 belong to the transactional billing service, not this calculator.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Context, Decimal, ROUND_DOWN, ROUND_HALF_UP, localcontext
+from decimal import ROUND_DOWN, ROUND_HALF_UP, Context, Decimal, localcontext
 
 CENT = Decimal("0.01")
 RATE_QUANTUM = Decimal("0.0001")
@@ -99,36 +100,46 @@ class InvoiceCalculation:
 
 
 def _allocate_discount(
-    lines: tuple[PricingLine, ...], gross: tuple[Decimal, ...], rule: SelectedDiscount | None,
+    lines: tuple[PricingLine, ...],
+    gross: tuple[Decimal, ...],
+    rule: SelectedDiscount | None,
 ) -> tuple[Decimal, ...]:
     allocations = [ZERO for _ in lines]
     if rule is None:
         return tuple(allocations)
-    eligible = [index for index, line in enumerate(lines)
-                if line.stable_line_key in rule.eligible_line_keys]
+    eligible = [
+        index for index, line in enumerate(lines) if line.stable_line_key in rule.eligible_line_keys
+    ]
     eligible_gross = sum((gross[index] for index in eligible), ZERO)
     if not eligible_gross:
         return tuple(allocations)
-    requested = (eligible_gross * rule.value / 100 if rule.kind == "PERCENT" else rule.value)
+    requested = eligible_gross * rule.value / 100 if rule.kind == "PERCENT" else rule.value
     target = _money(min(requested, eligible_gross))
     shares = {index: target * gross[index] / eligible_gross for index in eligible}
     for index in eligible:
         allocations[index] = shares[index].quantize(CENT, rounding=ROUND_DOWN)
     cents_remaining = int((target - sum(allocations, ZERO)) / CENT)
-    order = sorted(eligible, key=lambda index: (
-        -(shares[index] - allocations[index]), lines[index].stable_line_key,
-    ))
+    order = sorted(
+        eligible,
+        key=lambda index: (
+            -(shares[index] - allocations[index]),
+            lines[index].stable_line_key,
+        ),
+    )
     for index in order[:cents_remaining]:
         allocations[index] += CENT
     return tuple(allocations)
 
 
 def calculate_invoice(
-    lines: tuple[PricingLine, ...], discount: SelectedDiscount | None = None,
+    lines: tuple[PricingLine, ...],
+    discount: SelectedDiscount | None = None,
 ) -> InvoiceCalculation:
     """Calculate cents without mutation, persistence, floats or ambient rounding."""
-    if not isinstance(lines, tuple) or not lines or any(
-        not isinstance(line, PricingLine) for line in lines
+    if (
+        not isinstance(lines, tuple)
+        or not lines
+        or any(not isinstance(line, PricingLine) for line in lines)
     ):
         raise ValueError("Lines must be a nonempty tuple of PricingLine values")
     keys = {line.stable_line_key for line in lines}
@@ -146,17 +157,24 @@ def calculate_invoice(
         subtotal = _money(sum(gross, ZERO))
         allocations = _allocate_discount(lines, gross, discount)
         calculated = []
-        for line, line_gross, line_discount in zip(lines, gross, allocations):
+        for line, line_gross, line_discount in zip(lines, gross, allocations, strict=True):
             taxable = _money(line_gross - line_discount)
             taxes = tuple(_money(taxable * rate / 100) for rate in line.tax_rates)
             tax_total = _money(sum(taxes, ZERO))
-            calculated.append(LineCalculation(
-                line=line, gross=line_gross, discount=line_discount,
-                taxable_amount=taxable, tax_amounts=taxes, tax_total=tax_total,
-                total=_money(taxable + tax_total),
-            ))
+            calculated.append(
+                LineCalculation(
+                    line=line,
+                    gross=line_gross,
+                    discount=line_discount,
+                    taxable_amount=taxable,
+                    tax_amounts=taxes,
+                    tax_total=tax_total,
+                    total=_money(taxable + tax_total),
+                )
+            )
         return InvoiceCalculation(
-            lines=tuple(calculated), subtotal=subtotal,
+            lines=tuple(calculated),
+            subtotal=subtotal,
             discount_total=_money(sum(allocations, ZERO)),
             tax_total=_money(sum((line.tax_total for line in calculated), ZERO)),
             total=_money(sum((line.total for line in calculated), ZERO)),
