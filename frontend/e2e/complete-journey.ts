@@ -1,7 +1,9 @@
 /** T31: real browser writes, actual PostgreSQL, no route interception or fake totals. */
 import { randomUUID } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 import { lstatSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test, type Page } from '@playwright/test'
 import type { SubscriptionDetail } from '../src/features/portal/types'
 
@@ -16,6 +18,25 @@ type Manifest = {
   completed?: boolean;
 }
 type Invoice = { id: string; number: string; status: string; subtotal: string; discount_total: string; tax_total: string; total: string; paid_amount: string; balance_due: string; payments: { id: string; amount: string }[] }
+type VerifiedFacts = Record<string, string | number | boolean | null | string[]>
+type Evidence = {
+  scenario: 'T31'; started_at: string; finished_at: string | null; status: string;
+  git_start: ReturnType<typeof gitState>; git_end: ReturnType<typeof gitState> | null;
+  browser: { name: string; version: string };
+  viewports: Record<string, { width: number; height: number } | null>;
+  requested_business_date: string;
+  verified: Record<string, { verified_at: string; facts: VerifiedFacts }>;
+}
+let evidence: Evidence
+function gitState() {
+  const cwd = fileURLToPath(new URL('../..', import.meta.url))
+  const git = (...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim()
+  return { head: git('rev-parse', 'HEAD'), dirty: git('status', '--porcelain=v1', '--untracked-files=all').length > 0 }
+}
+function verified(name: string, facts: VerifiedFacts) {
+  // Only explicit scalar facts belong here, never credentials, headers or response bodies.
+  evidence.verified[name] = { verified_at: new Date().toISOString(), facts }
+}
 const manifestPath = process.env.CADENTRA_JOURNEY_MANIFEST ?? ''
 if (!isAbsolute(manifestPath) || dirname(manifestPath) !== '/tmp') throw new Error('T31 manifest must be directly under /tmp')
 const metadata = lstatSync(manifestPath)
@@ -76,6 +97,21 @@ async function publicRead<T>(page: Page, path: string): Promise<T> {
   assertPublicProjection(payload)
   return payload
 }
+async function ownerSubscriptionIds(page: Page): Promise<string[]> {
+  const ids: string[] = []
+  let total: number | undefined
+  for (let current = 1; ; current += 1) {
+    const result = await publicRead<{ items: { id: string }[]; total: number }>(page, `/portal/subscriptions?page=${current}&page_size=100`)
+    total ??= result.total
+    expect(result.total, 'Subscription count must stay stable during pagination').toBe(total)
+    ids.push(...result.items.map(item => item.id))
+    if (ids.length >= total) break
+    expect(result.items.length, 'A page cannot be empty before the complete subscription list is read').toBeGreaterThan(0)
+  }
+  expect(ids).toHaveLength(total)
+  expect(new Set(ids).size).toBe(total)
+  return ids.sort()
+}
 async function portalAction(page: Page, id: string, action: string, trigger: string, title: string, confirm: string) {
   await page.getByRole('button', { name: trigger, exact: true }).click()
   const dialog = page.getByRole('dialog', { name: title, exact: true })
@@ -101,6 +137,26 @@ async function lifecycle(page: Page, subscriptionId: string, action: string, nam
   return mutation<{ id: string; state: string }>(page, `/subscriptions/${subscriptionId}/${action}`, () => form.getByRole('button', { name, exact: true }).click())
 }
 
+test.beforeEach(async ({ page, browser }, testInfo) => {
+  evidence = {
+    scenario: 'T31', started_at: new Date().toISOString(), finished_at: null, status: 'running',
+    git_start: gitState(), git_end: null,
+    browser: { name: browser.browserType().name(), version: browser.version() },
+    viewports: { staff: page.viewportSize() }, requested_business_date: fixture.business_date, verified: {},
+  }
+  writeFileSync(testInfo.outputPath('T31-evidence.json'), JSON.stringify(evidence, null, 2), { mode: 0o600 })
+})
+// Playwright requires a destructured fixtures argument even when only TestInfo is used.
+// eslint-disable-next-line no-empty-pattern
+test.afterEach(async ({}, testInfo) => {
+  evidence.finished_at = new Date().toISOString()
+  evidence.status = testInfo.status ?? 'unknown'
+  evidence.git_end = gitState()
+  const path = testInfo.outputPath('T31-evidence.json')
+  writeFileSync(path, JSON.stringify(evidence, null, 2), { mode: 0o600 })
+  await testInfo.attach('T31 verification evidence', { path, contentType: 'application/json' })
+})
+
 // Explicit single scenario: a partial failure is never retried against its mutated dataset.
 test('T31 product to paid invoice, reports and isolated customer portal', async ({ page, browser }, testInfo) => {
   expect(fixture.completed, 'Use a fresh seed for each journey, not a previously completed manifest').not.toBe(true)
@@ -118,6 +174,7 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
   expect(baseline.as_of, 'Run the test-only fixed-clock API; do not use the production clock').toBe(day)
   expect(baseline.active_subscriptions).toBe(0)
   expect(baseline.outstanding_now).toBe('0.00')
+  verified('business_clock_and_empty_baseline', { as_of: baseline.as_of, active_subscriptions: 0, outstanding_now: '0.00' })
 
   await test.step('Create actual product, variant and tax/discount configuration', async () => {
     await page.goto('/catalog/products')
@@ -233,6 +290,7 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
     expect(settled).toMatchObject({ paid_amount: '4970.16', balance_due: '0.00', status: 'PAID' })
     expect(settled.payments.map(payment => payment.amount).sort()).toEqual(['2000.00', '2970.16'])
     await expect(page.getByRole('table', { name: 'Payments', exact: true }).getByRole('row')).toHaveCount(3)
+    verified('paid_invoice_after_reload', { currency: 'INR', total: settled.total, paid_amount: settled.paid_amount, balance_due: settled.balance_due, status: settled.status, payments: settled.payments.map(payment => payment.amount).sort(), payment_count: 2, initial_run_created: 1, second_run_created: 0 })
   })
 
   await test.step('Reports reconcile and survive reload', async () => {
@@ -251,6 +309,7 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       await expect(metric(page, 'Outstanding')).toHaveText('INR 0.00')
     }
     await page.screenshot({ path: testInfo.outputPath('T31-reconciled-report.png'), fullPage: true })
+    verified('report_after_reload', { active_subscriptions: 1, invoiced: '4970.16', payments_received: '4970.16', outstanding: '0.00', customer_filter_applied: true })
   })
 
   const ownerContext = await browser.newContext({ baseURL: 'http://127.0.0.1:5174', viewport: { width: 1440, height: 1000 } })
@@ -258,6 +317,8 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
   try {
     const owner = await ownerContext.newPage()
     const foreign = await foreignContext.newPage()
+    evidence.viewports.customer_a_desktop = owner.viewportSize()
+    evidence.viewports.customer_b = foreign.viewportSize()
     owner.on('pageerror', error => errors.push(error.message))
     foreign.on('pageerror', error => errors.push(error.message))
     await test.step('Two real customer contexts, persisted portal and authenticated printing', async () => {
@@ -288,8 +349,10 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       await print.screenshot({ path: testInfo.outputPath('T31-print-invoice.png'), fullPage: true })
       await print.close()
       await owner.setViewportSize({ width: 390, height: 844 })
+      evidence.viewports.customer_a_mobile = owner.viewportSize()
       await expect.poll(() => owner.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
       await owner.screenshot({ path: testInfo.outputPath('T31-mobile-paid-invoice.png'), fullPage: true })
+      verified('portal_invoice_reload_and_print', { paid_invoice_reloaded: true, authenticated_print: true, print_total: '4970.16', private_note_absent: true, staff_identity_absent: true, internal_cost_labels_absent: true, mobile_overflow_absent: true })
     })
     await test.step('Customer schedules pause, cancels it, schedules closure and creates a linked draft', async () => {
       await owner.goto(`/portal/subscriptions/${subscriptionId}`)
@@ -303,6 +366,7 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       await owner.reload()
       expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data.pause_effective_on).toBe('2026-12-02')
       await expect(owner.locator('.portal-facts > div').filter({ has: owner.getByText('Pause takes effect', { exact: true }) }).locator('time')).toHaveAttribute('datetime', '2026-12-02')
+      verified('pause', { effective_on: paused.pause_effective_on ?? null, state: paused.state, notice_focused: true, persisted_after_reload: true })
       const resumed = await portalAction(owner, subscriptionId, 'resume', 'Cancel scheduled pause', 'Cancel scheduled pause?', 'Cancel scheduled pause')
       expect(resumed).toMatchObject({ state: 'ACTIVE', pause_interval: null, pause_effective_on: null, resume_effective_on: null })
       await expect(owner.locator('.portal-notice')).toHaveText('Your scheduled pause was cancelled.')
@@ -310,15 +374,17 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       await owner.reload()
       expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data.pause_interval).toBeNull()
       await expect(owner.getByText('Pause takes effect', { exact: true })).toHaveCount(0)
+      verified('cancel_scheduled_pause', { interval: null, notice_focused: true, persisted_after_reload: true })
       const closed = await portalAction(owner, subscriptionId, 'close', 'Close subscription', 'Close subscription?', 'Confirm close')
       expect(closed).toMatchObject({ state: 'ACTIVE', close_effective_on: '2026-12-02', end_date: '2027-01-02' })
       await expect(owner.locator('.portal-notice')).toContainText('Closure takes effect on')
       await expect(owner.locator('.portal-notice time')).toHaveAttribute('datetime', '2026-12-02')
-      await expect(owner.locator('.portal-notice')).toBeFocused()
+      await expect(owner.getByRole('button', { name: 'Close subscription', exact: true })).toBeFocused()
       await owner.reload()
       expect((await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data.close_effective_on).toBe('2026-12-02')
       await expect(owner.locator('.portal-facts > div').filter({ has: owner.getByText('Closure takes effect', { exact: true }) }).locator('time')).toHaveAttribute('datetime', '2026-12-02')
       expect((await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)).data).toMatchObject({ status: 'PAID', total: '4970.16', paid_amount: '4970.16', balance_due: '0.00' })
+      verified('schedule_close', { effective_on: closed.close_effective_on ?? null, state: closed.state, connected_trigger_focused: true, persisted_after_reload: true, settled_invoice_unchanged: true })
       await owner.getByLabel('Renewal start date', { exact: true }).fill('2026-12-02')
       await owner.getByLabel('Renewal ends before', { exact: true }).fill('2027-01-02')
       const renewal = await portalAction(owner, subscriptionId, 'renew', 'Create renewal draft', 'Create a renewal draft?', 'Create draft')
@@ -334,9 +400,12 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       expect(invoices.items[0].id).toBe(invoiceId)
       expect((await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)).data.payments).toHaveLength(2)
       await owner.screenshot({ path: testInfo.outputPath('T31-customer-renewal-draft.png'), fullPage: true })
+      verified('renewal', { state: renewal.state, start_date: renewal.start_date, end_date: renewal.end_date, linked_to_original: true, staff_review_notice: true, persisted_after_reload: true, invoice_count: 1, payment_count: 2 })
     })
     await test.step('Foreign customer cannot read or mutate the original lifecycle records', async () => {
       const before = (await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data
+      const subscriptionsBefore = await ownerSubscriptionIds(owner)
+      expect(subscriptionsBefore).toEqual([...fixture.owned.subscriptions].sort())
       await login(foreign, 'customer_b')
       await publicRead(foreign, '/portal/me')
       const foreignSubscriptions = await publicRead<{ total: number }>(foreign, '/portal/subscriptions')
@@ -365,16 +434,19 @@ test('T31 product to paid invoice, reports and isolated customer portal', async 
       }
       const unchanged = (await publicRead<{ data: SubscriptionDetail }>(owner, `/portal/subscriptions/${subscriptionId}`)).data
       expect(unchanged).toMatchObject({ state: 'ACTIVE', revision: before.revision, close_effective_on: '2026-12-02', pause_interval: null })
+      expect(await ownerSubscriptionIds(owner)).toEqual(subscriptionsBefore)
       const invoice = (await publicRead<{ data: Invoice }>(owner, `/portal/invoices/${invoiceId}`)).data
       expect(invoice.payments).toHaveLength(2)
       expect(invoice).toMatchObject({ total: '4970.16', paid_amount: '4970.16', balance_due: '0.00' })
       expect((await publicRead<{ total: number }>(owner, '/portal/invoices')).total).toBe(1)
+      verified('foreign_isolation_and_safe_projections', { read_statuses: ['subscription:404', 'invoice:404', 'print:404'], action_statuses: ['pause:404', 'resume:404', 'close:404', 'renew:404'], all_owner_subscription_ids_unchanged: true, owner_subscription_count: subscriptionsBefore.length, original_revision_unchanged: true, invoice_count: 1, payment_count: 2, total: invoice.total, paid_amount: invoice.paid_amount, balance_due: invoice.balance_due, customer_lists_empty: true, checked_customer_projections_exclude_private_fields: true })
     })
   } finally {
     await ownerContext.close()
     await foreignContext.close()
   }
   expect(errors).toEqual([])
+  verified('browser_errors', { page_error_count: 0 })
   fixture.completed = true
   saveManifest()
 })
