@@ -14,26 +14,26 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
 {
   "project": "Cadentra",
   "subtitle": "Subscription Management System · Brightloop Software",
-  "snapshotUTC": "2026-10-31T09:02:48Z",
+  "snapshotUTC": "2026-10-31T09:07:41Z",
   "staleAfterMinutes": 15,
-  "headline": "The public demo is live. A cinematic release is in review.",
-  "summary": "The existing HTTPS demo is healthy on migration 0002 at b662117. The working-tree candidate adds a cinematic homepage, /app routing, CycleGuard, focused security corrections, form/send recovery and production Resend SMTP support. The candidate has not been deployed; focused verification and root review are in progress.",
+  "headline": "Cinematic website and working app are live",
+  "summary": "The approved cinematic homepage, /app entry, real CycleGuard and reliability/security fixes are deployed and publicly verified. Midhun P M remains the primary coordinator. Resend credentials and final all-page performance remain open.",
   "coverageLabel": "Local product requirement groups",
   "coverageCaveat": "20 of 23 requirement groups retain scoped local verification; three remain partial for external reset delivery, external invoice delivery and final performance. This is not effort, candidate-release readiness or a universal completion claim. Event obligations remain separate.",
   "currentMain": {
-    "sha": "b662117d9536f5bae2d86ada0d79777c51b9f0c6",
-    "label": "Verified existing public demo baseline",
-    "state": "HTTPS demo healthy on migration 0002; cinematic candidate remains in root review"
+    "sha": "5895b040b200d6da9612020b0f2321dfaa951eef",
+    "label": "Verified deployed application release",
+    "state": "Application code5895b04 is live; later status-only publication does not change runtime behavior."
   },
   "preparedRoot": {
-    "sha": "Working tree over b662117",
-    "label": "Cinematic release and correctness candidate",
-    "state": "Homepage and /app routes, CycleGuard API/UI, startup-log redaction, migration readiness, bounded pagination, form/send recovery and Resend SMTP 587 STARTTLS are implemented in the candidate. Review and deployment verification remain pending."
+    "sha": "5895b040b200d6da9612020b0f2321dfaa951eef",
+    "label": "Cinematic release published",
+    "state": "Reviewed, integrated with the verified owner SSH key, deployed through Dokploy, and publicly smoke-tested."
   },
   "deployment": {
-    "state": "Existing demo live · cinematic candidate not deployed",
+    "state": "Live · public UI and app verified",
     "target": "https://cadentra.midhunpm.in",
-    "detail": "The existing public HTTPS demo is healthy on migration 0002 at b662117. Its earlier public API acceptance and desktop/mobile checks are historical baseline evidence. The new cinematic working tree has not been deployed. Midhun P M will update release state after the candidate is actually deployed and verified."
+    "detail": "Dokploy deployment rfJwXgwi0YkdoGVYcqRZ0 completed. API/database healthy; worker/web running; migration/bootstrap exited0. Public homepage, /app sign-in, overview, all three CycleGuard API categories, persisted invoice, mobile theme/navigation and logout passed. Resend credentials are still missing; delivery is unverified."
   },
   "snapshotNotice": "Saved coordinator snapshot, not live agent telemetry. Reload reads this saved file again; it does not contact teammates or infer activity.",
   "team": [
@@ -41,8 +41,8 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "name": "Midhun P M",
       "role": "Platform · catalog · coordination · deployment",
       "done": "Shared platform, identity/catalog, native runtime, local verification and deployment package.",
-      "now": "Building and reviewing the cinematic release with the primary coordinator assistant and seven scoped helper tasks. Those tasks are tools assisting the existing four-person team, not additional human contributors or proof of new individual human activity.",
-      "next": "Complete focused review, integrate the candidate, deploy and verify HTTPS and /app behavior; configure Resend sender/password before external-delivery acceptance.",
+      "now": "The cinematic release is live and publicly verified. The primary coordinator assistant integrated seven scoped helper tasks; helper work is not evidence of extra human contributors.",
+      "next": "Maintain this single saved status page; accept optional hero video and private Resend configuration, then record actual delivery evidence.",
       "state": "Building cinematic release"
     },
     {
@@ -72,12 +72,6 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
   ],
   "blockers": [
     {
-      "level": "Candidate release in progress",
-      "title": "Cinematic working tree is not deployed",
-      "detail": "The existing HTTPS demo is healthy. The homepage, /app routes, CycleGuard API/UI, correctness/security fixes and recovery changes belong to the new working-tree candidate; historical full-suite counts do not verify this whole candidate.",
-      "action": "Finish root review and focused checks, integrate the candidate, then deploy and verify its actual public behavior before changing release state."
-    },
-    {
       "level": "Configuration gap",
       "title": "External reset and invoice email are not verified",
       "detail": "Production Resend SMTP support is prepared for port 587 with STARTTLS. The user confirmed the SMTP password and sender/FROM configuration are not supplied. Local capture and transport preparation do not establish delivery.",
@@ -91,6 +85,18 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     }
   ],
   "evidence": [
+    {
+      "label": "Cinematic public release",
+      "result": "Deployment and live UI pass",
+      "scope": "Code5895b04. Real browser desktop1440 and mobile390 checks passed with zero page exceptions, unexpected HTTP errors and mobile overflow. Optional Cloudflare analytics requests were blocked by the private QA harness; expected anonymous session401 is allowed. New CycleGuard categories returned200 and safe typed projections. This is a focused smoke, not a complete all-page performance run.",
+      "tone": "good"
+    },
+    {
+      "label": "Focused release verification",
+      "result": "Changed behavior checked",
+      "scope": "64 SMTP/outbox/proxy;33 readiness/pagination/API;53 CycleGuard/report regressions;16 subscription form;9 invoice-send;3 CycleGuard frontend;12 identity/route tests passed in overlapping scoped runs. Build/typecheck/lint/Ruff/pack passed. Counts are not a combined unique suite total.",
+      "tone": "good"
+    },
     {
       "label": "Historical combined backend verification",
       "result": "393 tests passed",
@@ -228,8 +234,8 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "id": "Deployment",
       "title": "Public production readiness",
-      "status": "Existing demo live · candidate not deployed",
-      "note": "The public HTTPS baseline is healthy on migration 0002 at b662117. Deploy and verify the new cinematic candidate before calling it released."
+      "status": "Passed · live public release",
+      "note": "Application5895b04 deployed successfully. HTTPS0002, real homepage/Open app/login, CycleGuard reads and persisted desktop/mobile invoice journey verified."
     },
     {
       "id": "SMTP",
@@ -261,11 +267,10 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     }
   ],
   "nextSteps": [
-    "Finish root review and focused verification of the cinematic homepage, /app routing, CycleGuard and correctness/recovery candidate.",
-    "Integrate the reviewed candidate, deploy it, then verify public HTTPS, /app navigation and persisted ownership/financial behavior before updating release status.",
-    "Provide Resend password and sender/FROM through the private environment; verify actual reset and invoice delivery separately from queued/local capture states.",
-    "Resolve the native T30 sign-in timeout and complete the final frozen-source all-page performance run; retain the 55-pass/56th-timeout partial scope.",
-    "Keep four human ownership records accurate, helper activity clearly identified as tooling, and E01–E04 event obligations unverified until evidenced."
+    "Configure SMTP_PASSWORD and verified SMTP_FROM privately in Dokploy, redeploy and run the no-email TLS/auth preflight; then verify controlled-inbox reset and invoice delivery.",
+    "Optional: generate the eight-second hero clip using frontend/design/HERO_VIDEO_PROMPT.md and provide it for optimized media integration. Current still-render website is complete and usable.",
+    "Resume final frozen-source all-page performance work when its owner is explicitly resumed; the55-pass/56th-timeout run remains incomplete.",
+    "Keep owner closeout/history and E01–E04 event obligations accurate; do not infer completion from application deployment."
   ],
   "workflow": "Midhun P M reviews an exact feature head against an expected main SHA and gives one serialized GO. The owner fetches/rechecks main and uses a normal SSH push with their own verified identity. No gh/API main publishing, force push or concurrent integration turns.",
   "history": [
@@ -333,6 +338,11 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "sha": "b662117",
       "title": "Healthy existing public demo baseline",
       "note": "Public HTTPS and migration 0002 are verified for the existing demo. The subsequent cinematic release is still a working-tree candidate under root review."
+    },
+    {
+      "sha": "5895b04",
+      "title": "Cinematic release deployed and publicly verified",
+      "note": "Root-owned feature97b4c9f integrated as5895b04; working public homepage/app, CycleGuard, send/form recovery and hardened production email transport. Actual Resend delivery remains pending private credentials."
     }
   ],
   "sourcePolicy": "Coordinator-maintained JSON after meaningful verified checkpoints. Sources are exact Git heads, owner handoffs, executed checks and scoped Codex TUI reports. Historical evidence retains its commit/runtime scope; tool activity does not prove new human contribution. The authored status source is self-contained and works offline, with no background agent heartbeat. Deployed hosting may inject Cloudflare analytics; this is not a claim that the hosted page has no telemetry.",

@@ -6,11 +6,13 @@ Cadentra is a subscription management platform for the **Subscription Management
 
 ## Status
 
-The existing public demo at [cadentra.midhunpm.in](https://cadentra.midhunpm.in) is healthy on migration `0002` at `b662117`. Its 11/11 public API acceptance and desktop/mobile checks are historical baseline evidence, recorded separately in [release evidence](handoffs/RELEASE.md).
+The cinematic website and working application are live at [cadentra.midhunpm.in](https://cadentra.midhunpm.in); [Open app](https://cadentra.midhunpm.in/app) enters the authenticated workspace. Application release `5895b04` is deployed and verified: public homepage, sign-in, overview, all three CycleGuard categories, persisted invoice, desktop/mobile navigation/theme and logout passed. API/database are healthy on migration `0002`, with one running worker.
 
-Midhun P M's primary coordinator assistant and seven scoped helper tasks are building and reviewing a cinematic release candidate: a homepage and `/app` routing, CycleGuard API/UI, startup-log redaction, exact migration readiness, safe pagination, form/send recovery, and production Resend SMTP on port 587 with STARTTLS. **This candidate has not been deployed.** Helper tasks assist the existing four-person team and do not establish new individual human activity. Focused candidate checks have separate scopes; the historical 393-backend/164-frontend totals are not claimed as a new combined rerun.
+Midhun P M remains primary coordinator. Seven bounded helper tasks assisted the cinematic homepage, route splitting, CycleGuard, recovery and security work; this does not invent additional human contributions. Focused checks, build/type/lint and independent reviews passed. Earlier393-backend/164-frontend/full-T31 evidence remains separately scoped; no repeated whole-suite run is claimed.
 
-Twenty of 23 requirement groups retain scoped verification. Three remain partial: external password-reset delivery, external invoice delivery, and final performance. The user confirmed Resend password and sender/FROM configuration are missing, so no external delivery is verified. The native all-page T30 attempt is paused after 55 passes and a sign-in timeout on case 56; it does not prove the final every-page two-second target. E01–E04 event obligations remain unverified. Root will update deployment state after actual candidate verification.
+Twenty of23 required product groups have scoped verification. External reset delivery, external invoice delivery and final every-page performance remain partial. Production is prepared for Resend SMTP587 with certificate-verified STARTTLS, but the user has not yet supplied the private key/sender. Missing configuration fails safely before connection; no external delivery is claimed. Development Mailpit is unchanged. The previous native all-page run stopped after55 passes and a sign-in timeout on case56. Event obligations remain unverified. See the [single status page](https://cadentra.midhunpm.in/PROJECT_STATUS.html) and [release evidence](handoffs/RELEASE.md).
+
+The still-render website is usable now. An optional hero-video generation prompt is in [HERO_VIDEO_PROMPT.md](frontend/design/HERO_VIDEO_PROMPT.md).
 
 ## Product scope
 
@@ -52,7 +54,7 @@ Fill in only after verification:
 
 - Portal-selected problem statement: Subscription Management System
 - Approved app/repository name: Cadentra; `9MidhunPM/Cadentra`
-- Existing demo: `https://cadentra.midhunpm.in`, healthy baseline `b662117`; cinematic candidate not yet deployed
+- Live demo: `https://cadentra.midhunpm.in`, verified cinematic application `5895b04`
 - Demonstration video: not recorded
 - Tested commit: see `handoffs/RELEASE.md` (checks and remaining gaps recorded separately)
 - Implemented requirements and remaining gaps: `docs/15-REQUIREMENTS.md`
