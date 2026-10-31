@@ -16,14 +16,14 @@ async function navigate(page: Page, label: string) {
   await page.getByRole('navigation').getByRole('link', { name: label, exact: true }).click()
 }
 
-test('staff shell imports every feature route', async ({ page }, testInfo) => {
+test('admin shell imports every feature route', async ({ page }, testInfo) => {
   await session(page)
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('overview.png'), fullPage: true })
-  for (const label of ['Customers', 'Products', 'Plans', 'Subscriptions', 'Quotation templates', 'Invoices', 'Taxes', 'Discounts', 'Staff settings']) {
+  for (const label of ['CycleGuard', 'Customers', 'Products', 'Plans', 'Subscriptions', 'Quotation templates', 'Invoices', 'Taxes', 'Discounts', 'Staff settings']) {
     await navigate(page, label)
     await expect(page.getByRole('heading', { name: label === 'Taxes' ? 'Tax rules' : label, exact: true })).toBeVisible()
     await expect(page).toHaveTitle(`${label === 'Taxes' ? 'Tax rules' : label} · Cadentra`)
@@ -46,7 +46,7 @@ test('staff cannot open admin settings directly', async ({ page }) => {
 
 test('customer uses a separate portal and cannot open staff routes', async ({ page }) => {
   await session(page, 'CUSTOMER')
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page).toHaveURL(/\/portal\/subscriptions$/)
   await navigate(page, 'My invoices')
   await expect(page.getByRole('heading', { name: 'My invoices', exact: true })).toBeVisible()
@@ -71,7 +71,7 @@ test('backend failures remain visible and retry restores the session', async ({ 
   await mockFeatureReads(page)
   let healthy = false
   await page.route('**/api/v1/auth/session', route => route.fulfill(healthy ? { json: { data: { actor: { id: 'test', name: 'Tester', role: 'ADMIN', customer_id: null }, csrf_token: 'csrf' } } } : { status: 503, json: { error: { code: 'UNAVAILABLE', message: 'Service temporarily unavailable' } } }))
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page.getByRole('heading', { name: 'We couldn’t connect' })).toBeVisible()
   healthy = true
   await page.getByRole('button', { name: 'Try again' }).click()
@@ -86,7 +86,7 @@ test('logout sends CSRF and clears the restored session', async ({ page }) => {
     signedOut = true
     await route.fulfill({ status: 204 })
   })
-  await page.goto('/')
+  await page.goto('/app')
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
   await expect(page).toHaveURL(/\/sign-in$/)
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
@@ -96,7 +96,7 @@ test('logout sends CSRF and clears the restored session', async ({ page }) => {
 test('mobile navigation closes with Escape and restores focus', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'Mobile drawer only')
   await session(page)
-  await page.goto('/')
+  await page.goto('/app')
   const open = page.getByRole('button', { name: 'Open navigation' })
   await open.click()
   await expect(page.getByRole('dialog', { name: 'Workspace sidebar' })).toBeVisible()
@@ -110,7 +110,7 @@ test('mobile navigation closes with Escape and restores focus', async ({ page },
 test('keyboard navigation focuses and announces the destination', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Desktop keyboard navigation')
   await session(page)
-  await page.goto('/')
+  await page.goto('/app')
   const link = page.getByRole('navigation').getByRole('link', { name: 'Customers', exact: true })
   await link.focus()
   await page.keyboard.press('Enter')
