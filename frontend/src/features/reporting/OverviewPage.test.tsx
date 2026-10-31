@@ -77,17 +77,36 @@ describe('Overview', () => {
     const invoiceCalls = vi.mocked(apiClient.request).mock.calls.filter(([path]) => path.startsWith('/invoices'))
     expect(invoiceCalls.every(([path]) => !path.includes('from=') && !path.includes('to='))).toBe(true)
   })
-  it('uses searched customer IDs and preserves that filter in reports and current invoice queries', async () => {
+  it('keeps overdue drilldowns scoped to the applied customer without report dates or draft edits', async () => {
     setup()
     await screen.findByText('INR 5,870.16')
+    const expectOverdueLinks = (href: string) => {
+      expect(screen.getByRole('link', { name: 'View overdue invoices' })).toHaveAttribute('href', href)
+      expect(screen.getByRole('link', { name: 'View all invoices' })).toHaveAttribute('href', href)
+    }
+    expectOverdueLinks('/billing/invoices?overdue=true')
     await userEvent.click(screen.getByRole('button', { name: 'All customers' }))
     const search = screen.getByRole('combobox', { name: 'Find a customer' })
     await userEvent.type(search, 'workshop')
     await screen.findByRole('option', { name: /Example workshop/ })
     await userEvent.keyboard('{Enter}')
+    expectOverdueLinks('/billing/invoices?overdue=true')
     await userEvent.click(screen.getByRole('button', { name: 'Apply filters' }))
     await waitFor(() => expect(apiClient.request).toHaveBeenCalledWith('/reports/summary?from=2026-10-01&to=2026-11-01&customer_id=customer-a', expect.anything()))
     await waitFor(() => expect(apiClient.request).toHaveBeenCalledWith('/invoices?overdue=true&page=1&page_size=5&customer_id=customer-a', expect.anything()))
+    await screen.findByText('INR 5,870.16')
+    expectOverdueLinks('/billing/invoices?overdue=true&customer_id=customer-a')
+
+    await userEvent.clear(screen.getByLabelText('Report final day'))
+    await userEvent.type(screen.getByLabelText('Report final day'), '2026-10-20')
+    await userEvent.click(screen.getByRole('button', { name: 'Example workshop' }))
+    await userEvent.click(screen.getByRole('button', { name: 'All customers' }))
+    expectOverdueLinks('/billing/invoices?overdue=true&customer_id=customer-a')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Apply filters' }))
+    await waitFor(() => expect(apiClient.request).toHaveBeenCalledWith('/reports/summary?from=2026-10-01&to=2026-10-21', expect.anything()))
+    await screen.findByText('INR 5,870.16')
+    expectOverdueLinks('/billing/invoices?overdue=true')
   })
   it('keeps invoice errors independent of successful summary and chart responses', async () => {
     const original = vi.mocked(apiClient.request).getMockImplementation()!

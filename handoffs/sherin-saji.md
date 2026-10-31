@@ -110,3 +110,12 @@ Unverified: Docker build/entrypoint/user filesystem, actual Compose network/DNS 
 Prepared PR title: Package the frontend for static same-origin serving
 Description: Adds a locked production build and non-root static server on8080, preserving SPA links, API errors and authenticated headers. Native routing/DNS and Chromium referrer/error-path checks pass; Docker execution remains unverified. The coordinator wires Compose and runtime docs separately.
 Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/frontend-production
+
+## Applied customer overdue drilldowns
+
+Branch: feature/reporting-drilldowns; reviewed base00ffa99
+Implementation: bbb5ffc31160ab8204caf0109269fca58c9139d9
+
+Both Overview overdue links retain only the applied customer_id. Unsubmitted customer/date edits do not affect navigation; from/to remain absent because overdue is current-state data. This pairs with Noel Biju's reviewed URL-filter support. No financial calculations, backend endpoints or policy changes.
+
+Executed: red-before-fix regression, eight reporting tests, typecheck, scoped lint, production build and diff checks pass. Existing bundle warning remains recorded. No browser/database mutations performed by this slice. Ready for exact code review and a serialized owner SSH integration window.
