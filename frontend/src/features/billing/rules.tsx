@@ -74,17 +74,39 @@ function RuleForm({ kind, rule, onSaved, onCancel, blocked }: { kind: Kind; rule
   const [quantity, setQuantity] = useState(String(rule?.min_quantity ?? 0));
   const [limit, setLimit] = useState(rule?.usage_limit == null ? '' : String(rule.usage_limit));
   const [active, setActive] = useState(rule?.active ?? true);
-  const [selected, setSelected] = useState<string[]>(rule?.product_ids ?? []);
+  const [selected, setSelected] = useState<{ id: string; name?: string }[]>(() => (rule?.product_ids ?? []).map(id => ({ id })));
   const [search, setSearch] = useState('');
-  const products = useResource<ListResponse<Product>>(`/products?page_size=100&q=${encodeURIComponent(search)}`);
+  const [productPage, setProductPage] = useState(1);
+  const products = useResource<ListResponse<Product>>(`/products?page=${productPage}&page_size=100&q=${encodeURIComponent(search)}`);
+  const productRows = products.data?.items;
+  useEffect(() => {
+    if (!productRows) return;
+    // Retain names of selected products when their page or search is no longer visible.
+    setSelected(current => {
+      let changed = false;
+      const next = current.map(product => {
+        const match = productRows.find(row => row.id === product.id);
+        if (!match || match.name === product.name) return product;
+        changed = true;
+        return { id: product.id, name: match.name };
+      });
+      return changed ? next : current;
+    });
+  }, [productRows]);
   const [error, setError] = useState<unknown>(null);
   const [pending, setPending] = useState(false);
   const lock = useRef(false);
   const uncertainAttempt = useRef(false);
+  function selectProduct(product: Product, checked: boolean) {
+    setSelected(current => {
+      if (!checked) return current.filter(item => item.id !== product.id);
+      return current.some(item => item.id === product.id) ? current : [...current, product];
+    });
+  }
   async function submit(event: FormEvent) {
     event.preventDefault(); if (lock.current || blocked || uncertainAttempt.current || !beginRuleWrite(kind)) return;
     lock.current = true; setPending(true); setError(null);
-    const common = { name, active, product_ids: kind === 'discount' && scope === 'SUBSCRIPTION' ? [] : selected };
+    const common = { name, active, product_ids: kind === 'discount' && scope === 'SUBSCRIPTION' ? [] : selected.map(product => product.id) };
     const payload = kind === 'tax' ? { ...common, rate_percent: value, valid_from: start, valid_until: end || null } : { ...common, kind: discountKind, value, scope, min_purchase: minimum, min_quantity: Number(quantity), starts_on: start, ends_on: end || null, usage_limit: limit === '' ? null : Number(limit) };
     try {
       const path = `${kind === 'tax' ? '/tax-rules' : '/discount-rules'}${rule ? `/${rule.id}` : ''}`;
@@ -112,8 +134,10 @@ function RuleForm({ kind, rule, onSaved, onCancel, blocked }: { kind: Kind; rule
     <FormField error={fieldError(error, 'min_quantity')} id="rule-quantity" label="Minimum eligible product quantity"><input type="number" min={0} step={1} required value={quantity} onChange={event => setQuantity(event.target.value)} /></FormField>
     <FormField error={fieldError(error, 'usage_limit')} id="rule-limit" label="Global usage limit (optional)"><input type="number" min={0} step={1} value={limit} onChange={event => setLimit(event.target.value)} /></FormField></>}
     <label className="billing-check"><input type="checkbox" checked={active} onChange={event => setActive(event.target.checked)} /> Rule active</label>
-    {(kind === 'tax' || scope === 'PRODUCTS') && <div className="billing-product-picker"><FormField id="product-search" label="Search eligible products"><input value={search} onChange={event => setSearch(event.target.value)} /></FormField>{products.loading && <LoadingSkeleton label="Loading products" />}{products.error != null && <ErrorPanel message={getErrorMessage(products.error)} onRetry={products.reload} />}
-    {products.data?.items.map(product => <label className="billing-check" key={product.id}><input type="checkbox" checked={selected.includes(product.id)} onChange={event => setSelected(event.target.checked ? [...selected, product.id] : selected.filter(id => id !== product.id))} />{product.name}</label>)}
-    {products.data?.total === 0 && <p>No matching products. Search another name.</p>}<p className="ui-muted">{selected.length} products selected. Search narrows the catalogue; selections are retained.</p>{selected.filter(id => !products.data?.items.some(product => product.id === id)).map(id => <Button key={id} variant="secondary" onClick={() => setSelected(selected.filter(value => value !== id))}>Remove selected product {id}</Button>)}</div>}
+    {(kind === 'tax' || scope === 'PRODUCTS') && <div className="billing-product-picker"><FormField id="product-search" label="Search eligible products"><input maxLength={200} value={search} onChange={event => { setSearch(event.target.value); setProductPage(1); }} /></FormField>{products.loading && <LoadingSkeleton label="Loading products" />}{products.error != null && <ErrorPanel message={getErrorMessage(products.error)} onRetry={products.reload} />}
+    {products.data?.items.map(product => <label className="billing-check" key={product.id}><input type="checkbox" checked={selected.some(item => item.id === product.id)} onChange={event => selectProduct(product, event.target.checked)} />{product.name}</label>)}
+    {products.data?.total === 0 && <p>No matching products. Search another name.</p>}
+    <nav className="ui-pagination" aria-label="Eligible products pagination"><span className="ui-muted">{products.data ? `${products.data.total} matching ${products.data.total === 1 ? 'product' : 'products'} · Page ${productPage} of ${Math.max(1, Math.ceil(products.data.total / products.data.page_size))}` : 'Product pages unavailable until the list loads.'}</span><div className="ui-actions"><Button variant="secondary" disabled={products.loading || products.error != null || productPage <= 1} onClick={() => setProductPage(page => page - 1)}>Previous products</Button><Button variant="secondary" disabled={products.loading || products.error != null || !products.data || productPage >= Math.ceil(products.data.total / products.data.page_size)} onClick={() => setProductPage(page => page + 1)}>Next products</Button></div></nav>
+    <p className="ui-muted">{selected.length} products selected. Search and page changes retain selections.</p>{selected.map(product => <Button key={product.id} variant="secondary" onClick={() => setSelected(current => current.filter(item => item.id !== product.id))}>Remove selected product {product.name ?? product.id}</Button>)}</div>}
   </fieldset>{error != null && <ErrorPanel message={getErrorMessage(error)} />}<div className="ui-actions"><Button type="submit" pending={pending} disabled={blocked}>{rule ? 'Schedule revision' : 'Create rule'}</Button><Button variant="secondary" disabled={pending} onClick={onCancel}>Close form</Button></div></form>;
 }
