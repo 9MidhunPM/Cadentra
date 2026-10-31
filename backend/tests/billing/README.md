@@ -38,8 +38,9 @@ invoice-level percentage rounding and empty discount eligibility.
 [billing.feature](billing.feature) is an acceptance specification, not an
 installed BDD test suite. It covers T08/T14-T17 and invoice/payment/rule/print
 behavior in T18-T27. Translate its cases into the actual foundation's test runner;
-do not add a separate test framework just for this file. Run both JSON fixture
-sets against the actual pricing service, including its per-line allocations.
+do not add a separate test framework just for this file. Both JSON fixture sets
+already run against the actual pure calculator, including per-line allocations;
+bind the remaining scenarios to persisted services after the foundation lands.
 
 [CONCURRENCY.md](CONCURRENCY.md) defines real PostgreSQL race and rollback
 protocols, including shared T13/T34 pause/expiry coordination. Every such scenario
