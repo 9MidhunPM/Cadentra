@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import get_clock
 from app.core.config import get_settings
+from app.core.demo_contacts import is_demo_contact
 from app.core.errors import DomainError
 from app.core.security import hash_password, hash_token, new_token, normalize_email, verify_password
 from app.models import Customer, EmailOutbox, PasswordResetToken, SessionRecord, User
@@ -88,7 +89,9 @@ def request_reset(db: Session, email: str) -> None:
         .where(User.normalized_email == normalize_email(email), User.active.is_(True))
         .with_for_update()
     )
-    if user is None:
+    if user is None or is_demo_contact(
+        db, customer_id=user.customer_id, recipient=user.normalized_email
+    ):
         return
     raw = new_token()
     now = get_clock().now()

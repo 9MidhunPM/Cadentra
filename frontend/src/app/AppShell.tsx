@@ -101,7 +101,7 @@ export function AppShell() {
           {logoutError ? <div className="shell-error" role="alert">{logoutError}</div> : null}
           <div className="breadcrumb"><span>{customer ? 'Customer portal' : 'Workspace'}</span><ChevronRight size={13} aria-hidden="true" /><strong>{current?.label || 'Details'}</strong><span className="theme-caption">{theme === 'dark' ? 'Graphite Mint' : 'Sage Commerce'}</span></div>
           <main id="main-content" className="main-content" tabIndex={-1}><motion.div initial={false} animate={routeArrival}><Outlet /></motion.div></main>
-          <footer className="workspace-footer"><span>Cadentra · Brightloop Software</span><span>Every cycle, accounted for <ArrowUpRight size={13} aria-hidden="true" /></span></footer>
+          <footer className="workspace-footer"><span>Cadentra · Brightloop Software · <a href="/DEMO_DATA.html">Demo data</a></span><span>Every cycle, accounted for <ArrowUpRight size={13} aria-hidden="true" /></span></footer>
         </div>
       </div>
     </div>

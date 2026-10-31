@@ -1,3 +1,17 @@
+# Commerce showcase preparation:31 October2026
+
+New user instruction, relayed with exact wording through Noel's thread, requests coordinated substantial demo data. The user explicitly selected the public Dokploy demo as the target. Existing records and immutable financial history must be preserved; imported contacts must receive no email. Implementation is active; no commerce data has been imported yet.
+
+Root prepared a frozen80-product catalog from UCI Online Retail (Chen2015, DOI10.24432/C5BW33, CC BY4.0). Only product codes/descriptions are retained; all96 customer identities,160 pack variants, INR prices,8plans,6templates and future financial scenarios are fictional and explicitly labelled. Source ZIP/workbook hashes and reproducible selection are in docs/DEMO_DATA_PROVENANCE.md. Root owns orchestration/provenance/no-email policy/isolated historical Clock; Thanushree owns a supported subscription adapter and Noel the billing adapter/invoice enqueue guard. Sherin's reviewed benchmark is integrated at ef3097d but execution is held while import source/data are prepared.
+
+Email suppression uses reserved demo.cadentra.example.com addresses and durable CUSTOMER/DEMO_CONTACT_NO_EMAIL audit markers, so editing a customer email cannot remove suppression. Identity reset creates no token/outbox for that cohort; dispatch rejects it before composition/SMTP and records only DemoContactSuppressed through the existing failure/backoff path. Development Mailpit and SMTP settings are unchanged. Five new PostgreSQL policy cases plus six existing outbox cases passed once (11total) against a newly created UUID-named local *_test database; retained T30/T31 data was untouched. Nested/exception historical-clock restoration was also checked. No direct financial inserts or immutable date updates are authorized by this preparation.
+
+Separately, the user explicitly requested a reset email to their own controlled address after configuring Resend. Actual API-container configuration and verified STARTTLS/auth passed. The requested address had no account, so an ordinary CUSTOMER account was created through the real browser/public signup201 with a privately generated password. Reset request202 produced an actual outbox row SENT on attempt1 with no error; the user directly confirmed arrival in root's thread. No reset token/link, real recipient, password or private sender is included in source/status. External invoice delivery remains unverified. The first standalone Python signup request received an edge403 before the supported real-browser flow succeeded; no fake success is inferred from genericHTTP202.
+
+---
+
+## Previous checkpoints
+
 # Verified live workspace polish:31 October2026
 
 Application main9c2b057a4fb34c072128d73cbf622b542b37c6b0 is deployed in Dokploy XltDM2jvbKADoIltq6I5s. Root source805aa57/c211d72 and Noel's owner-published invoice layout127bdba were combined without conflicts; the integrated tree passed production build/typecheck and lint. This is visual polish, with no financial/domain/API changes.
@@ -100,3 +114,29 @@ Sherin's471808 test/T31-evidence feature remains ready; her owner-main push was 
 First authorized deployment built all images, created only Cadentra networks/volumes and completed migrations/bootstrap with exit0. API, PostgreSQL and private Mailpit report healthy; one worker runs as cadentra and web as UID101. No service publishes a host port. Public HTTPS still returned Traefik404: actual web labels lacked router/enable settings despite the saved native domain record. The root follow-up adds explicit Cadentra-only routers/service8080, Cloudflare middleware on both HTTP/HTTPS and app-only redirect/TLS resolver settings.
 
 Actual Dokploy also attached web to the default network. Root adds cadentra-api-proxy only on the private proxy network; Sherin's separately reviewed follow-up must select that upstream, retaining exact web `.2` API trust. No wider proxy trust or other service/domain changes are authorized by this correction. Actual ingress/source/functional workflow verification remains pending.
+
+## Commerce import closeout implementation ·31 October2026
+
+User-approved plan is executing on feature/commerce-demo-import. Root integrated
+Thanushree's bbed4dc adapter, preserving author history. Coordinator helpers added
+static foundation persistence,192 dated scenarios, billing-intent replay and the
+invoice no-email guard adapted from Noel's preserved draft. Root owns the explicit
+CLI, frozen manifest, existing-record baseline, namespace/rule locks and deployment.
+New public attribution page and a workspace footer link make the CC BY notice
+accessible; this bounded shared-UI addition is a coordinator decision.
+
+Local fresh-database interruption/replay acceptance passed:192 subscriptions,
+624 invoices,843 payments,648 periods, zero outbound emails; rerun adds zero.
+Foundation6, billing13 and owner's subscription4 focused checks passed. Scoped
+Ruff/whitespace plus frontend typecheck/lint/build passed. No broad suite repeat.
+
+Production reset SMTP STARTTLS/auth and HTTPS URL were verified; recipient
+confirmed actual reset receipt. The separate zero-value invoice check created no
+Payment, queued one email, reached SENT on attempt1 without recorded error, and
+the recipient directly confirmed receipt. Do not resend either probe. Private
+credentials/recipient information remain outside Git. Development Mailpit unchanged.
+
+Public bulk import and final performance run remain pending this checkpoint.
+Thanushree's new adapter main push has direct user approval in the root thread;
+its owner integration is serialized before the coordinator's main slice. Older
+three-fix bundle remains separately blocked on its existing owner approval.

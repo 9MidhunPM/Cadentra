@@ -1,0 +1,434 @@
+{
+  "schema_version": 1,
+  "dataset_id": "cadentra-commerce-catalog-v1",
+  "source": {
+    "title": "Online Retail",
+    "creator": "Daqing Chen",
+    "year": 2015,
+    "doi": "10.24432/C5BW33",
+    "dataset_url": "https://archive.ics.uci.edu/dataset/352/online%2Bretail",
+    "download_url": "https://archive.ics.uci.edu/static/public/352/online%2Bretail.zip",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "retrieved_at_utc": "2026-10-31T10:04:16Z",
+    "archive_sha256": "f5385cbb54bbebf7196389109c6b0621faab0c304e3702548165e71c84aede8b",
+    "workbook_name": "Online Retail.xlsx",
+    "workbook_sha256": "43465a06f2ccf7c8b5bd2892bc7defb52f97487934fe93b16ae4c3936424676d"
+  },
+  "attribution": "Catalog descriptions adapted from Chen, D. (2015), Online Retail, UCI Machine Learning Repository, DOI:10.24432/C5BW33. Licensed CC BY 4.0. Descriptions were selected and normalized; prices, customers and financial scenarios are fictional Cadentra demo data. No endorsement is implied.",
+  "selection": {
+    "count": 80,
+    "source_columns_retained": [
+      "StockCode",
+      "Description"
+    ],
+    "stock_code_pattern": "[0-9]{5}[A-Z]*",
+    "excluded": "Blank, short, oversized, control-character/question-mark descriptions; adjustment, service, fee and damaged/missing-stock descriptions. The exact exclusion expression is frozen in the preparation script.",
+    "ranking": "Descending count of eligible description occurrences per stock code, then ascending stock code; no quantity or sales-value ranking.",
+    "canonical_description": "Most frequent trimmed nonblank eligible description per stock code; ties use ascending exact source-description text.",
+    "display_normalization": "Collapse whitespace and apply Python str.title().",
+    "generated_data_notice": "All INR prices, costs, variants, plans, customers, subscriptions, invoices and payments are synthetic demo scenarios. Historical sterling prices are neither imported nor converted. No source customer or order fields are retained."
+  },
+  "products": [
+    {
+      "stock_code": "85123A",
+      "original_description": "WHITE HANGING HEART T-LIGHT HOLDER",
+      "name": "White Hanging Heart T-Light Holder"
+    },
+    {
+      "stock_code": "22423",
+      "original_description": "REGENCY CAKESTAND 3 TIER",
+      "name": "Regency Cakestand 3 Tier"
+    },
+    {
+      "stock_code": "85099B",
+      "original_description": "JUMBO BAG RED RETROSPOT",
+      "name": "Jumbo Bag Red Retrospot"
+    },
+    {
+      "stock_code": "47566",
+      "original_description": "PARTY BUNTING",
+      "name": "Party Bunting"
+    },
+    {
+      "stock_code": "20725",
+      "original_description": "LUNCH BAG RED RETROSPOT",
+      "name": "Lunch Bag Red Retrospot"
+    },
+    {
+      "stock_code": "84879",
+      "original_description": "ASSORTED COLOUR BIRD ORNAMENT",
+      "name": "Assorted Colour Bird Ornament"
+    },
+    {
+      "stock_code": "22197",
+      "original_description": "POPCORN HOLDER",
+      "name": "Popcorn Holder"
+    },
+    {
+      "stock_code": "22720",
+      "original_description": "SET OF 3 CAKE TINS PANTRY DESIGN",
+      "name": "Set Of 3 Cake Tins Pantry Design"
+    },
+    {
+      "stock_code": "21212",
+      "original_description": "PACK OF 72 RETROSPOT CAKE CASES",
+      "name": "Pack Of 72 Retrospot Cake Cases"
+    },
+    {
+      "stock_code": "20727",
+      "original_description": "LUNCH BAG  BLACK SKULL.",
+      "name": "Lunch Bag Black Skull."
+    },
+    {
+      "stock_code": "22383",
+      "original_description": "LUNCH BAG SUKI DESIGN",
+      "name": "Lunch Bag Suki Design"
+    },
+    {
+      "stock_code": "22457",
+      "original_description": "NATURAL SLATE HEART CHALKBOARD",
+      "name": "Natural Slate Heart Chalkboard"
+    },
+    {
+      "stock_code": "23203",
+      "original_description": "JUMBO BAG VINTAGE DOILY",
+      "name": "Jumbo Bag Vintage Doily"
+    },
+    {
+      "stock_code": "22386",
+      "original_description": "JUMBO BAG PINK POLKADOT",
+      "name": "Jumbo Bag Pink Polkadot"
+    },
+    {
+      "stock_code": "22469",
+      "original_description": "HEART OF WICKER SMALL",
+      "name": "Heart Of Wicker Small"
+    },
+    {
+      "stock_code": "22960",
+      "original_description": "JAM MAKING SET WITH JARS",
+      "name": "Jam Making Set With Jars"
+    },
+    {
+      "stock_code": "21931",
+      "original_description": "JUMBO STORAGE BAG SUKI",
+      "name": "Jumbo Storage Bag Suki"
+    },
+    {
+      "stock_code": "22086",
+      "original_description": "PAPER CHAIN KIT 50'S CHRISTMAS",
+      "name": "Paper Chain Kit 50'S Christmas"
+    },
+    {
+      "stock_code": "22411",
+      "original_description": "JUMBO SHOPPER VINTAGE RED PAISLEY",
+      "name": "Jumbo Shopper Vintage Red Paisley"
+    },
+    {
+      "stock_code": "20728",
+      "original_description": "LUNCH BAG CARS BLUE",
+      "name": "Lunch Bag Cars Blue"
+    },
+    {
+      "stock_code": "22382",
+      "original_description": "LUNCH BAG SPACEBOY DESIGN",
+      "name": "Lunch Bag Spaceboy Design"
+    },
+    {
+      "stock_code": "22961",
+      "original_description": "JAM MAKING SET PRINTED",
+      "name": "Jam Making Set Printed"
+    },
+    {
+      "stock_code": "22666",
+      "original_description": "RECIPE BOX PANTRY YELLOW DESIGN",
+      "name": "Recipe Box Pantry Yellow Design"
+    },
+    {
+      "stock_code": "23298",
+      "original_description": "SPOTTY BUNTING",
+      "name": "Spotty Bunting"
+    },
+    {
+      "stock_code": "22699",
+      "original_description": "ROSES REGENCY TEACUP AND SAUCER",
+      "name": "Roses Regency Teacup And Saucer"
+    },
+    {
+      "stock_code": "22384",
+      "original_description": "LUNCH BAG PINK POLKADOT",
+      "name": "Lunch Bag Pink Polkadot"
+    },
+    {
+      "stock_code": "23209",
+      "original_description": "LUNCH BAG VINTAGE DOILY",
+      "name": "Lunch Bag Vintage Doily"
+    },
+    {
+      "stock_code": "82482",
+      "original_description": "WOODEN PICTURE FRAME WHITE FINISH",
+      "name": "Wooden Picture Frame White Finish"
+    },
+    {
+      "stock_code": "22993",
+      "original_description": "SET OF 4 PANTRY JELLY MOULDS",
+      "name": "Set Of 4 Pantry Jelly Moulds"
+    },
+    {
+      "stock_code": "22727",
+      "original_description": "ALARM CLOCK BAKELIKE RED",
+      "name": "Alarm Clock Bakelike Red"
+    },
+    {
+      "stock_code": "22697",
+      "original_description": "GREEN REGENCY TEACUP AND SAUCER",
+      "name": "Green Regency Teacup And Saucer"
+    },
+    {
+      "stock_code": "23206",
+      "original_description": "LUNCH BAG APPLE DESIGN",
+      "name": "Lunch Bag Apple Design"
+    },
+    {
+      "stock_code": "22178",
+      "original_description": "VICTORIAN GLASS HANGING T-LIGHT",
+      "name": "Victorian Glass Hanging T-Light"
+    },
+    {
+      "stock_code": "20724",
+      "original_description": "RED RETROSPOT CHARLOTTE BAG",
+      "name": "Red Retrospot Charlotte Bag"
+    },
+    {
+      "stock_code": "20726",
+      "original_description": "LUNCH BAG WOODLAND",
+      "name": "Lunch Bag Woodland"
+    },
+    {
+      "stock_code": "23084",
+      "original_description": "RABBIT NIGHT LIGHT",
+      "name": "Rabbit Night Light"
+    },
+    {
+      "stock_code": "22726",
+      "original_description": "ALARM CLOCK BAKELIKE GREEN",
+      "name": "Alarm Clock Bakelike Green"
+    },
+    {
+      "stock_code": "21080",
+      "original_description": "SET/20 RED RETROSPOT PAPER NAPKINS",
+      "name": "Set/20 Red Retrospot Paper Napkins"
+    },
+    {
+      "stock_code": "23199",
+      "original_description": "JUMBO BAG APPLES",
+      "name": "Jumbo Bag Apples"
+    },
+    {
+      "stock_code": "22139",
+      "original_description": "RETROSPOT TEA SET CERAMIC 11 PC",
+      "name": "Retrospot Tea Set Ceramic 11 Pc"
+    },
+    {
+      "stock_code": "22077",
+      "original_description": "6 RIBBONS RUSTIC CHARM",
+      "name": "6 Ribbons Rustic Charm"
+    },
+    {
+      "stock_code": "22138",
+      "original_description": "BAKING SET 9 PIECE RETROSPOT",
+      "name": "Baking Set 9 Piece Retrospot"
+    },
+    {
+      "stock_code": "21034",
+      "original_description": "REX CASH+CARRY JUMBO SHOPPER",
+      "name": "Rex Cash+Carry Jumbo Shopper"
+    },
+    {
+      "stock_code": "22470",
+      "original_description": "HEART OF WICKER LARGE",
+      "name": "Heart Of Wicker Large"
+    },
+    {
+      "stock_code": "85099C",
+      "original_description": "JUMBO  BAG BAROQUE BLACK WHITE",
+      "name": "Jumbo Bag Baroque Black White"
+    },
+    {
+      "stock_code": "84946",
+      "original_description": "ANTIQUE SILVER T-LIGHT GLASS",
+      "name": "Antique Silver T-Light Glass"
+    },
+    {
+      "stock_code": "21790",
+      "original_description": "VINTAGE SNAP CARDS",
+      "name": "Vintage Snap Cards"
+    },
+    {
+      "stock_code": "82494L",
+      "original_description": "WOODEN FRAME ANTIQUE WHITE",
+      "name": "Wooden Frame Antique White"
+    },
+    {
+      "stock_code": "20914",
+      "original_description": "SET/5 RED RETROSPOT LID GLASS BOWLS",
+      "name": "Set/5 Red Retrospot Lid Glass Bowls"
+    },
+    {
+      "stock_code": "23301",
+      "original_description": "GARDENERS KNEELING PAD KEEP CALM",
+      "name": "Gardeners Kneeling Pad Keep Calm"
+    },
+    {
+      "stock_code": "23201",
+      "original_description": "JUMBO BAG ALPHABET",
+      "name": "Jumbo Bag Alphabet"
+    },
+    {
+      "stock_code": "22629",
+      "original_description": "SPACEBOY LUNCH BOX",
+      "name": "Spaceboy Lunch Box"
+    },
+    {
+      "stock_code": "23245",
+      "original_description": "SET OF 3 REGENCY CAKE TINS",
+      "name": "Set Of 3 Regency Cake Tins"
+    },
+    {
+      "stock_code": "22355",
+      "original_description": "CHARLOTTE BAG SUKI DESIGN",
+      "name": "Charlotte Bag Suki Design"
+    },
+    {
+      "stock_code": "21232",
+      "original_description": "STRAWBERRY CERAMIC TRINKET BOX",
+      "name": "Strawberry Ceramic Trinket Box"
+    },
+    {
+      "stock_code": "21977",
+      "original_description": "PACK OF 60 PINK PAISLEY CAKE CASES",
+      "name": "Pack Of 60 Pink Paisley Cake Cases"
+    },
+    {
+      "stock_code": "23202",
+      "original_description": "JUMBO BAG VINTAGE LEAF",
+      "name": "Jumbo Bag Vintage Leaf"
+    },
+    {
+      "stock_code": "22112",
+      "original_description": "CHOCOLATE HOT WATER BOTTLE",
+      "name": "Chocolate Hot Water Bottle"
+    },
+    {
+      "stock_code": "21929",
+      "original_description": "JUMBO BAG PINK VINTAGE PAISLEY",
+      "name": "Jumbo Bag Pink Vintage Paisley"
+    },
+    {
+      "stock_code": "22630",
+      "original_description": "DOLLY GIRL LUNCH BOX",
+      "name": "Dolly Girl Lunch Box"
+    },
+    {
+      "stock_code": "20712",
+      "original_description": "JUMBO BAG WOODLAND ANIMALS",
+      "name": "Jumbo Bag Woodland Animals"
+    },
+    {
+      "stock_code": "21181",
+      "original_description": "PLEASE ONE PERSON METAL SIGN",
+      "name": "Please One Person Metal Sign"
+    },
+    {
+      "stock_code": "21731",
+      "original_description": "RED TOADSTOOL LED NIGHT LIGHT",
+      "name": "Red Toadstool Led Night Light"
+    },
+    {
+      "stock_code": "84991",
+      "original_description": "60 TEATIME FAIRY CAKE CASES",
+      "name": "60 Teatime Fairy Cake Cases"
+    },
+    {
+      "stock_code": "22722",
+      "original_description": "SET OF 6 SPICE TINS PANTRY DESIGN",
+      "name": "Set Of 6 Spice Tins Pantry Design"
+    },
+    {
+      "stock_code": "20719",
+      "original_description": "WOODLAND CHARLOTTE BAG",
+      "name": "Woodland Charlotte Bag"
+    },
+    {
+      "stock_code": "22910",
+      "original_description": "PAPER CHAIN KIT VINTAGE CHRISTMAS",
+      "name": "Paper Chain Kit Vintage Christmas"
+    },
+    {
+      "stock_code": "85099F",
+      "original_description": "JUMBO BAG STRAWBERRY",
+      "name": "Jumbo Bag Strawberry"
+    },
+    {
+      "stock_code": "22698",
+      "original_description": "PINK REGENCY TEACUP AND SAUCER",
+      "name": "Pink Regency Teacup And Saucer"
+    },
+    {
+      "stock_code": "21175",
+      "original_description": "GIN + TONIC DIET METAL SIGN",
+      "name": "Gin + Tonic Diet Metal Sign"
+    },
+    {
+      "stock_code": "21928",
+      "original_description": "JUMBO BAG SCANDINAVIAN BLUE PAISLEY",
+      "name": "Jumbo Bag Scandinavian Blue Paisley"
+    },
+    {
+      "stock_code": "23355",
+      "original_description": "HOT WATER BOTTLE KEEP CALM",
+      "name": "Hot Water Bottle Keep Calm"
+    },
+    {
+      "stock_code": "22090",
+      "original_description": "PAPER BUNTING RETROSPOT",
+      "name": "Paper Bunting Retrospot"
+    },
+    {
+      "stock_code": "22728",
+      "original_description": "ALARM CLOCK BAKELIKE PINK",
+      "name": "Alarm Clock Bakelike Pink"
+    },
+    {
+      "stock_code": "21754",
+      "original_description": "HOME BUILDING BLOCK WORD",
+      "name": "Home Building Block Word"
+    },
+    {
+      "stock_code": "22111",
+      "original_description": "SCOTTIE DOG HOT WATER BOTTLE",
+      "name": "Scottie Dog Hot Water Bottle"
+    },
+    {
+      "stock_code": "22558",
+      "original_description": "CLOTHES PEGS RETROSPOT PACK 24",
+      "name": "Clothes Pegs Retrospot Pack 24"
+    },
+    {
+      "stock_code": "23207",
+      "original_description": "LUNCH BAG ALPHABET DESIGN",
+      "name": "Lunch Bag Alphabet Design"
+    },
+    {
+      "stock_code": "23300",
+      "original_description": "GARDENERS KNEELING PAD CUP OF TEA",
+      "name": "Gardeners Kneeling Pad Cup Of Tea"
+    },
+    {
+      "stock_code": "22356",
+      "original_description": "CHARLOTTE BAG PINK POLKADOT",
+      "name": "Charlotte Bag Pink Polkadot"
+    }
+  ]
+}
