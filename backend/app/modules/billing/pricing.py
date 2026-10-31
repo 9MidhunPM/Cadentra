@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import ROUND_DOWN, ROUND_HALF_UP, Context, Decimal, localcontext
 
+from app.core.money import money
+
 CENT = Decimal("0.01")
 RATE_QUANTUM = Decimal("0.0001")
 ZERO = Decimal("0.00")
@@ -26,7 +28,7 @@ def _money(value: Decimal) -> Decimal:
         raise ValueError("Invoice amount exceeds NUMERIC(18,2) storage")
     if not value:
         return ZERO
-    return value.quantize(CENT, rounding=ROUND_HALF_UP)
+    return money(value)
 
 
 def _has_scale(value: Decimal, quantum: Decimal) -> bool:
