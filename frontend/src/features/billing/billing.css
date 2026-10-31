@@ -1,3 +1,90 @@
 .billing-filters,.billing-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}.billing-form-grid{border:0;padding:0;margin-top:20px;min-width:0}.billing-card{padding:24px;border:1px solid var(--color-border,#e2e8f0);background:var(--color-surface,#fff);border-radius:12px;margin-bottom:24px}.billing-card h2{font-size:1.15rem;margin:0 0 12px}.billing-card>.ui-actions{margin-top:16px}.billing-tax{display:block;color:var(--color-muted,#64748b);font-size:.8rem;line-height:1.7}.billing-totals{max-width:460px;margin:24px 0 24px auto;padding:20px;background:var(--color-surface-raised,#f8fafc);border-radius:12px}.billing-totals>div{display:flex;justify-content:space-between;gap:24px;padding:8px 0}.billing-totals dd{margin:0}.billing-totals>div:last-child{border-top:1px solid var(--color-border,#cbd5e1);font-weight:700;margin-top:8px;padding-top:16px}.billing-check{display:flex;gap:10px;align-items:center;font-size:.875rem;min-height:40px}.billing-check input{width:18px;height:18px;accent-color:#0f766e}.billing-product-picker{grid-column:1/-1;max-height:340px;overflow:auto;padding:16px;background:var(--color-surface-raised,#f8fafc);border-radius:8px}.billing-product-picker>.ui-field{margin-bottom:12px}@media(max-width:640px){.billing-card{padding:16px}.billing-filters,.billing-form-grid{grid-template-columns:1fr}.billing-totals{max-width:none}}
 
 .billing-invoice-lines{min-width:820px}.billing-scroll-hint{display:none}@media(max-width:900px){.billing-scroll-hint{display:block}}
+
+.billing-invoice-list {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.billing-invoice-list .billing-filters {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 12px;
+}
+
+.billing-invoice-list .billing-filters .ui-field,
+.billing-invoice-list .billing-filters input,
+.billing-invoice-list .billing-filters select {
+  min-width: 0;
+}
+
+.billing-invoice-list .billing-filters input,
+.billing-invoice-list .billing-filters select {
+  min-height: 44px;
+}
+
+.billing-invoice-table {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.billing-invoice-table .ui-table {
+  min-width: 860px;
+}
+
+.billing-invoice-table[data-empty="true"] .ui-table {
+  min-width: 0;
+}
+
+.billing-invoice-table .ui-table td:not([colspan]):not(:nth-child(2)) {
+  white-space: nowrap;
+}
+
+.billing-invoice-customer {
+  display: block;
+  min-width: 12rem;
+  max-width: 22rem;
+  overflow-wrap: anywhere;
+}
+
+.billing-invoice-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+@media (max-width: 640px), (pointer: coarse) {
+  .billing-invoice-link {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .billing-invoice-table[data-empty="true"] .ui-table thead {
+    display: none;
+  }
+}
+
+@container (min-width: 600px) {
+  .billing-invoice-list .billing-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+}
+
+@container (min-width: 1080px) {
+  .billing-invoice-list .billing-filters {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 300px) {
+  .billing-invoice-list .billing-filters label[for="invoice-from"],
+  .billing-invoice-list .billing-filters label[for="invoice-to"] {
+    min-height: 2.625rem;
+  }
+
+  .billing-invoice-list .billing-filters input[type="date"] {
+    padding-inline: 8px;
+  }
+}
