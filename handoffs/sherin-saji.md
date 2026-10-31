@@ -111,15 +111,6 @@ Prepared PR title: Package the frontend for static same-origin serving
 Description: Adds a locked production build and non-root static server on8080, preserving SPA links, API errors and authenticated headers. Native routing/DNS and Chromium referrer/error-path checks pass; Docker execution remains unverified. The coordinator wires Compose and runtime docs separately.
 Compare: https://github.com/9MidhunPM/Cadentra/compare/main...feature/frontend-production
 
-## Applied customer overdue drilldowns
-
-Branch: feature/reporting-drilldowns; reviewed base00ffa99
-Implementation: bbb5ffc31160ab8204caf0109269fca58c9139d9
-
-Both Overview overdue links retain only the applied customer_id. Unsubmitted customer/date edits do not affect navigation; from/to remain absent because overdue is current-state data. This pairs with Noel Biju's reviewed URL-filter support. No financial calculations, backend endpoints or policy changes.
-
-Executed: red-before-fix regression, eight reporting tests, typecheck, scoped lint, production build and diff checks pass. Existing bundle warning remains recorded. No browser/database mutations performed by this slice. Ready for exact code review and a serialized owner SSH integration window.
-
 ## Production ingress identity hardening
 
 Branch: feature/frontend-trusted-ingress; implementation and native evidence: 0306d16.
@@ -130,3 +121,12 @@ CADENTRA_TRUSTED_INGRESS=true selects nginx.production.conf through the nonroot 
 Executed: 26 native NGINX1.30.6 realip checks, including raw duplicate/mixed-case CF headers, invalid/missing/comma/port addresses, canonical IPv6, spoofed internal headers, wrong original peer, no rewrite, SPA/assets/cache/gzip and nonroot selector tests. Shell syntax and whitespace checks pass. All task listeners stopped; no database touched. Exact source/binary hashes, command, adaptations and official build sources are in frontend/e2e/evidence/trusted-ingress-native.md and its JSON.
 
 Integration dependency: production Compose must explicitly pass CADENTRA_TRUSTED_INGRESS=true; Midhun P M confirmed this in reviewed main. The coordinator owns the actual Cloudflare allowlist, exact private API peer and --no-proxy-headers configuration. Native protocol fixtures and immutable-source simulation do not verify Docker execution, a read-only root mount, real Traefik/Cloudflare, or deployment. Final T30 waits for the settled reviewed runtime.
+
+## Applied customer overdue drilldowns
+
+Branch: feature/reporting-drilldowns; reviewed base00ffa99
+Implementation: bbb5ffc31160ab8204caf0109269fca58c9139d9
+
+Both Overview overdue links retain only the applied customer_id. Unsubmitted customer/date edits do not affect navigation; from/to remain absent because overdue is current-state data. This pairs with Noel Biju's reviewed URL-filter support. No financial calculations, backend endpoints or policy changes.
+
+Executed: red-before-fix regression, eight reporting tests, typecheck, scoped lint, production build and diff checks pass. Existing bundle warning remains recorded. No browser/database mutations performed by this slice. Ready for exact code review and a serialized owner SSH integration window.
