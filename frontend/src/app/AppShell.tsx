@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
-import { AnimatePresence, LayoutGroup, m as motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, LayoutGroup, m as motion, useAnimationControls, useReducedMotion } from 'motion/react'
 import { ArrowUpRight, ChevronRight, LogOut, Menu, Moon, RotateCcw, Sun, X } from 'lucide-react'
 import { useSession, getErrorMessage } from '../lib'
 import { currentNavigation, getNavigation } from './navigation'
@@ -18,9 +18,26 @@ export function AppShell() {
   const sidebar = useRef<HTMLElement>(null)
   const menuTrigger = useRef<HTMLButtonElement>(null)
   const location = useLocation()
+  const routeArrival = useAnimationControls()
+  const previousPath = useRef(location.pathname)
   const customer = actor?.role === 'CUSTOMER'
   const items = getNavigation(actor?.role || 'CUSTOMER')
   const current = currentNavigation(items, location.pathname)
+
+  useEffect(() => {
+    // Keep the existing Outlet/main mounted: filtering, data reloads and form state
+    // are not animation triggers. The initial page load is deliberately immediate.
+    if (reduceMotion) {
+      previousPath.current = location.pathname
+      routeArrival.set({ opacity: 1, y: 0 })
+      return
+    }
+    if (previousPath.current === location.pathname) return
+    previousPath.current = location.pathname
+    routeArrival.set({ opacity: .65, y: 6 })
+    void routeArrival.start({ opacity: 1, y: 0, transition: { duration: .2, ease: [.16, 1, .3, 1] } })
+    return () => routeArrival.stop()
+  }, [location.pathname, reduceMotion, routeArrival])
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 760px)')
@@ -83,7 +100,7 @@ export function AppShell() {
         <div className="main-column" inert={menuOpen}>
           {logoutError ? <div className="shell-error" role="alert">{logoutError}</div> : null}
           <div className="breadcrumb"><span>{customer ? 'Customer portal' : 'Workspace'}</span><ChevronRight size={13} aria-hidden="true" /><strong>{current?.label || 'Details'}</strong><span className="theme-caption">{theme === 'dark' ? 'Graphite Mint' : 'Sage Commerce'}</span></div>
-          <main id="main-content" className="main-content" tabIndex={-1}><Outlet /></main>
+          <main id="main-content" className="main-content" tabIndex={-1}><motion.div initial={false} animate={routeArrival}><Outlet /></motion.div></main>
           <footer className="workspace-footer"><span>Cadentra · Brightloop Software</span><span>Every cycle, accounted for <ArrowUpRight size={13} aria-hidden="true" /></span></footer>
         </div>
       </div>

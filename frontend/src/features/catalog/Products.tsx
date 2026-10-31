@@ -149,17 +149,17 @@ export function Products() {
                   <div className="catalog-actions">
                     <Button
                       variant="secondary"
-                      onClick={() => setSelected(row)}
+                      aria-label={`Variants for ${row.name}`} onClick={() => setSelected(row)}
                     >
-                      Variants for {row.name}
+                      Variants
                     </Button>
                     {admin && (
                       <>
                         <Button
                           variant="secondary"
-                          onClick={() => setEditing(row)}
+                          aria-label={`Edit ${row.name}`} onClick={() => setEditing(row)}
                         >
-                          Edit {row.name}
+                          Edit
                         </Button>
                         <ConfirmDialog
                           title={

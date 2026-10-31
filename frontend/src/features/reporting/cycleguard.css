@@ -1,76 +1,77 @@
 .cycle-guard {
   display: grid;
-  gap: 24px;
+  gap: 18px;
   min-width: 0;
+}
+.cycle-guard .ui-page-header {
+  margin-bottom: 0;
+}
+.cycle-guard .ui-page-header h1 {
+  font-size: 29px;
+  font-weight: 650;
+}
+.cycle-guard .ui-page-header p {
+  font-size: 13px;
 }
 .cycle-guard-intro {
   display: flex;
-  gap: 18px;
+  gap: 12px;
   align-items: center;
-  padding: 24px;
+  padding: 14px 16px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--color-surface);
-  box-shadow: var(--shadow-panel);
 }
 .cycle-guard-mark {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 32px;
+  height: 32px;
   flex: 0 0 auto;
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--color-success-bg);
   color: var(--color-success);
 }
-.cycle-guard-intro h2 {
-  font-size: 17px;
-  letter-spacing: -0.3px;
-  margin-bottom: 6px;
-}
 .cycle-guard-intro p {
-  max-width: 670px;
+  max-width: 96ch;
   color: var(--color-muted);
-  font-size: 13px;
-  line-height: 1.7;
-}
-.cycle-guard-readonly {
-  margin-left: auto;
-  white-space: nowrap;
-  color: var(--color-muted);
-  font-size: 11px;
-  padding: 7px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
+  font-size: 12px;
+  line-height: 1.65;
 }
 .cycle-guard-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+}
+.cycle-guard-toolbar .report-customer-popover {
+  right: 0;
+  left: auto;
 }
 .cycle-guard-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: wrap;
-  padding: 5px;
+  padding: 3px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 9px;
 }
 .cycle-guard-tabs button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 10px 15px;
+  gap: 7px;
+  min-height: 32px;
+  padding: 6px 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--color-muted);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.5;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 .cycle-guard-tabs button:hover {
   background: var(--color-neutral-bg);
@@ -84,19 +85,18 @@
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--color-surface);
-  box-shadow: var(--shadow-panel);
 }
 .cycle-guard-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 24px;
+  padding: 18px 20px;
 }
 .cycle-guard-panel-header h2 {
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: -0.3px;
 }
 .cycle-guard-panel-header p {
@@ -112,9 +112,9 @@
   flex-shrink: 0;
 }
 .cycle-guard-count strong {
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 600;
-  letter-spacing: -1.5px;
+  letter-spacing: -0.03em;
   color: var(--color-primary);
 }
 .cycle-guard-count span {
@@ -128,9 +128,22 @@
   box-shadow: none;
   border-radius: 0;
 }
+.cycle-guard-panel .ui-empty {
+  padding: 24px 16px;
+}
+.cycle-guard-panel .ui-empty-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+.cycle-guard-panel .ui-empty h2 {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 550;
+}
 .cycle-guard-panel > .ui-error,
 .cycle-guard-panel > .ui-loading {
-  margin: 0 24px 24px;
+  margin: 0 20px 20px;
 }
 .cycle-guard-link {
   display: inline-flex;
@@ -160,10 +173,6 @@
 @media (max-width: 800px) {
   .cycle-guard-intro {
     align-items: flex-start;
-    flex-wrap: wrap;
-  }
-  .cycle-guard-readonly {
-    margin-left: 70px;
   }
   .cycle-guard-panel-header {
     align-items: flex-start;
@@ -178,6 +187,10 @@
   .cycle-guard-tabs {
     width: 100%;
   }
+  .cycle-guard-toolbar .report-customer-popover {
+    right: auto;
+    left: 0;
+  }
   .cycle-guard-tabs button {
     flex: 1;
     justify-content: center;
@@ -185,20 +198,23 @@
 }
 @media (max-width: 480px) {
   .cycle-guard-intro {
-    padding: 18px;
-  }
-  .cycle-guard-intro > div {
-    flex: 1;
-    min-width: 180px;
-  }
-  .cycle-guard-readonly {
-    margin-left: 0;
+    padding: 14px;
   }
   .cycle-guard-tabs button {
     flex: 1 0 100%;
     justify-content: flex-start;
   }
   .cycle-guard-panel-header {
-    padding: 20px;
+    padding: 16px;
+  }
+}
+@media (pointer: coarse), (max-width: 760px) {
+  .cycle-guard-tabs button {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cycle-guard-tabs button {
+    transition: none;
   }
 }

@@ -134,8 +134,8 @@ export function Customers() {
                 key: "edit",
                 header: "Actions",
                 render: (row) => (
-                  <Button variant="secondary" onClick={() => setEditing(row)}>
-                    Edit {row.display_name}
+                  <Button variant="secondary" aria-label={`Edit ${row.display_name}`} onClick={() => setEditing(row)}>
+                    Edit
                   </Button>
                 ),
               },
