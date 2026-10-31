@@ -41,6 +41,35 @@ def product_payload(**changes):
     }
 
 
+def test_product_search_filters_count_and_paginated_results(client, db_session):
+    from app.models import Product
+
+    login(client, db_session, "STAFF")
+    prefix = f"Search-{uuid4()}"
+    db_session.add_all(
+        Product(**product_payload(name=f"{prefix} group {index:03d}")) for index in range(120)
+    )
+    db_session.add(Product(**product_payload(name=f"Unrelated {uuid4()}")))
+    db_session.add(Product(**product_payload(name=f"{prefix}%literal")))
+    db_session.add(Product(**product_payload(name=f"{prefix}Xliteral")))
+    db_session.commit()
+
+    query = f"  {prefix} group  "
+    first = client.get("/api/v1/products", params={"q": query.swapcase(), "page_size": 100})
+    assert first.status_code == 200
+    first = first.json()
+    assert first["total"] == 120
+    assert len(first["items"]) == 100
+    second = client.get("/api/v1/products", params={"q": query, "page_size": 100, "page": 2}).json()
+    assert second["total"] == 120
+    assert len(second["items"]) == 20
+    assert not ({row["id"] for row in first["items"]} & {row["id"] for row in second["items"]})
+    literal = client.get("/api/v1/products", params={"q": f"{prefix}%literal"}).json()
+    assert literal["total"] == 1
+    assert literal["items"][0]["name"] == f"{prefix}%literal"
+    assert client.get("/api/v1/products", params={"q": "x" * 201}).status_code == 422
+
+
 def plan_payload(**changes):
     return {
         "name": "Monthly plan",

@@ -21,16 +21,17 @@ Operator = Annotated[Actor, Depends(require_role("ADMIN", "STAFF"))]
 Admin = Annotated[Actor, Depends(require_role("ADMIN"))]
 
 
-def paginated(db, model, page, page_size, serialize):
+def paginated(db, model, page, page_size, serialize, *, conditions=()):
     rows = db.scalars(
         select(model)
+        .where(*conditions)
         .order_by(model.created_at.desc(), model.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     ).all()
     return {
         "items": [serialize(row) for row in rows],
-        "total": db.scalar(select(func.count()).select_from(model)),
+        "total": db.scalar(select(func.count()).select_from(model).where(*conditions)),
         "page": page,
         "page_size": page_size,
     }
@@ -42,8 +43,11 @@ def products(
     db: Database,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+    q: Annotated[str | None, Query(max_length=200)] = None,
 ):
-    return paginated(db, Product, page, page_size, service.product_data)
+    search = q.strip() if q else ""
+    conditions = (Product.name.icontains(search, autoescape=True),) if search else ()
+    return paginated(db, Product, page, page_size, service.product_data, conditions=conditions)
 
 
 @router.post("/products", status_code=201)

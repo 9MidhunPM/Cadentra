@@ -840,3 +840,141 @@ def test_disabled_frozen_policy_rejects_staff_and_actual_customer_owner(
         )
         is None
     )
+
+
+def test_future_start_activation_is_rejected(db_session, setup):
+    setup.payload["start_date"] = date(2027, 3, 1)
+    row = w.create_subscription(db_session, setup.actor, setup.payload)
+    w.apply_action_record(db_session, setup.actor, row.id, "issue-quotation", {"valid_days": 7})
+    w.apply_action_record(db_session, setup.actor, row.id, "confirm", {})
+    revision = row.revision
+    with pytest.raises(DomainError) as caught:
+        w.apply_action_record(db_session, setup.actor, row.id, "activate", {})
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_TRANSITION", 409)
+    assert row.state == "CONFIRMED" and row.revision == revision
+
+
+@pytest.mark.parametrize("state", ["CONFIRMED", "CLOSED"])
+def test_noneditable_state_rejects_patch(db_session, setup, state):
+    row = w.create_subscription(db_session, setup.actor, setup.payload)
+    # Seed a persisted state to isolate PATCH permissions; this does not assert a
+    # lifecycle transition or any billing outcome.
+    row.state = state
+    db_session.flush()
+    before = (row.payment_terms_days, row.end_date, row.revision)
+    audit_ids = set(db_session.scalars(select(AuditEvent.id).where(AuditEvent.entity_id == row.id)))
+    with pytest.raises(DomainError) as caught:
+        w.edit_subscription(db_session, setup.actor, row.id, {"payment_terms_days": 99})
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_TRANSITION", 409)
+    assert (row.payment_terms_days, row.end_date, row.revision) == before
+    assert (
+        set(db_session.scalars(select(AuditEvent.id).where(AuditEvent.entity_id == row.id)))
+        == audit_ids
+    )
+
+
+@pytest.mark.parametrize("expired,start", [(False, date(2027, 4, 30)), (True, date(2027, 2, 9))])
+def test_renewal_rejects_overlap_and_backdated_expired_gap(db_session, setup, expired, start):
+    if expired:
+        setup.payload["end_date"] = date(2027, 2, 1)
+    row = active(db_session, setup)
+    revision = row.revision
+    with pytest.raises(DomainError) as caught:
+        w.apply_action_record(
+            db_session,
+            setup.actor,
+            row.id,
+            "renew",
+            {"start_date": start, "end_date": date(2027, 8, 1)},
+        )
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_RENEWAL", 409)
+    assert row.state == "ACTIVE" and row.revision == revision
+    assert (
+        db_session.scalar(
+            select(Subscription.id).where(Subscription.prior_subscription_id == row.id)
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize("action", ["pause", "close"])
+def test_allowed_policy_still_requires_due_billing_before_schedule_change(
+    db_session, setup, action
+):
+    row = active(db_session, setup)
+    assert row.plan_snapshot["allow_pause"] and row.plan_snapshot["allow_early_close"]
+    revision = row.revision
+    audit_ids = set(db_session.scalars(select(AuditEvent.id).where(AuditEvent.entity_id == row.id)))
+    with pytest.raises(DomainError) as caught:
+        w.apply_action_record(db_session, setup.actor, row.id, action, {})
+    assert (caught.value.code, caught.value.status_code) == ("DUE_BILLING_PENDING", 409)
+    assert row.close_effective_on is None and row.revision == revision
+    assert (
+        db_session.scalar(
+            select(SubscriptionPause.id).where(SubscriptionPause.subscription_id == row.id)
+        )
+        is None
+    )
+    assert (
+        set(db_session.scalars(select(AuditEvent.id).where(AuditEvent.entity_id == row.id)))
+        == audit_ids
+    )
+
+
+@pytest.mark.parametrize(
+    "start,accepted",
+    [
+        (date(2027, 2, 9), False),
+        (date(2027, 2, 10), True),
+        (date(2027, 2, 28), True),
+        (date(2027, 3, 1), False),
+        (date(2027, 3, 2), False),
+    ],
+)
+def test_plan_availability_uses_requested_start_with_exclusive_end(
+    db_session, setup, start, accepted
+):
+    setup.plan.available_from = date(2027, 2, 10)
+    setup.plan.available_until = date(2027, 3, 1)
+    db_session.flush()
+    payload = {**setup.payload, "start_date": start}
+    if accepted:
+        row = w.create_subscription(db_session, setup.actor, payload)
+        assert row.state == "DRAFT" and row.start_date == start
+    else:
+        with pytest.raises(DomainError) as caught:
+            w.create_subscription(db_session, setup.actor, payload)
+        assert (caught.value.code, caught.value.status_code) == (
+            "PLAN_UNAVAILABLE",
+            409,
+        )
+
+
+def test_template_must_match_requested_plan(db_session, setup):
+    template = w.create_template(
+        db_session,
+        setup.actor,
+        {
+            "name": "Original plan template",
+            "plan_id": setup.plan.id,
+            "valid_days": 14,
+            "lines": setup.payload["lines"],
+        },
+    )
+    other = Plan(
+        name="Other plan",
+        base_fee=Decimal("0.00"),
+        cadence="MONTHLY",
+        available_from=date(2027, 1, 1),
+        min_quantity=3,
+    )
+    db_session.add(other)
+    db_session.flush()
+    payload = {key: value for key, value in setup.payload.items() if key != "lines"}
+    with pytest.raises(DomainError) as caught:
+        w.create_subscription(
+            db_session,
+            setup.actor,
+            {**payload, "plan_id": other.id, "template_id": template.id},
+        )
+    assert (caught.value.code, caught.value.status_code) == ("INVALID_TEMPLATE", 422)
