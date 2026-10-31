@@ -1,10 +1,10 @@
 # Thanushree Suresh: handoff
 
-Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
+Status: SUBSCRIPTION ROLE ACCEPTANCE VERIFIED
 
 Role: Subscription Workflows
-Branch: feature/subscription-acceptance
-Reviewed main incorporated: beedbbdda87774ac6813d3c3e8036db5df465ca3 (PRs #14/#15 merged)
+Branch: feature/subscription-completion
+Reviewed main incorporated: 00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -13,6 +13,9 @@ Named template plan labels: c046593f7e91b9fdd58f0b2d16dbd863988fdae5
 Lifecycle/availability boundary coverage: 3f759740b2196f3d8973ba5798214d85d18f3980
 Actual worker/action race verification: a9817959c5af35b06b5d1eecdf3279974423334a
 Theme notice contrast fix: a9b7a0c1b9f6b453395565effc1f34457c5079d6
+Owner SSH integration: 18e88ff7e1b9abfb2d17c4be50b2e929267c437f
+Joint browser/test-only correction: 41ef6df0521d853348803cd71471d5852b7bc313 (Sherin Saji)
+Committed browser proof: 471808e69c2760571086ad6d6880ef03ff21eb82 (Sherin Saji)
 Prior getter implementation a40fe5a and calendar bdb1cf2 were integrated in PRs #6/#1.
 
 ## Delivered behavior
@@ -53,6 +56,18 @@ get_billable_inputs, snapshot_to_json, get_subscription_for_actor, apply_action,
 and process_lifecycle. Query/action facades return a raw safe detail dictionary;
 HTTP wrappers add the data envelope.
 
+Stable signatures (the implementations use the shared Session, Actor and UUID types):
+
+```python
+get_cycle_bounds(snapshot: CycleSnapshot, cycle_index: int) -> tuple[date, date] | None
+get_billable_inputs(db: Session, subscription_id: UUID, cycle_index: int) -> BillableInputs
+snapshot_to_json(value: Any) -> Any
+get_subscription_for_actor(db: Session, actor: Actor, subscription_id: UUID) -> dict
+apply_action(db: Session, actor: Actor, subscription_id: UUID, action: str,
+             payload: dict | None = None) -> dict
+process_lifecycle(db: Session, as_of: date) -> dict
+```
+
 - Billing owns the subscription lock and transaction, reuses durable period
   outcomes first, and requests only next_cycle_index. Inputs contain one BASE
   line (quantity 1) and already-adjusted product prices, UUID tax-ID tuples and
@@ -84,10 +99,14 @@ Python 3.12.13; PostgreSQL 18.6; reviewed migrations 0001/0002. The current suit
 uses the separate cadentra_subscriptions_integration_test database. The original
 workstream test DB and earlier verification DB remain intact. Worker/race fixtures
 use independently migrated UUID schemas and remove only those newly created schemas.
+No additional shared model or migration changes are required or requested.
 
 - backend/.venv/bin/python -m pytest backend/tests -q:
-  314 passed, 121 subtests passed in 59.25s on reviewed main 382fa2b plus this
-  integration slice. Includes all 124 subscription cases: 10 calendar,
+  361 passed, 121 subtests passed in 75.56s on reviewed portal 09d4a62 plus main
+  2967a8e. Subsequent main ff18b1f has exactly the same backend/frontend Git tree
+  hashes and tracked application-file fingerprint as that tested combination.
+  Backend tree: 20c3ce708ef888705c6adeb1aebdf26be77a6ecb.
+  Includes all 124 subscription cases: 10 calendar,
   25 billing-input, 52 workflow, 27 API, four actual worker and six race cases.
   No missing-service skips. The 13 added guard cases cover future activation,
   terminal-state edits, renewal date constraints, due pause/close guards,
@@ -96,18 +115,21 @@ use independently migrated UUID schemas and remove only those newly created sche
   actual PostgreSQL lock wait; cached template rows refresh coherently.
 - Policy tests cover disabled pause/close/renew for staff and an actual customer
   owner, asserting conflict/no mutation/no misleading action hint.
-- npm test: 79 passed across the current shared+feature frontend suite.
-- Final frontend run on reviewed beedbbd plus the theme correction: 113 tests
-  passed across ten files. Typecheck, lint and production build passed. The shared
-  bundle-size advisory remains a build warning, not a failure or performance claim.
+- Final portal-combined frontend run: all 164 tests passed across 13 files in
+  4.45s on main 00ffa99 plus Sherin Saji's test-only 41ef6df correction. It waits for
+  the actual focus effect while retaining the privacy/title/navigation checks.
+  The initial 155/156 run and focused pass were reported before this correction;
+  neither was used to claim a green full suite.
+  The later main invoice URL-filter change affects InvoiceList only; invoice
+  detail, payments and subscription code are unchanged. Its additional unit
+  cases are included in this 164-case run. Later backend changes are README-only,
+  so the executed backend application/test sources retain the 361-case proof.
 - npm run typecheck, npm run lint, npm run build: PASS.
+  The shared bundle-size advisory remains a warning, not a performance claim.
 - backend/.venv/bin/ruff check backend scripts/smoke.py: PASS.
 - python3 scripts/check_pack.py and git diff --check: PASS.
 - Independent standards/specification/UI reviews found issues that were fixed;
   final focused reviews have no remaining blocker in the owned code.
-- Coordinator's earlier reviewed PR #11 integration: 280 backend tests,
-  121 subtests and 113 frontend tests pass, plus type/lint/build/Ruff/pack/security.
-  This combined run was performed by the coordinator, not rerun locally here.
 
 Native Chromium QA used the real API/PostgreSQL at http://127.0.0.1:5172 through
 its same-origin proxy (API 8002), at 1440x1000 and 390x844. Browser plugin was not
@@ -139,25 +161,49 @@ inspected. Private temporary scripts, report.json, close-desktop.png,
 close-light-desktop.png, mobile.png and mobile-light.png are under
 /tmp/cadentra-agent2-lifecycle-qa. They are not submission fixtures or credentials.
 
-## Remaining integration gates and honest limits
+## Joint T31 and live portal ownership evidence
 
-The historical broad backend run after billing PR #7 reported 176 passed/8 failed:
-the obsolete coordinator-owned subscriptions501 assertion, committed financial
-race fixtures polluting global empty-table assumptions, and two owned assertions
-that were subsequently made before/after or baseline-relative. The final owned
-suite now passes 124 cases within the green full 314-case run in a separate DB.
-Root/Noel corrected the shared tests/fixture isolation.
-No global truncate, financial-data deletion or database drop was performed.
+Sherin Saji executed the actual Chromium journey: one test passed in 16.6s at
+clean 41ef6df on the reviewed ff18b1f application runtime. The sanitized report
+records identical clean start/end Git heads, Chromium 156.0.8078.4, desktop
+1440x1000/customer mobile 390x844 and the private test-only business date
+2026-11-02. Thanushree's workspace independently inspected the report, executable
+assertions and screenshots; it did not read the private credential manifest.
 
-T09-T13/T33/T34 now have actual service/API/worker/concurrency evidence. PR #14
-merged at 209fef8a35d880133f6c011ab6357b5c7ea02502. The remaining full-role
-verification is joint T31 through invoice creation/payment/customer-portal reload,
-plus live portal ownership isolation. Native staff QA proves the staff portion,
-including post-ACTIVE actions, but does not substitute for the joint paid journey.
-No deployment, external email delivery or hardware/performance claim is made.
+The real UI created catalog/variant/rules, plan, template and the required
+DRAFT -> QUOTATION -> CONFIRMED -> ACTIVE progression. Due billing created one
+invoice and replay created none. INR 4970.16 was settled by payments 2000.00 and
+2970.16, with PAID/zero balance and both payments preserved after reload. Filtered
+reporting and authenticated customer invoice reload/print reconciled those values.
+
+The customer scheduled pause for 2026-12-02, cancelled the pending pause, scheduled
+close for that boundary while retaining ACTIVE, and created/reloaded a new linked
+DRAFT for 2026-12-02 through exclusive 2027-01-02. The paid invoice stayed unchanged.
+A second authenticated customer received 404 for subscription/invoice/print and
+all four actions. The complete owner subscription-ID set, original revision,
+invoice/payment counts and settled amounts stayed unchanged; safe projections and
+zero browser page errors were asserted. All ten verification stages are present.
+
+Reproducible assertion source: frontend/e2e/complete-journey.ts and
+frontend/playwright.journey.config.ts. The inspected sanitized report is committed
+at backend/tests/reporting/evidence/t31-2026-10-31.json; its method is in that
+directory's README. It exactly matches the local actual-run report. Screenshots are
+under /home/midhun/Coading/Cadentra/agent4/frontend/test-results/complete-journey/
+complete-journey.ts-T31-pr-5f403-nd-isolated-customer-portal-complete-journey/.
+The report is T31-evidence.json; renewal, paid-invoice, reconciled-report and print
+captures are separate artifacts. Do not read or publish the private seed manifest.
+
+## Role completion and limits
+
+T09-T13, T33-T34 and the subscription contribution to T06/T31 now have actual
+service/API/worker/concurrency/browser evidence. The final independent role audit
+found no remaining functional verification gap. PR #14 integrated the worker/race
+slice at 209fef8a35d880133f6c011ab6357b5c7ea02502; owner-key integration preserved
+the reviewed theme fix at 18e88ff. The final test-only correction and this closing
+handoff follow the same reviewed, serialized owner-key integration workflow.
 
 Actual integrated evidence: four real worker cases and six real billing/action
-lock-order cases pass against reviewed main 382fa2b plus this owned test slice.
+lock-order cases pass in the final 361-case backend run.
 The worker cases create real subscriptions and invoices, retain historical PAUSED
 outcomes and defer closure until backlog is drained. Race tests use three distinct
 physical connections, observed PostgreSQL Lock/blocking-PID relationships and both
@@ -168,22 +214,38 @@ integration test DB. Final standards/specification source reviews found no block
 The final integrated run includes all ten cases; no seeded period outcome stands
 in for actual billing in these worker/race tests.
 
-## Coordination and PR
+The shared T31 harness's UUID-scoped cleanup rolled back on immutable tax/discount
+revision guards. Its controlled fixture database/private manifest were retained
+for the database owner; no guard bypass, global truncate or database drop was
+performed. Future shared runs need a safely isolated namespace coordinated by
+that owner. This cleanup limitation does not invalidate the completed functional
+journey. Deployment, external email delivery and all-surface performance evidence
+remain with their owners; this handoff makes no such completion claim.
 
-SSH-only: push with verified gh-agent2/IdentitiesOnly, preserve real commit author,
-and send tested heads to Midhun P M. No gh login, OAuth/token setup or global
-account switching. Coordinator creates/reviews/merges PRs using existing auth.
+## Coordination and integration
+
+The user changed the workflow after billing PR #13: Midhun P M reviews exact
+heads, then each owner merges reviewed code locally and pushes main with their
+own SSH key during an explicitly serialized coordinator window. Do not create
+or merge PRs through gh/API. Preserve real authorship, never force-push or delete
+work, and do not change global Git/SSH/account configuration.
+
+The approved 9672e09 slice was merged with --no-ff from verified main 6cd8b74 and
+pushed by Thanushree's configured author/key to main 18e88ff. A subsequent SSH
+ls-remote verified the exact remote SHA; local HEAD/origin/main were clean and
+0/0. Pack and whitespace checks passed. No GitHub API mutation was used.
+Use command-local ssh -F /dev/null -i "$HOME/.ssh/gh-agent2" -o IdentitiesOnly=yes
+with normal Git push, preserving host-key checks. No private key was read or copied.
 Keep atomic active-work commits within 30 minutes, incorporate reviewed main at
 least hourly, and report ready slices sooner. Preserve both earlier feature branches.
 
-Title: Keep subscription notices readable across themes
+Title: Record completed subscription acceptance
 Target: main
-Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-acceptance
+Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-completion
 
-Description: Replace hardcoded subscription colors that made effective-date and
-tax notices unreadable in dark mode with existing semantic theme colors. Native
-staff pause/resume/close/renewal and next-cycle edit/reload checks pass against the
-real API/PostgreSQL at desktop/mobile sizes in both themes; notice contrast is
-7.96:1 dark and 10.88:1 light. All 113 frontend tests, typecheck, lint and build
-pass. Only the owned stylesheet and this evidence handoff change; joint T31 remains
-an explicit separate integration gate.
+Description: Record the final subscription interfaces, actual PostgreSQL worker
+and lock-race checks, staff desktop/mobile action QA and inspected paid-invoice/
+customer-portal journey. All 361 backend tests/121 subtests and 164 frontend tests
+pass; typecheck, lint, build, Ruff and pack checks pass. Only owned evidence docs
+change beyond the separately owner-reviewed test-only correction. Preserve the
+explicit isolated-fixture cleanup and release/performance limits above.
