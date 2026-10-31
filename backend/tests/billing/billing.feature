@@ -55,6 +55,22 @@ Feature: Billing preserves money, historical policy and payment history
     And confirmation and matching replay preserve both invoice dates
     And the production run-due request cannot override the business clock
 
+  @T16 @T21 @T26
+  Scenario: Later-valid product tax membership applies without repricing
+    Given a quoted product price is frozen before a product tax becomes valid
+    And retained tax revisions change product membership on a later service date
+    When billing requests product tax identities for that later period_start
+    Then the product tax is included even if absent from the original quotation
+    And its rate and membership come from the retained applicable revision
+    And the quoted product unit price and variant adjustment remain unchanged
+
+  @T16 @T26
+  Scenario: Base-fee tax selection stays frozen while its rates can be revised
+    Given confirmed plan_snapshot contains explicit stable plan_tax_ids
+    When the current catalog plan selects a different tax later
+    Then the existing subscription keeps its confirmed base-fee tax selection
+    And selected rules resolve their applicable rate revisions at period_start
+
   @T22 @T23
   Scenario: Replay an exact settlement after the invoice has become paid
     Given a confirmed invoice totals 4970.16

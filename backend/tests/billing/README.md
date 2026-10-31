@@ -27,6 +27,8 @@ vectors, independent caller precision/rounding, immutable Decimal inputs/results
 per-tax cent rounding, stable-key allocation, invalid values and database money
 bounds. It uses no planning reference calculator. Its result is financial unit
 evidence, not PostgreSQL transaction or full-application evidence.
+Tax and selected percentage-discount rates accept at most four fractional digits,
+matching the agreed stored precision and preventing intermediate half-cent drift.
 
 Additional cases cover a base fee with multiple products, zero totals,
 half-cent tax rounding, product versus
@@ -55,6 +57,11 @@ Billing must not add either twice. Base quantity never contributes to product
 minimums. Stable tax identities are resolved to retained revisions at the service
 period start; billing owns discount selection. Freeze concrete DTO types and
 imports with the coordinator at Gate A before writing adapters.
+
+Product tax identities come from Catalog.get_product_tax_ids at each period
+start, retaining revision-owned membership history without reading live prices.
+Base-fee tax selection uses the explicit stable plan_tax_ids frozen in the
+confirmed plan snapshot; selected rates still resolve by period start.
 
 The coordinator confirmed synchronous SQLAlchemy sessions, one financial
 transaction owner, parent-locked rule revisions, stable rule IDs and discount

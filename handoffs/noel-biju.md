@@ -8,6 +8,7 @@ Baseline: 766cb2664ded48afcb1012001565cbbf65c68142
 Setup commit: ca07fe256f66147fa8baca0bd40649e6c690f19f
 Prepared-test commit: 813091d7819310a5e4b23a62938e72a018e979b9
 Pricing implementation commit: d380643f4b1b4d844d4bc51f66d70c8f24498532
+Stored-percentage precision fix: 9d7ebc2ba4c5327a81443005f5d6f843fdcc60ef
 
 ## Delivered slice
 Created the billing feature branch from the reviewed main baseline. Preserved the
@@ -51,9 +52,12 @@ unit prices. The calculator does not add either charge or select rules itself.
 - Independent standards/specification reviews: no remaining findings after
   adding the multi-product base-fee fixture and external-mail receipt scenario.
 - `PYTHONPATH=backend python3 -m unittest discover -s backend/tests/billing -p
-  test_pricing.py -v`: PASS, 12 actual calculator unit tests including all 15
+  test_pricing.py -v`: PASS, 13 actual calculator unit tests including all 15
   vectors, immutable inputs/results, line/tax sums, stable-key allocation,
-  independent caller precision/rounding, zero normalization and invalid values.
+  independent caller precision/rounding, zero normalization, stored-rate precision
+  and invalid values. A focused boundary audit demonstrated half-cent drift for
+  unconstrained 60-digit percentages. Its rejection regression failed before the
+  fix, then passed; tax/percentage rates now match NUMERIC(9,4) precision.
   The initial test-first run failed because the pricing module did not yet exist;
   the implementation now passes. These tests do not call the planning oracle.
 - `python3 -m py_compile backend/app/modules/billing/pricing.py
@@ -102,6 +106,13 @@ InvoiceCalculation. calculate_invoice(tuple[PricingLine, ...], discount=None)
 returns Decimal line/invoice totals. Its adapter must retain exactly one BASE
 line; subscription inputs keep product identity separately for eligibility.
 
+Coordinator clarified tax membership: Catalog.get_product_tax_ids(db,
+product_id, effective_date) resolves revision-owned product membership at each
+period_start. Thanushree's getter supplies those period-specific stable IDs,
+without repricing. Base-fee selection instead uses explicit stable plan_tax_ids
+frozen in the confirmed plan snapshot; applicable rate revisions are resolved
+per period. The added scenarios record both boundaries and remain NOT RUN.
+
 ## Known gaps and next dependency
 Database-backed invoice and UI implementation await the integrated, verified
 Gate A baseline. Docker is unavailable in this shell. The coordinator reports a
@@ -129,7 +140,7 @@ at least hourly while active and coordinate integration with Midhun P M.
 Title: Calculate immutable invoice totals and prepare billing acceptance coverage
 
 The billing workstream now calculates immutable invoice totals with Decimal,
-deterministic capped discount allocation and separately rounded taxes. Twelve
+deterministic capped discount allocation and separately rounded taxes. Thirteen
 actual unit tests cover 15 fixtures and precision/validation boundaries. Prepared
 acceptance specifications cover invoice/payment, rule history, permissions,
 print/email and true two-connection PostgreSQL races. Integrated issuance and
