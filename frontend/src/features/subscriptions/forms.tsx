@@ -40,6 +40,7 @@ export function fieldError(error: unknown, field: string): string | undefined {
 export function LineEditor({ lines, onChange, products, disabled = false, validationError }: { lines: LineInput[]; onChange: (lines: LineInput[]) => void; products: Product[]; disabled?: boolean; validationError?: unknown }) {
   const [variants, setVariants] = useState<Record<string, Variant[]>>({});
   const [error, setError] = useState<unknown>();
+  const [retry, setRetry] = useState(0);
   const selected = [...new Set(lines.map(line => line.product_id).filter(Boolean))].sort().join(',');
   useEffect(() => {
     const controller = new AbortController();
@@ -50,10 +51,10 @@ export function LineEditor({ lines, onChange, products, disabled = false, valida
     })).then(entries => { if (!controller.signal.aborted) setVariants(Object.fromEntries(entries)); })
       .catch((caught: unknown) => { if (!controller.signal.aborted && !isAbortError(caught)) setError(caught); });
     return () => controller.abort();
-  }, [selected]);
+  }, [selected, retry]);
   function change(index: number, value: LineInput) { onChange(lines.map((line, position) => position === index ? value : line)); }
   return <fieldset disabled={disabled}><legend>Product lines</legend><div className="subscription-lines">
-    {error !== undefined && <ErrorPanel title="Cannot load variants" message={getErrorMessage(error)} />}
+    {error !== undefined && <ErrorPanel title="Cannot load variants" message={getErrorMessage(error)} onRetry={() => { setError(undefined); setRetry(current => current + 1); }} />}
     {lines.map((line, index) => <div className="subscription-line" key={index}>
       <FormField id={`line-product-${index}`} label={`Product ${index + 1}`} error={fieldError(validationError, `lines.${index}.product_id`)}><select required value={line.product_id} onChange={event => change(index, { product_id: event.target.value, quantity: line.quantity })}><option value="">Select a product</option>{products.filter(product => product.active || product.id === line.product_id).map(product => <option key={product.id} value={product.id}>{product.name}{!product.active ? ' (archived)' : ''}</option>)}</select></FormField>
       <FormField id={`line-variant-${index}`} label={`Variant ${index + 1}`} error={fieldError(validationError, `lines.${index}.variant_id`)}><select value={line.variant_id ?? ''} onChange={event => change(index, { ...line, variant_id: event.target.value || undefined })}><option value="">No variant</option>{(variants[line.product_id] ?? []).filter(variant => variant.active || variant.id === line.variant_id).map(variant => <option key={variant.id} value={variant.id}>{variant.attribute_name}: {variant.attribute_value}{!variant.active ? ' (archived)' : ''}</option>)}</select></FormField>

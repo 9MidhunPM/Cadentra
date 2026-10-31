@@ -1,10 +1,53 @@
 # Thanushree Suresh: handoff
 
-Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
+Status: REQUIRED SUBSCRIPTION BEHAVIOR VERIFIED; CURRENT AUDIT FIXES READY FOR REVIEW
 
 Role: Subscription Workflows
-Branch: feature/subscription-acceptance
-Reviewed main incorporated: beedbbdda87774ac6813d3c3e8036db5df465ca3 (PRs #14/#15 merged)
+Branch: feature/subscription-current-audit
+Reviewed main incorporated: 56bd60bac347ece7b23442046e25b8e29d8fa21f
+Current runtime head: c4c0d05511e9702a1850a8a1ddab457880e7471e
+
+## Current audit, 31 October 2026
+
+Three concrete defects found on current main are fixed in separate atomic commits:
+
+- b184354: a failed product-variant lookup can be retried in place without losing
+  the selected product/variant, quantity, customer, dates or payment terms.
+- 18e6134: browser Back/Forward updates the subscription filter controls to match
+  the URL and results. Pagination and retry preserve unapplied filter edits.
+- c4c0d05: create/edit/renew and quotation confirmation reject payment terms whose
+  invoice due date exceeds the supported date range. The coordinator approved the
+  horizon max(real business date, service end); there is no arbitrary days cap.
+  Billing retains its actual issue-date check for catch-up after that horizon.
+  Existing quotations remain recoverable through revise/edit/reissue. No models,
+  migrations, lifecycle policy or historical data are changed.
+
+Checks actually run for this slice:
+
+- In backend, APP_ENV=test and DATABASE_URL/TEST_DATABASE_URL pointed to the owned
+  cadentra_subscriptions_integration_test PostgreSQL database. `.venv/bin/python
+  -m pytest tests/subscriptions/test_workflows.py -q`: 62 passed in 5.42s. The ten
+  added cases first reproduced eight missing rejections (two valid boundaries
+  already passed), then passed with the fix. They verify no record/audit mutation,
+  clock-advanced and legacy quotation correction, and real billing issuance/replay
+  at the accepted boundary with due_date=9999-12-31.
+- `npm --prefix frontend test -- --run src/features/subscriptions/forms.test.tsx
+  src/features/subscriptions/subscriptions.test.tsx`: 18 passed after both new UI
+  regressions reproduced their failures. These are component tests with API
+  fixtures and a real memory router, not new native browser evidence.
+- `npm --prefix frontend run typecheck`, `npm --prefix frontend run lint`,
+  backend `.venv/bin/ruff check app/modules/subscriptions/workflows.py
+  tests/subscriptions/test_workflows.py`, and `git diff --check`: pass.
+- Independent read-only reviews of the exact owned backend/UI diffs found no
+  blocking issue. The full application suites were not rerun for this slice.
+
+No main-push clearance has been given for this head. Midhun P M owns shared UI
+polish, contract recording and deployment; this slice changes only owned feature
+code, tests and these two owned evidence documents. No missing migration or shared
+runtime dependency is requested.
+
+Historical implementation references (already integrated):
+
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -78,9 +121,9 @@ POST /api/v1/subscriptions/{id}/renew with
 {"start_date":"2027-05-01","end_date":"2027-08-01"}
 Dates above illustrate a request, not a production clock override.
 
-## Checks actually run
+## Historical checks actually run
 
-Python 3.12.13; PostgreSQL 18.6; reviewed migrations 0001/0002. The current suite
+Python 3.12.13; PostgreSQL 18.6; reviewed migrations 0001/0002. The historical suite
 uses the separate cadentra_subscriptions_integration_test database. The original
 workstream test DB and earlier verification DB remain intact. Worker/race fixtures
 use independently migrated UUID schemas and remove only those newly created schemas.
@@ -139,7 +182,28 @@ inspected. Private temporary scripts, report.json, close-desktop.png,
 close-light-desktop.png, mobile.png and mobile-light.png are under
 /tmp/cadentra-agent2-lifecycle-qa. They are not submission fixtures or credentials.
 
-## Remaining integration gates and honest limits
+## Joint acceptance evidence and delivery limits
+
+Joint T31 is complete in the retained owner-run evidence:
+backend/tests/reporting/evidence/t31-2026-10-31.json. It records a clean unchanged
+41ef6df0521d853348803cd71471d5852b7bc313 start/end and one passing Chromium journey
+at 06:50 UTC on 31 October. The actual UI/API/database journey reaches Paid after
+2000.00 + 2970.16 payments on a 4970.16 invoice, retains zero balance on reload,
+reconciles reporting, and verifies portal reload/print, pause/cancel/close/renewal
+and cross-customer 404/no mutation. Billing replay creates zero new invoices.
+The shared evidence writer and sanitized result were published by Sherin Saji in
+471808e69c2760571086ad6d6880ef03ff21eb82 and integrated into main. This is retained
+evidence on its recorded source, not a rerun of the current audit head.
+
+Current delivery work is exact coordinator review and serialized integration of
+the new audit commits. No current main GO is implied by earlier clearances. The
+previous final-document integration candidate remains preserved on its feature
+branch; it was not pushed to main after automatic approval review rejected that
+main update for lack of direct current-thread user authorization. Do not retry
+that stale candidate. Deployment, external email delivery and T30 performance
+remain with their respective owners; no new claim about them is made here.
+
+Historical integration diagnosis:
 
 The historical broad backend run after billing PR #7 reported 176 passed/8 failed:
 the obsolete coordinator-owned subscriptions501 assertion, committed financial
@@ -149,12 +213,9 @@ suite now passes 124 cases within the green full 314-case run in a separate DB.
 Root/Noel corrected the shared tests/fixture isolation.
 No global truncate, financial-data deletion or database drop was performed.
 
-T09-T13/T33/T34 now have actual service/API/worker/concurrency evidence. PR #14
-merged at 209fef8a35d880133f6c011ab6357b5c7ea02502. The remaining full-role
-verification is joint T31 through invoice creation/payment/customer-portal reload,
-plus live portal ownership isolation. Native staff QA proves the staff portion,
-including post-ACTIVE actions, but does not substitute for the joint paid journey.
-No deployment, external email delivery or hardware/performance claim is made.
+T09-T13/T33/T34 have actual service/API/worker/concurrency evidence. PR #14 merged
+at 209fef8a35d880133f6c011ab6357b5c7ea02502. The native staff QA below and retained
+joint T31 evidence above cover distinct parts of the required journey.
 
 Actual integrated evidence: four real worker cases and six real billing/action
 lock-order cases pass against reviewed main 382fa2b plus this owned test slice.
@@ -168,15 +229,17 @@ integration test DB. Final standards/specification source reviews found no block
 The final integrated run includes all ten cases; no seeded period outcome stands
 in for actual billing in these worker/race tests.
 
-## Coordination and PR
+## Coordination
 
 SSH-only: push with verified gh-agent2/IdentitiesOnly, preserve real commit author,
 and send tested heads to Midhun P M. No gh login, OAuth/token setup or global
-account switching. Coordinator creates/reviews/merges PRs using existing auth.
+account switching. Send the immutable head and expected main to Midhun P M for
+exact review and serialized GO before owner-operated local integration. No PR/API
+integration or coordinator publication on the owner's behalf is requested.
 Keep atomic active-work commits within 30 minutes, incorporate reviewed main at
 least hourly, and report ready slices sooner. Preserve both earlier feature branches.
 
-Title: Keep subscription notices readable across themes
+Historical acceptance slice: Keep subscription notices readable across themes
 Target: main
 Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-acceptance
 
@@ -185,5 +248,5 @@ tax notices unreadable in dark mode with existing semantic theme colors. Native
 staff pause/resume/close/renewal and next-cycle edit/reload checks pass against the
 real API/PostgreSQL at desktop/mobile sizes in both themes; notice contrast is
 7.96:1 dark and 10.88:1 light. All 113 frontend tests, typecheck, lint and build
-pass. Only the owned stylesheet and this evidence handoff change; joint T31 remains
-an explicit separate integration gate.
+pass. Only the owned stylesheet and its evidence handoff changed in that slice;
+joint T31 was subsequently completed as recorded above.
