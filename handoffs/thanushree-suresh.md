@@ -4,7 +4,7 @@ Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT
 
 Role: Subscription Workflows
 Branch: feature/subscription-completion
-Reviewed main incorporated: 18e88ff7e1b9abfb2d17c4be50b2e929267c437f
+Reviewed main incorporated: ff18b1fa75e72edd5f9b61ff7b2064ba7da4270d
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -87,8 +87,11 @@ workstream test DB and earlier verification DB remain intact. Worker/race fixtur
 use independently migrated UUID schemas and remove only those newly created schemas.
 
 - backend/.venv/bin/python -m pytest backend/tests -q:
-  314 passed, 121 subtests passed in 59.25s on reviewed main 382fa2b plus this
-  integration slice. Includes all 124 subscription cases: 10 calendar,
+  361 passed, 121 subtests passed in 75.56s on reviewed portal 09d4a62 plus main
+  2967a8e. Subsequent main ff18b1f has exactly the same backend/frontend Git tree
+  hashes and tracked application-file fingerprint as that tested combination.
+  Backend tree: 20c3ce708ef888705c6adeb1aebdf26be77a6ecb.
+  Includes all 124 subscription cases: 10 calendar,
   25 billing-input, 52 workflow, 27 API, four actual worker and six race cases.
   No missing-service skips. The 13 added guard cases cover future activation,
   terminal-state edits, renewal date constraints, due pause/close guards,
@@ -100,6 +103,12 @@ use independently migrated UUID schemas and remove only those newly created sche
 - Final frontend run on reviewed beedbbd plus the theme correction: 113 tests
   passed across ten files. Typecheck, lint and production build passed. The shared
   bundle-size advisory remains a build warning, not a failure or performance claim.
+- Portal-combined frontend run: 155 passed/one failed of 156. The shared
+  RouteErrorBoundary focus test expected focus immediately after heading render;
+  a focused rerun passed. This is reported to the shared-code owner as a possible
+  asynchronous assertion race, not a confirmed production defect or a green full
+  suite. Current combined typecheck, lint and production build pass. The full
+  frontend suite must pass after the owner's correction before final closure.
 - npm run typecheck, npm run lint, npm run build: PASS.
 - backend/.venv/bin/ruff check backend scripts/smoke.py: PASS.
 - python3 scripts/check_pack.py and git diff --check: PASS.
@@ -145,7 +154,7 @@ The historical broad backend run after billing PR #7 reported 176 passed/8 faile
 the obsolete coordinator-owned subscriptions501 assertion, committed financial
 race fixtures polluting global empty-table assumptions, and two owned assertions
 that were subsequently made before/after or baseline-relative. The final owned
-suite now passes 124 cases within the green full 314-case run in a separate DB.
+suite now passes 124 cases within the green full 361-case run in a separate DB.
 Root/Noel corrected the shared tests/fixture isolation.
 No global truncate, financial-data deletion or database drop was performed.
 
@@ -154,6 +163,8 @@ merged at 209fef8a35d880133f6c011ab6357b5c7ea02502. The remaining full-role
 verification is joint T31 through invoice creation/payment/customer-portal reload,
 plus live portal ownership isolation. Native staff QA proves the staff portion,
 including post-ACTIVE actions, but does not substitute for the joint paid journey.
+The shared asynchronous focus-test failure also remains open pending the owner's
+resolution and a green full frontend rerun.
 No deployment, external email delivery or hardware/performance claim is made.
 
 Actual integrated evidence: four real worker cases and six real billing/action
