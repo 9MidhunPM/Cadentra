@@ -210,8 +210,15 @@ def test_subscription_pages_have_owner_scoped_counts_and_stable_order(client, po
 
 
 def test_subscription_details_are_snapshot_based_safe_and_isolated(
-    client, portal_records, db_session
+    client, portal_records, db_session, monkeypatch
 ):
+    from app.modules.subscriptions import queries
+
+    class FixedClock:
+        def today(self):
+            return date(2026, 10, 15)
+
+    monkeypatch.setattr(queries, "get_clock", lambda: FixedClock())
     sign_in(client, portal_records)
     owned, _, foreign = portal_records["subscriptions"]
     response = client.get(f"/api/v1/portal/subscriptions/{owned.id}")
@@ -224,8 +231,11 @@ def test_subscription_details_are_snapshot_based_safe_and_isolated(
         "allow_pause": True,
     }
     assert data["lines"][0]["unit_price"] == "1560.00"
-    assert data["pause_intervals"] == [{"starts_on": "2026-11-01", "ends_on": "2026-12-01"}]
-    assert "allowed_actions" not in data and "next_billing_date" not in data
+    assert data["pause_interval"] == {"starts_on": "2026-11-01", "ends_on": "2026-12-01"}
+    assert isinstance(data["allowed_actions"], list)
+    assert data["next_billing_date"] == "2026-10-01"
+    assert data["invoice_references"][0]["id"] == str(portal_records["invoices"][0].id)
+    assert response.headers["cache-control"] == "private, no-store"
     assert "SECRET" not in response.text
     before = db_session.get(Subscription, foreign.id).revision
     for identifier in (foreign.id, uuid4()):
@@ -532,3 +542,294 @@ def test_invoice_detail_omits_private_nested_address_fields(
     assert data["customer_snapshot"]["billing_address"]["city"] == "Kochi"
     assert data["seller_snapshot"]["address"]["city"] == "Kochi"
     assert "SECRET" not in response.text
+
+
+@pytest.fixture
+def lifecycle_record(portal_records, db_session, monkeypatch):
+    from app.core import clock
+    from app.modules.catalog.service import get_plan_snapshot
+
+    class FixedClock(clock.Clock):
+        current_date = date(2026, 10, 15)
+
+        def today(self):
+            return self.current_date
+
+    fixed = FixedClock()
+    monkeypatch.setattr(clock, "_clock", fixed)
+    row = portal_records["subscriptions"][0]
+    plan = db_session.get(Plan, row.plan_id)
+    plan.allow_pause = plan.allow_early_close = plan.allow_renew = True
+    plan.base_fee = Decimal("10.00")
+    line = db_session.scalar(
+        select(SubscriptionLine).where(SubscriptionLine.subscription_id == row.id)
+    )
+    db_session.get(Product, line.product_id).sales_price = Decimal("1560.00")
+    db_session.flush()
+    row.plan_snapshot = get_plan_snapshot(db_session, plan.id, row.start_date)
+    row.next_cycle_index = 1  # October's persisted invoice is the processed first cycle.
+    for pause in db_session.scalars(
+        select(SubscriptionPause).where(SubscriptionPause.subscription_id == row.id)
+    ):
+        db_session.delete(pause)
+    db_session.commit()
+    return row, fixed
+
+
+def authorize_mutation(client, records, name="Alice"):
+    sign_in(client, records, name)
+    client.headers["X-CSRF-Token"] = "portal-read-test"
+
+
+def portal_state(db):
+    """Denial snapshots include mutable state and financial/audit record counts."""
+    db.expire_all()
+    return {
+        "subscriptions": [
+            (str(row.id), row.state, row.revision, row.close_effective_on)
+            for row in db.scalars(select(Subscription).order_by(Subscription.id))
+        ],
+        "pauses": [
+            (str(row.id), row.starts_on, row.ends_on)
+            for row in db.scalars(select(SubscriptionPause).order_by(SubscriptionPause.id))
+        ],
+        "counts": [
+            db.scalar(select(func.count()).select_from(model))
+            for model in (Invoice, Payment, EmailOutbox, AuditEvent)
+        ],
+    }
+
+
+def test_customer_pause_and_pending_resume_persist_owner_effective_dates(
+    client, portal_records, lifecycle_record, db_session
+):
+    row, _ = lifecycle_record
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    initial = client.get(f"/api/v1/portal/subscriptions/{row.id}").json()["data"]
+    assert set(initial["allowed_actions"]) == {"pause", "close", "renew"}
+    paused = client.post(f"/api/v1/portal/subscriptions/{row.id}/pause", json={"reason": "Holiday"})
+    assert paused.status_code == 200, paused.text
+    data = paused.json()["data"]
+    assert data["state"] == "ACTIVE" and data["paused"] is False
+    assert data["pause_effective_on"] == "2026-11-01"
+    assert data["pause_interval"] == {"starts_on": "2026-11-01", "ends_on": None}
+    assert "resume" in data["allowed_actions"] and "pause" not in data["allowed_actions"]
+    assert (
+        client.get(f"/api/v1/portal/subscriptions/{row.id}").json()["data"]["pause_effective_on"]
+        == "2026-11-01"
+    )
+    resumed = client.post(f"/api/v1/portal/subscriptions/{row.id}/resume", json={})
+    assert resumed.status_code == 200, resumed.text
+    assert resumed.json()["data"]["pause_interval"] is None
+    assert resumed.json()["data"]["pause_effective_on"] is None
+    after = portal_state(db_session)
+    assert after["counts"][:3] == before["counts"][:3]
+    assert after["counts"][3] > before["counts"][3]
+    assert (
+        db_session.scalar(
+            select(func.count())
+            .select_from(SubscriptionPause)
+            .where(SubscriptionPause.subscription_id == row.id)
+        )
+        == 0
+    )
+
+
+def test_customer_resume_preserves_processed_pause_and_returns_next_boundary(
+    client, portal_records, lifecycle_record, db_session
+):
+    row, clock = lifecycle_record
+    clock.current_date = date(2026, 11, 15)
+    row.next_cycle_index = 2
+    db_session.add(SubscriptionPause(subscription_id=row.id, starts_on=date(2026, 11, 1)))
+    db_session.add(
+        BillingPeriod(
+            subscription_id=row.id,
+            cycle_index=1,
+            period_start=date(2026, 11, 1),
+            period_end=date(2026, 12, 1),
+            disposition="PAUSED",
+        )
+    )
+    db_session.commit()
+    authorize_mutation(client, portal_records)
+    response = client.post(f"/api/v1/portal/subscriptions/{row.id}/resume", json={})
+    assert response.status_code == 200, response.text
+    data = response.json()["data"]
+    assert data["paused"] is True and data["resume_effective_on"] == "2026-12-01"
+    assert data["pause_interval"] == {"starts_on": "2026-11-01", "ends_on": "2026-12-01"}
+    assert (
+        db_session.scalar(
+            select(func.count())
+            .select_from(BillingPeriod)
+            .where(BillingPeriod.subscription_id == row.id, BillingPeriod.disposition == "PAUSED")
+        )
+        == 1
+    )
+
+
+def test_customer_close_schedules_boundary_without_creating_financial_records(
+    client, portal_records, lifecycle_record, db_session
+):
+    row, _ = lifecycle_record
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    response = client.post(
+        f"/api/v1/portal/subscriptions/{row.id}/close", json={"reason": "Ending service"}
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()["data"]
+    assert data["state"] == "ACTIVE" and data["close_effective_on"] == "2026-11-01"
+    reloaded = client.get(f"/api/v1/portal/subscriptions/{row.id}").json()["data"]
+    assert reloaded["close_effective_on"] == "2026-11-01"
+    assert "close_reason" not in reloaded
+    assert portal_state(db_session)["counts"][:3] == before["counts"][:3]
+
+
+def test_customer_renewal_creates_linked_draft_and_rejects_overlap(
+    client, portal_records, lifecycle_record, db_session
+):
+    row, _ = lifecycle_record
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    payload = {"start_date": "2027-10-01", "end_date": "2028-10-01", "payment_terms_days": 14}
+    response = client.post(f"/api/v1/portal/subscriptions/{row.id}/renew", json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()["data"]
+    assert data["id"] != str(row.id) and data["prior_subscription_id"] == str(row.id)
+    assert data["state"] == "DRAFT" and data["allowed_actions"] == []
+    assert data["customer_id"] == str(portal_records["customers"][0].id)
+    assert data["payment_terms_days"] == 14
+    assert (
+        client.get(f"/api/v1/portal/subscriptions/{data['id']}").json()["data"]["state"] == "DRAFT"
+    )
+    after = portal_state(db_session)
+    assert len(after["subscriptions"]) == len(before["subscriptions"]) + 1
+    assert after["counts"][:3] == before["counts"][:3]
+    replay = client.post(f"/api/v1/portal/subscriptions/{row.id}/renew", json=payload)
+    assert replay.status_code == 409 and replay.json()["error"]["code"] == "RENEWAL_OVERLAP"
+    assert portal_state(db_session) == after
+
+
+@pytest.mark.parametrize("action", ["pause", "resume", "close", "renew"])
+@pytest.mark.parametrize("payload", [{"reason": {"bad": "type"}}, ["invalid"], "invalid"])
+def test_lifecycle_ownership_precedes_semantic_body_validation(
+    client, portal_records, db_session, action, payload
+):
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    failures = []
+    for identifier in (portal_records["subscriptions"][2].id, uuid4()):
+        response = client.post(f"/api/v1/portal/subscriptions/{identifier}/{action}", json=payload)
+        assert response.status_code == 404
+        error = response.json()["error"]
+        failures.append((error["code"], error["message"]))
+    assert failures[0] == failures[1] == ("NOT_FOUND", "Record not found.")
+    assert portal_state(db_session) == before
+
+
+@pytest.mark.parametrize(
+    "guard", ["missing_csrf", "wrong_csrf", "missing_origin", "hostile_origin"]
+)
+def test_lifecycle_csrf_and_origin_denials_do_not_write(
+    client, portal_records, lifecycle_record, db_session, guard
+):
+    row, _ = lifecycle_record
+    authorize_mutation(client, portal_records)
+    if guard == "missing_csrf":
+        client.headers.pop("X-CSRF-Token")
+    elif guard == "wrong_csrf":
+        client.headers["X-CSRF-Token"] = "wrong"
+    elif guard == "missing_origin":
+        client.headers.pop("Origin")
+    else:
+        client.headers["Origin"] = "https://untrusted.example"
+    before = portal_state(db_session)
+    for action in ("pause", "resume", "close", "renew"):
+        response = client.post(f"/api/v1/portal/subscriptions/{row.id}/{action}", json={})
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] in {"INVALID_CSRF", "FORBIDDEN_ORIGIN"}
+    assert portal_state(db_session) == before
+
+
+@pytest.mark.parametrize("role", ["ADMIN", "STAFF", None])
+def test_lifecycle_routes_require_customer_role(client, portal_records, db_session, role):
+    if role:
+        authorize_mutation(client, portal_records, role)
+    before = portal_state(db_session)
+    for action in ("pause", "resume", "close", "renew"):
+        response = client.post(
+            f"/api/v1/portal/subscriptions/{portal_records['subscriptions'][0].id}/{action}",
+            json={},
+        )
+        assert response.status_code == (403 if role else 401)
+    assert portal_state(db_session) == before
+
+
+def test_lifecycle_rejects_customer_override_and_exposes_only_four_actions(
+    client, portal_records, lifecycle_record, db_session
+):
+    row, _ = lifecycle_record
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    for action in ("pause", "resume", "close", "renew"):
+        response = client.post(
+            f"/api/v1/portal/subscriptions/{row.id}/{action}?customer_id={portal_records['customers'][0].id}",
+            json={},
+        )
+        assert response.status_code == 422
+    for action in ("activate", "confirm", "issue-quotation", "revise"):
+        assert (
+            client.post(f"/api/v1/portal/subscriptions/{row.id}/{action}", json={}).status_code
+            == 404
+        )
+    assert portal_state(db_session) == before
+
+
+@pytest.mark.parametrize("action", ["pause", "resume", "close", "renew"])
+def test_lifecycle_own_payload_errors_do_not_mutate(
+    client, portal_records, lifecycle_record, db_session, action
+):
+    row, _ = lifecycle_record
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    response = client.post(
+        f"/api/v1/portal/subscriptions/{row.id}/{action}", json={"reason": {"bad": "type"}}
+    )
+    assert response.status_code == 422 and response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert portal_state(db_session) == before
+
+
+@pytest.mark.parametrize(
+    "action,flag",
+    [("pause", "allow_pause"), ("close", "allow_early_close"), ("renew", "allow_renew")],
+)
+def test_owner_policy_denials_roll_back_without_financial_side_effects(
+    client, portal_records, lifecycle_record, db_session, action, flag
+):
+    row, _ = lifecycle_record
+    row.plan_snapshot = {**row.plan_snapshot, flag: False}
+    db_session.commit()
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    payload = {"start_date": "2027-10-01", "end_date": "2028-10-01"} if action == "renew" else {}
+    response = client.post(f"/api/v1/portal/subscriptions/{row.id}/{action}", json=payload)
+    assert response.status_code == 409 and response.json()["error"]["code"] == "POLICY_FORBIDDEN"
+    assert portal_state(db_session) == before
+
+
+def test_due_billing_blocks_pause_and_close_without_side_effects(
+    client, portal_records, lifecycle_record, db_session
+):
+    row, clock = lifecycle_record
+    clock.current_date = date(2026, 11, 1)
+    authorize_mutation(client, portal_records)
+    before = portal_state(db_session)
+    for action in ("pause", "close"):
+        response = client.post(f"/api/v1/portal/subscriptions/{row.id}/{action}", json={})
+        assert (
+            response.status_code == 409
+            and response.json()["error"]["code"] == "DUE_BILLING_PENDING"
+        )
+    assert portal_state(db_session) == before
