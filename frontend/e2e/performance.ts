@@ -270,6 +270,21 @@ for (const auth of [
 }
 const routes: Route[] = [
   ...authRoutes,
+  { key: 'anonymous-workspace-entry', actor: 'anonymous', path: '/app',
+    scope: 'Anonymous guarded workspace entry reaches the real sign-in form without a login mutation', apis: [],
+    ready: async page => {
+      await expect(page).toHaveURL(`${origin}/sign-in`)
+      await heading(page, 'Welcome back.')
+      await expect(page.getByLabel('Email address', { exact: true })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeEnabled()
+    } },
+  { key: 'admin-landing', actor: 'admin', path: '/app',
+    scope: 'Administrator workspace redirect with real dashboard records and role-specific navigation',
+    apis: [summary(), series(), overdue()], ready: async page => {
+      await expect(page).toHaveURL(`${origin}/overview`)
+      await overview(page)
+      await expect(page.getByRole('link', { name: 'Staff settings', exact: true }).first()).toBeVisible()
+    } },
   ...['/overview', '/app'].map(path => ({ key: path === '/app' ? 'staff-landing' : 'overview', actor: 'staff' as const, path,
     scope: 'Complete dashboard with summary/chart/five real overdue invoices', apis: [summary(), series(), overdue()], ready: (page: Page) => overview(page) })),
   ...[false, true].map(customer => ({ key: customer ? 'overview-customer-date-filter' : 'overview-date-filter', actor: 'staff' as const,
@@ -543,6 +558,17 @@ routes.push({ key: 'public-home-lazy-cycle-art', actor: 'anonymous', path: '/',
     await decodedImage(page, '.home-cycle-visual img'); await settledHomeSection(page, '.home-cycleguard')
     await expect(page.getByText('Illustrative signals · open the app for actual records', { exact: true })).toBeVisible()
   } })
+routes.push({ key: 'public-project-status', actor: 'anonymous', path: '/PROJECT_STATUS.html', rawDocument: true,
+  scope: 'Linked standalone saved-status page: embedded snapshot renders all23 product groups/four owners. No live business metrics or API latency claim',
+  apis: [], ready: async page => {
+    await expect(page).toHaveTitle('Cadentra · Project status')
+    await expect(page.locator('#headline')).toBeVisible()
+    await expect(page.locator('#headline')).not.toHaveText('')
+    await expect(page.getByRole('navigation', { name: 'Report sections', exact: true })).toBeVisible()
+    await expect(page.locator('#team-rows .person')).toHaveCount(4)
+    await expect(page.locator('#requirement-rows .requirement')).toHaveCount(23)
+    await expect(page.locator('#result-count')).toHaveText('23 of 23 requirement groups shown')
+  } })
 
 type QueueKind = 'OVERDUE' | 'BILLING_DUE' | 'EMAIL_FAILED'
 const queueLabels = { OVERDUE: 'Overdue invoices', BILLING_DUE: 'Billing due', EMAIL_FAILED: 'Invoice email failures' }
@@ -623,7 +649,7 @@ routes.push({ key: 'cycleguard-email-failed-empty', actor: 'staff', path: '/cycl
   scope: 'Actual EMAIL_FAILED list-envelope zero total and honest empty state in unchanged fixture; no fabricated failed messages or retry/delivery claim',
   apis: [queueApi('EMAIL_FAILED')], ready: page => queueReady(page, 'EMAIL_FAILED') })
 
-if (routes.length !== 75 || new Set(routes.map(route => route.key)).size !== routes.length) throw new Error('Expected 75 unique final T30 route cases')
+if (routes.length !== 78 || new Set(routes.map(route => route.key)).size !== routes.length) throw new Error('Expected 78 unique final T30 route cases')
 
 async function contextFor(browser: Browser, actor: ActorKey, mobile = false) {
   const device = mobile ? devices['iPhone 13'] : { viewport: { width: 1497, height: 1049 } }
