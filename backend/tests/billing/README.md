@@ -1,75 +1,41 @@
-# Billing acceptance preparation
+# Billing verification
 
-Status: PURE PRICING IMPLEMENTED; INTEGRATED GATE A PENDING. The coordinator
-explicitly released the independent pricing calculator before Gate A. Its actual
-unit tests run; invoice persistence, migration, API, browser and database tests
-remain pending. No competing scaffold or dependencies are introduced.
+Status: persisted financial API and atomic recurring issuer implemented. The billing UI is in final review; joint lifecycle/worker checks remain a separate integration gate.
 
-## Executable now
+## Commands
 
-From the repository root:
+Use the reviewed backend lock and Python 3.12:
 
 ```sh
+uv sync --project backend --frozen --python 3.12
 python3 scripts/check_pack.py
 python3 backend/tests/billing/check_prepared_cases.py
-PYTHONPATH=backend python3 -m unittest discover -s backend/tests/billing -p test_pricing.py -v
+backend/.venv/bin/pytest backend/tests/billing -q
 ```
 
-The second command uses only the Python standard library. It checks the six
-canonical arithmetic fixtures plus nine additional hand-specified fixtures
-against the existing planning reference calculator. It also verifies stable-key
-allocation under reordered lines, finite decimal text and fixture immutability.
-It does not import or exercise an application pricing function. Passing it is
-evidence of coherent prepared fixtures only.
+Set DATABASE_URL and TEST_DATABASE_URL to this workspace's isolated PostgreSQL databases. TEST_DATABASE_URL must end in _test. Never point financial tests at a production/shared application database.
 
-The third command tests the actual billing-owned calculator, including all 15
-vectors, independent caller precision/rounding, immutable Decimal inputs/results,
-per-tax cent rounding, stable-key allocation, invalid values and database money
-bounds. It uses no planning reference calculator. Its result is financial unit
-evidence, not PostgreSQL transaction or full-application evidence.
-Tax and selected percentage-discount rates accept at most four fractional digits,
-matching the agreed stored precision and preventing intermediate half-cent drift.
+The preparation checker compares six canonical and nine additional fixtures with the planning reference only. test_pricing.py runs those 15 vectors against the actual calculator. Passing reference checks alone is not application evidence.
 
-Additional cases cover a base fee with multiple products, zero totals,
-half-cent tax rounding, product versus
-subscription scope of the base fee, remainder ties, negative variant deltas,
-invoice-level percentage rounding and empty discount eligibility.
+## Actual coverage
 
-## To execute after Gate A
+- test_pricing.py: Decimal cents, deterministic largest-remainder allocation, separate additive taxes, immutable inputs/results and stored-precision/bounds validation.
+- test_rules.py: real rule/API permissions, immutable effective-dated revisions, scoped minimums/date/cap eligibility and locked best-rule selection.
+- test_invoices.py: persisted queries, partial/full/zero settlement, matching/conflicting keys, cancellation, safe customer projection, escaped print, queued email and strict HTTP guards.
+- test_invoice_races.py: independent connections compete for payment capacity, matching payment replay and cancellation; fixture cleanup removes only its generated UUID graph in an explicitly disposable test database.
+- test_issuance.py: one period/invoice under contention, one remaining global discount use, immutable historical snapshots, actual rollback/23505 recovery, shortened full-cycle pricing, paused catch-up and failed-prefix progress across a fresh interpreter.
+- test_run_due_api.py: actual authentication/role/CSRF guards, strict empty input and server-owned clock/batch size.
 
-[billing.feature](billing.feature) is an acceptance specification, not an
-installed BDD test suite. It covers T08/T14-T17 and invoice/payment/rule/print
-behavior in T18-T27. Translate its cases into the actual foundation's test runner;
-do not add a separate test framework just for this file. Both JSON fixture sets
-already run against the actual pure calculator, including per-line allocations;
-bind the remaining scenarios to persisted services after the foundation lands.
+Committed issuance fixtures create a generated UUID PostgreSQL schema, migrate it with the reviewed Alembic head, run all connections there, then drop only that schema after workers finish. No public truncation, database drops or disabled history triggers are used. Existing public test data is not silently erased.
 
-[CONCURRENCY.md](CONCURRENCY.md) defines real PostgreSQL race and rollback
-protocols, including shared T13/T34 pause/expiry coordination. Every such scenario
-is NOT RUN until executed with actual services and independent connections.
-Sequential duplicate calls or SQLite do not establish this evidence.
+A clean generated-schema full backend run passed 146 tests and 121 subtests at the issuer milestone. Exact commands, commit and subsequent verification are recorded in [Noel's handoff](../../../handoffs/noel-biju.md).
 
-## Shared integration boundary
+## Domain boundary
 
-The agreed subscription DTO direction has exactly one flattened `BASE` line and
-product lines whose `unit_price` already includes the quoted variant delta.
-Billing must not add either twice. Base quantity never contributes to product
-minimums. Stable tax identities are resolved to retained revisions at the service
-period start; billing owns discount selection. Freeze concrete DTO types and
-imports with the coordinator at Gate A before writing adapters.
+Subscription DTOs supply exactly one BASE line and already variant-adjusted product unit prices. Product tax membership is resolved at each period_start by the catalog helper, while the base-fee stable selection comes from plan_snapshot["tax_rule_ids"]. Billing resolves retained rates, selects one discount and commits its global usage with the invoice.
 
-Product tax identities come from Catalog.get_product_tax_ids at each period
-start, retaining revision-owned membership history without reading live prices.
-Base-fee tax selection uses the explicit stable plan_tax_ids frozen in the
-confirmed plan snapshot; selected rates still resolve by period start.
+The shared money helper uses Decimal ROUND_HALF_UP; tax and percentage inputs support at most four fractional digits. Invoice dates use actual Asia/Kolkata creation date plus payment terms, with original service bounds retained. Replays never reprice or reset dates.
 
-The coordinator confirmed synchronous SQLAlchemy sessions, one financial
-transaction owner, parent-locked rule revisions, stable rule IDs and discount
-usage shared across revisions. Retained revision payloads include product
-membership; effective intervals are nonoverlapping `[start, end)`. Revision
-patches are prospective from at least the next business day. These agreements
-await coordinator-owned documentation/models; no schema is supplied here.
+[billing.feature](billing.feature) remains a readable acceptance specification, not an installed BDD runner. [CONCURRENCY.md](CONCURRENCY.md) records the real PostgreSQL protocol and outstanding joint lifecycle checks. Gherkin text or sequential duplicate calls are not race-test evidence.
 
-The user selected actual issuance date in Asia/Kolkata plus payment terms for
-invoice/due dates, while retaining the original service period. Tests must inject
-the shared business clock. Replays and confirmation preserve stored dates.
+Mailpit invoice SMTP/web-inbox capture is verified locally. External delivery is explicitly deferred by the user until real SMTP is configured. Credentials and private recipients never belong in fixtures or public evidence.

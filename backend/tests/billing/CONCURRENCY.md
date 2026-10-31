@@ -1,8 +1,9 @@
 # Billing PostgreSQL concurrency acceptance protocol
 
-Status: PLANNED / NOT RUN. Gate A, migrations and application services are pending.
-This is a test design, not evidence that financial concurrency is implemented.
-Implement these cases against the integrated foundation and actual services.
+Status: CORE RACES EXECUTED; JOINT LIFECYCLE VERIFICATION PENDING.
+The issuer and payment tests now execute real PostgreSQL services and independent
+connections. This protocol still distinguishes executed evidence from planned
+stronger lock-order, email and cross-workstream scenarios below.
 
 ## Harness and evidence
 
@@ -103,7 +104,14 @@ Fixture: DAILY anchor 2026-10-01, exclusive end 2026-10-06, pause interval
 
 ## Acceptance record
 
-Execution status for every case above: NOT RUN. After implementation, Noel's
-handoff records exact commands, returned outcomes and database assertions; Midhun
-P M records integrated release evidence. A written protocol, sequential duplicate
-calls or passing arithmetic fixtures cannot mark these race cases as passed.
+Executed at the issuer milestone: actual same-period and capped-discount races,
+payment capacity/replay/cancellation races, flushed-before-commit rollback and
+retry, real uniqueness-conflict recovery, bounded paused catch-up and persisted
+fair traversal across a fresh interpreter. See test_issuance.py,
+test_invoice_races.py and the exact commit/checks in Noel's handoff.
+
+Controlled winner-order/concurrent-send extensions and the joint subscription
+lifecycle/worker closure test are follow-up verification, not implied by the
+initial race results. Mailpit captures SMTP locally; external email delivery is
+explicitly deferred by the user. A written protocol, sequential duplicate calls
+or passing arithmetic fixtures cannot mark an unexecuted race case as passed.
