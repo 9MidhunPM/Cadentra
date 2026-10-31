@@ -206,10 +206,12 @@ def test_getter_never_commits_advances_or_creates_outcomes(db_session, records, 
 
     monkeypatch.setattr(db_session, "commit", forbidden_commit)
     before = (records.subscription.next_cycle_index, records.subscription.revision)
+    periods_before = db_session.scalar(select(func.count()).select_from(BillingPeriod))
+    invoices_before = db_session.scalar(select(func.count()).select_from(Invoice))
     get_billable_inputs(db_session, records.subscription.id, 0)
     assert before == (records.subscription.next_cycle_index, records.subscription.revision)
-    assert db_session.scalar(select(func.count()).select_from(BillingPeriod)) == 0
-    assert db_session.scalar(select(func.count()).select_from(Invoice)) == 0
+    assert db_session.scalar(select(func.count()).select_from(BillingPeriod)) == periods_before
+    assert db_session.scalar(select(func.count()).select_from(Invoice)) == invoices_before
 
 
 def test_dto_and_nested_snapshot_are_immutable_without_orm_aliases(db_session, records):

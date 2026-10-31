@@ -8,9 +8,11 @@ from types import MappingProxyType
 from typing import Any
 from uuid import UUID
 
+from pydantic import ValidationError
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.auth import Actor, require_customer_ownership
 from app.core.errors import DomainError
 from app.models import Subscription, SubscriptionLine, SubscriptionPause
 from app.modules.catalog.service import get_product_tax_ids
@@ -171,3 +173,65 @@ def get_billable_inputs(db: Session, subscription_id: UUID, cycle_index: int) ->
         plan_snapshot=plan,
         lines=tuple(lines),
     )
+
+
+def get_subscription_for_actor(db: Session, actor: Actor, subscription_id: UUID) -> dict:
+    """Shared safe detail projection for staff and customer portal callers."""
+    from .queries import get_subscription_for_actor as project
+
+    return project(db, actor, subscription_id)
+
+
+def apply_action(
+    db: Session,
+    actor: Actor,
+    subscription_id: UUID,
+    action: str,
+    payload: dict | None = None,
+) -> dict:
+    """Validate a portal/staff action and project its result; caller commits."""
+    from . import queries, schemas, workflows
+
+    subscription = db.get(Subscription, subscription_id)
+    if subscription is None:
+        raise DomainError("NOT_FOUND", "Subscription not found.", 404)
+    require_customer_ownership(actor, subscription.customer_id)
+    if actor.role not in {"ADMIN", "STAFF", "CUSTOMER"}:
+        raise DomainError("FORBIDDEN", "Your role cannot act on subscriptions.", 403)
+    if actor.role == "CUSTOMER" and action not in {"pause", "resume", "close", "renew"}:
+        raise DomainError("FORBIDDEN", "Customers cannot perform staff lifecycle actions.", 403)
+    if action not in {
+        "issue-quotation",
+        "revise",
+        "confirm",
+        "activate",
+        "pause",
+        "resume",
+        "close",
+        "renew",
+    }:
+        raise DomainError("INVALID_TRANSITION", "Unknown subscription action.")
+    model = (
+        schemas.QuoteIssue
+        if action == "issue-quotation"
+        else (schemas.Renew if action == "renew" else schemas.LifecycleAction)
+    )
+    try:
+        values = model.model_validate({} if payload is None else payload).model_dump(
+            exclude_unset=True
+        )
+    except ValidationError as error:
+        fields = {
+            ".".join(str(part) for part in item["loc"]) or "body": item["msg"]
+            for item in error.errors()
+        }
+        raise DomainError("VALIDATION_ERROR", "Check the action fields.", 422, fields) from error
+    row = workflows.apply_action_record(db, actor, subscription_id, action, values)
+    return queries.subscription_data(db, actor, row)
+
+
+def process_lifecycle(db: Session, as_of: date) -> dict:
+    """Worker-facing lifecycle processing inside its caller-owned transaction."""
+    from .workflows import process_lifecycle as process
+
+    return process(db, as_of)
