@@ -120,6 +120,25 @@ const object = (value: Json | string) => {
   return value
 }
 const data = (value: Json | string) => object(value).data as Json
+const seenListPages = new Map<string, Map<number, string[]>>()
+function recordPageIdentities(path: string, rows: Json[], idKey = 'id') {
+  const query = new URL(path, origin)
+  const page = Number(query.searchParams.get('page') || 1)
+  query.searchParams.delete('page')
+  query.searchParams.sort()
+  const key = `${query.pathname}?${query.searchParams}`
+  const ids = rows.map(row => String(row[idKey]))
+  for (const id of ids) expect(id).toMatch(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/)
+  expect(new Set(ids).size).toBe(ids.length)
+  const pages = seenListPages.get(key) || new Map<number, string[]>()
+  if (pages.has(page)) expect(ids, `Stable persisted identities for ${key}, page${page}`).toEqual(pages.get(page))
+  for (const [otherPage, otherIds] of pages) {
+    if (otherPage !== page) expect(ids.filter(id => otherIds.includes(id)), `Distinct pages for ${key}`).toEqual([])
+  }
+  pages.set(page, ids)
+  seenListPages.set(key, pages)
+  report.list_page_ids = Object.fromEntries([...seenListPages].map(([name, values]) => [name, Object.fromEntries(values)]))
+}
 const sessionApi = (actor: ActorKey): Api => ({ path: apiPath('/auth/session'), status: actor === 'anonymous' ? 401 : 200,
   validate: value => {
     if (actor === 'anonymous') expect((object(value).error as Json).code).toBe('UNAUTHENTICATED')
@@ -133,10 +152,14 @@ const sessionApi = (actor: ActorKey): Api => ({ path: apiPath('/auth/session'), 
 function list(path: string, total: number, rowCount = Math.min(25, total), ref?: Ref): Api {
   return { path: apiPath(path), validate: value => {
     const result = object(value)
+    const request = new URL(path, origin)
     expect(result.total).toBe(total)
+    expect(result.page).toBe(Number(request.searchParams.get('page') || 1))
+    expect(result.page_size).toBe(Number(request.searchParams.get('page_size') || 25))
     expect(Array.isArray(result.items)).toBe(true)
     const rows = result.items as Json[]
     expect(rows.length).toBe(rowCount)
+    recordPageIdentities(apiPath(path), rows)
     if (ref) expect(rows.find(row => row.id === ref.id)?.name).toBe(ref.name)
   } }
 }
@@ -173,12 +196,23 @@ const series = (customer = false, range = false, cadence = 'DAILY'): Api => ({
     const row = data(value)
     expect(row.range_from).toBe(range ? '2026-07-01' : '2026-11-01')
     expect(row.range_to).toBe(range ? '2026-11-01' : '2026-11-03')
-    expect(Array.isArray(row.buckets)).toBe(true)
-    expect((row.buckets as Json[]).length).toBe(cadence === 'MONTHLY' ? 4 : range ? 123 : 2)
-    for (const bucket of row.buckets as Json[]) {
-      expect(bucket.invoiced_gross).toMatch(/^\d+\.\d{2}$/)
-      expect(bucket.cash_received).toMatch(/^\d+\.\d{2}$/)
+    expect(row.currency).toBe('INR')
+    expect(row.cadence).toBe(cadence)
+    const expected: Json[] = []
+    const finalDay = String(row.range_to)
+    for (const cursor = new Date(`${row.range_from}T00:00:00Z`); cursor.toISOString().slice(0, 10) < finalDay;) {
+      const start = cursor.toISOString().slice(0, 10)
+      const next = new Date(cursor)
+      if (cadence === 'MONTHLY') next.setUTCMonth(next.getUTCMonth() + 1)
+      else next.setUTCDate(next.getUTCDate() + 1)
+      // Independently grouped SQL over the retained fixture verified these
+      // exact daily/monthly values; this is test data, not app arithmetic.
+      expected.push({ period_start: start, period_end: [next.toISOString().slice(0, 10), finalDay].sort()[0],
+        invoiced_gross: range && (cadence === 'MONTHLY' || start.endsWith('-01')) ? customer ? '250000.00' : '500000.00' : '0.00',
+        cash_received: range && (cadence === 'MONTHLY' || start.endsWith('-02')) ? customer ? '187500.00' : '375000.00' : '0.00' })
+      cursor.setTime(next.getTime())
     }
+    expect(row.buckets).toEqual(expected)
   },
 })
 const overdue = (customer = false) => list(`/invoices?overdue=true&page=1&page_size=5${customer ? `&customer_id=${fixture.customers[0]}` : ''}`,
@@ -188,6 +222,7 @@ async function overview(page: Page, customer = false, range = false) {
   await expect(metric(page, 'Active subscriptions')).toHaveText(String(count(customer ? 'customer_active' : 'active')))
   await expect(metric(page, 'Outstanding')).toHaveText(money(amount(customer ? 'customer_outstanding' : 'outstanding')))
   await expect(metric(page, 'Invoiced')).toHaveText(money(range ? amount(customer ? 'customer_invoiced' : 'invoiced') : '0.00'))
+  await expect(metric(page, 'Payments received')).toHaveText(money(range ? amount(customer ? 'customer_cash' : 'cash') : '0.00'))
   await expect(page.getByRole('img', { name: 'Invoiced and received' })).toBeVisible()
   await rows(page, 'Overdue invoices', 5, count(customer ? 'customer_overdue' : 'overdue'))
 }
@@ -593,6 +628,7 @@ function queueApi(kind: QueueKind, pageNumber = 1, customer = false): Api {
       expect(item.amount).toBe(kind === 'OVERDUE' ? '50.00' : null)
       expect(item.currency).toBe(kind === 'OVERDUE' ? 'INR' : null)
     }
+    recordPageIdentities(apiPath(`/reports/cycleguard?kind=${kind}&page=${pageNumber}&page_size=25${customer ? `&customer_id=${fixture.customers[0]}` : ''}`), items, 'record_id')
   } }
 }
 async function queueReady(page: Page, kind: QueueKind, customer = false, pageNumber = 1) {
@@ -745,6 +781,18 @@ async function sample(context: BrowserContext, route: Route, capture?: string) {
       })
       await page.evaluate(() => window.scrollTo(0, 0))
       await frames(page)
+      await page.evaluate(async () => {
+        for (let pass = 0; pass < 4; pass++) {
+          const animations = document.getAnimations().filter(animation => animation.playState === 'running'
+            && Number.isFinite(Number(animation.effect?.getComputedTiming().endTime ?? Infinity)))
+          if (!animations.length) return
+          await Promise.all(animations.map(animation => animation.finished))
+          await new Promise<void>(done => requestAnimationFrame(() => requestAnimationFrame(() => done())))
+        }
+        throw new Error('Mobile invoice animations did not settle')
+      })
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No mobile document overflow').toBe(true)
+      await expect(page.getByRole('dialog')).toHaveCount(0)
       await page.screenshot({ path: capture, fullPage: true })
     }
     return { browser_ms: browserMs, api: measurements }
