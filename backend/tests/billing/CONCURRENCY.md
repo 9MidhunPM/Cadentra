@@ -1,9 +1,10 @@
 # Billing PostgreSQL concurrency acceptance protocol
 
-Status: CORE RACES EXECUTED; JOINT LIFECYCLE VERIFICATION PENDING.
+Status: CORE RACES AND JOINT LIFECYCLE/WORKER VERIFICATION EXECUTED.
 The issuer and payment tests now execute real PostgreSQL services and independent
 connections. This protocol still distinguishes executed evidence from planned
-stronger lock-order, email and cross-workstream scenarios below.
+cross-workstream scenarios below. The invoice races now force both acquisition
+orders and prove the losing connection is waiting on the actual PostgreSQL lock.
 
 ## Harness and evidence
 
@@ -40,6 +41,7 @@ stronger lock-order, email and cross-workstream scenarios below.
 | T24: competing payments | One CONFIRMED invoice with total/balance 100.00 and no payments. Submit 70.00 and 60.00 with distinct request keys and valid dates. | Exactly one payment is accepted; the other gets the documented business conflict after rereading balance under lock. Final paid sum is 70.00 or 60.00, balance is 30.00 or 40.00, and invoice remains CONFIRMED. No negative balance, hidden second payment or cancelled invoice. |
 | T23: concurrent payment replay | One CONFIRMED invoice for 100.00. Submit the same normalized full-payment payload with the same request key from both connections. | One payment record and one 100.00 settlement; both successful responses identify that same record. Repeat a matching request after PAID and require replay. Reuse the key with a changed amount/method/date/note and require conflict without mutation. |
 | T25: payment versus cancellation | One unpaid CONFIRMED invoice for 100.00. Race a full payment against cancellation with a reason, then force each lock order separately. | Payment wins: PAID with one payment, cancellation rejected. Cancellation wins: CANCELLED with reason, zero payments, payment rejected. Never CANCELLED with a payment. Keep the original period and discount use; later billing does not reinvoice it. |
+| T27: matching concurrent sends | One CONFIRMED invoice; both callers submit the same send request key. | Both responses identify one outbox row. The invoice is unchanged and no payment is created. Repeat with each caller acquiring the invoice lock first. |
 
 Run all cases through services that own their financial transactions. A test must
 not insert its own pre-lock or outer transaction that serializes away the race.
@@ -110,8 +112,21 @@ retry, real uniqueness-conflict recovery, bounded paused catch-up and persisted
 fair traversal across a fresh interpreter. See test_issuance.py,
 test_invoice_races.py and the exact commit/checks in Noel's handoff.
 
-Controlled winner-order/concurrent-send extensions and the joint subscription
-lifecycle/worker closure test are follow-up verification, not implied by the
-initial race results. Mailpit captures SMTP locally; external email delivery is
+The eight controlled payment capacity/replay/cancellation/send cases passed in
+test_invoice_races.py, committed as 45c7465 (carried from 7ca967f). Each uses distinct physical backend
+PIDs, an acquired-lock event and a third connection observing the loser's
+pg_stat_activity Lock wait before releasing the winner. Fixture cleanup removes
+only its generated UUID graph.
+
+Joint subscription lifecycle/worker closure is integrated through PR #14 and
+passed in the combined 329-test backend run. The subscription-owned
+test_worker_integration.py executes four actual worker cases; its
+test_billing_action_races.py forces both orders for billing versus edit, pause
+and close, observing actual blocking from a third physical connection. These
+verify drained backlog before terminal closure, PAUSED history, anchor retention,
+full shortened-cycle charges and immutable prior invoices after future changes.
+The issued-then-cancelled replay test also verifies retained invoice/period IDs,
+one redemption and unchanged consumed discount usage after cancellation.
+Mailpit captures SMTP locally; external email delivery is
 explicitly deferred by the user. A written protocol, sequential duplicate calls
 or passing arithmetic fixtures cannot mark an unexecuted race case as passed.
