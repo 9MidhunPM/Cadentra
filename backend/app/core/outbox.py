@@ -127,3 +127,27 @@ def dispatch_pending(db: Session, limit: int | None = None) -> dict[str, int]:
         result["processed"] += 1
     db.flush()
     return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Explicit one-batch dispatcher; print counts without message/token content."""
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(description="Dispatch one bounded pending SMTP outbox batch")
+    parser.add_argument("--once", action="store_true", required=True)
+    parser.add_argument("--limit", type=int, default=None)
+    args = parser.parse_args(argv)
+    if args.limit is not None and not 1 <= args.limit <= 1000:
+        parser.error("--limit must be between 1 and 1000")
+    from app.db.session import SessionFactory
+
+    with SessionFactory.begin() as db:
+        result = dispatch_pending(db, args.limit)
+    counts = {key: result[key] for key in ("processed", "accepted_by_smtp", "failed")}
+    print(json.dumps(counts, sort_keys=True))
+    return 1 if counts["failed"] else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

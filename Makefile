@@ -5,9 +5,9 @@ API_PORT ?= 8001
 WEB_PORT ?= 5171
 SMOKE_ORIGIN ?= http://127.0.0.1:$(API_PORT)
 
-.PHONY: help dev db-up migrate native-migrate backend-dev frontend-dev worker worker-native seed-demo seed-demo-native smoke test lint sync
+.PHONY: help dev db-up migrate native-migrate backend-dev frontend-dev worker worker-native seed-demo seed-demo-native smoke test lint sync mail-up outbox outbox-native
 help:
-	@printf '%s\n' 'make dev: Compose database+migration+API (frontend-dev in another terminal)' 'make sync/backend-dev/native-migrate: native Python against supplied DATABASE_URL' 'make test/lint: backend+pack; frontend checks when integrated' 'make worker: explicit Compose worker (fails until domain services exist)' 'make seed-demo: explicit non-destructive Compose demo seed'
+	@printf '%s\n' 'make dev: Compose database+migration+API (frontend-dev in another terminal)' 'make sync/backend-dev/native-migrate: native Python against supplied DATABASE_URL' 'make test/lint: backend+pack; frontend checks when integrated' 'make worker: explicit Compose worker (fails until domain services exist)' 'make seed-demo: explicit non-destructive Compose demo seed' 'make mail-up: loopback-only Mailpit capture inbox/SMTP' 'make outbox-native: dispatch one bounded SMTP batch against native database'
 
 sync:
 	$(UV) sync --project backend --frozen
@@ -56,3 +56,12 @@ lint:
 	node --check scripts/check_gate_a.mjs
 	$(UV) run --project backend --frozen ruff check backend scripts/smoke.py
 	@if test -f frontend/package.json; then npm --prefix frontend run lint && npm --prefix frontend run typecheck; else printf '%s\n' 'Frontend checks not run: foundation not integrated.'; fi
+
+mail-up:
+	docker compose up -d mailpit
+
+outbox:
+	docker compose run --rm api python -m app.core.outbox --once
+
+outbox-native:
+	$(UV) run --project backend --frozen python -m app.core.outbox --once

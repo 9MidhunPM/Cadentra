@@ -1,11 +1,13 @@
-import type { RouteObject } from 'react-router'
-import { FeaturePlaceholder } from '../../app/FeaturePlaceholder'
+import type { RouteObject } from "react-router";
+import { Customers } from "./Customers";
+import { Products } from "./Products";
+import { Plans } from "./Plans";
+import "./catalog.css";
 
-// Bootstrap placeholders; catalog feature ownership transfers to Midhun P M.
 export function getRoutes(): RouteObject[] {
   return [
-    { path: '/customers', element: <FeaturePlaceholder title="Customers" description="The people and businesses behind every subscription." /> },
-    { path: '/catalog/products', element: <FeaturePlaceholder title="Products" description="Your products, variants and recurring charges." /> },
-    { path: '/catalog/plans', element: <FeaturePlaceholder title="Plans" description="Billing schedules and policies, in one place." /> },
-  ]
+    { path: "/customers", element: <Customers /> },
+    { path: "/catalog/products", element: <Products /> },
+    { path: "/catalog/plans", element: <Plans /> },
+  ];
 }

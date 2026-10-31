@@ -6,7 +6,7 @@ Cadentra is a proposed unified subscription management platform for the **Subscr
 
 ## Status
 
-The backend foundation implements persistent identity/customer/catalog APIs, shared ORM models, Alembic migrations, explicit worker wiring and an SMTP outbox. The shared frontend foundation is reviewed and integrated; business screens are still placeholders. Integrated Gate A verification is recorded in the release handoff before domain implementation is declared ready.
+The backend foundation implements persistent identity/customer/catalog APIs, shared ORM models, Alembic migrations, explicit worker wiring and an SMTP outbox. The shared frontend foundation is reviewed and integrated; identity/catalog screens persist real data; subscription/billing/reporting work continues in reviewed feature slices. Integrated Gate A verification is recorded in the release handoff before domain implementation is declared ready.
 
 ## Product scope
 

@@ -30,7 +30,7 @@ Performance benchmark: NOT RUN
 Fresh-clone reproduction: NOT RUN
 
 ## Known gaps
-Identity/customer/catalog backend APIs and shared foundation are implemented and locally verified. Full subscription/billing/reporting/portal workflows, identity/catalog business screens, true financial concurrency, performance and external delivery remain in progress.
+Identity/customer/catalog backend APIs and shared foundation are implemented and locally verified. Full subscription/billing/reporting/portal workflows, remaining subscription/billing/reporting screens, performance and external delivery remain in progress. Identity/catalog screens are now verified in real browser/API flows; payment concurrency is verified in the independently reviewed billing API slice.
 
 ## Gate A local browser evidence
 
@@ -44,3 +44,11 @@ User requested hourly integration. Contributors were notified through Codex TUI 
 Video: NOT RECORDED
 Signed-out access: NOT CHECKED
 Final portal confirmation: NOT RECORDED
+
+## Subsequent integration evidence
+
+Identity/catalog experience:91frontend tests, type/lint/build and real Chromium admin/customer/staff persistence/restriction flows pass. Native full suite before billing API integration:104backend tests pass. Local password-reset UI/outbox/SMTP/Mailpit/new-password sign-in passes with fictional data. Mailpit is checksum-verified native1.33.0; Compose service is pinned but Docker execution remains untested. External email is not configured or attempted.
+
+Billing API PR7 has independent48tests including3true PostgreSQL payment/cancellation races. Portal integration identified nested invoice-metadata privacy and committed race-fixture cleanup regressions. PR8 fixes both; independent14PostgreSQL invoice/race checks pass. The combined fresh integration suite now passes140backend tests plus91frontend tests. Portal owners still verify their complete delegated flow independently.
+
+Hourly checkpoint05:36UTC: reviewed ready PRs1-8 are merged, including the urgent invoice privacy/test-isolation fix. All three workstreams received the checkpoint and SSH-only instruction. No timer-only/failing portal merge was forced.

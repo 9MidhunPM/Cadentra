@@ -4,9 +4,11 @@ Proposed direction, not a design supplied by the organiser. Product name: **Cade
 
 ## Visual direction
 
-A calm, precise operations tool. Use a white main canvas, deep navy navigation, restrained teal primary actions, clear neutral borders and semantic warning/danger colours. Typography: system sans-serif for reliable offline loading; tabular numerals for money and dates. A small linked-cycle icon may accompany the wordmark, but no custom image generation or logo production is on the critical path.
+The user selected Graphite Mint as the default dark theme and Sage Commerce as light mode. Use one semantic component system and the tokens in frontend/src/styles/global.css. The selected concepts and source explanation live in frontend/design/README.md; their illustrative figures are not production metrics.
 
-Suggested tokens: background #F8FAFC, surface #FFFFFF, ink #152235, muted #64748B, border #E2E8F0, primary #0F766E, danger #B91C1C, warning #B45309. Check actual contrast before use. Use 8px spacing increments, 8px control radius, 12px panel radius, visible keyboard focus and consistent control height. These are proposed design values, not accessibility certification.
+Graphite Mint uses near-black workspaces, charcoal surfaces and mint accents. Sage Commerce uses pale sage workspaces/navigation, white surfaces, a charcoal header and forest-green actions. Theme preference is local and contains no account data. Preserve clear financial tables, tabular numerals, readable labels, keyboard focus and semantic status colors. Feature modules use shared controls and var(--color-*) tokens rather than inventing palettes.
+
+Motion is short and purposeful: navigation selection, mobile drawer and dialog feedback; respect reduced motion and keep financial actions immediate. Ctrl/Cmd K navigates actual role-permitted pages. No decorative controls or preview chart totals become fake application functionality.
 
 ## Navigation and screens
 

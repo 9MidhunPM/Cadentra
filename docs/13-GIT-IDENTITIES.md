@@ -4,13 +4,13 @@
 
 The repository already exists at https://github.com/9MidhunPM/Cadentra and the current independent checkout has that HTTPS origin. During planning, read-only remote inspection returned no branches. The user approved one initial planning-pack commit/push to main, followed by feature branches and PRs for all application work. No new remote repository or global configuration changes are needed.
 
-Midhun P M keeps the existing default identity and authentication. The three additional keys below were reported in the historical setup; registration, authenticated accounts and repository access have not been verified. These are legacy technical filenames, not team member labels:
+Midhun P M keeps the existing default identity and authentication. The participant handoffs now record successful SSH authentication and feature-branch pushes for the three existing keys below. This verifies Git transport, not API login. Existing filenames remain technical paths:
 
-| Team member | Existing technical key path |
-|---|---|
-| Thanushree Suresh | ~/.ssh/gh-agent2 |
-| Noel Biju | ~/.ssh/gh-agent3 |
-| Sherin Saji | ~/.ssh/gh-agent4 |
+| Team member | Existing technical key path | Verified SSH account (handoff evidence) |
+|---|---|---|
+| Thanushree Suresh | ~/.ssh/gh-agent2 | thanushreesuresh |
+| Noel Biju | ~/.ssh/gh-agent3 | noel-ult |
+| Sherin Saji | ~/.ssh/gh-agent4 | Sherin745 |
 
 Keep existing clone folder names and key files. Never regenerate keys or set another person's commit identity as part of renaming the documentation.
 
@@ -53,7 +53,7 @@ If SSH is chosen, any core.sshCommand belongs only to that participant's clone a
 
 ## Publishing and PRs
 
-Follow docs/09-INTEGRATION.md: commit/test the slice, update the named handoff, push your feature branch and create a PR targeting main with the correct authorized account. If PR creation is unavailable, prepare the title, body and comparison link and ask Midhun P M to create it. SSH authentication does not switch the GitHub CLI/API account. Do not run a global gh auth switch, push application changes directly to main or invent a successful push/PR.
+The user explicitly selected SSH-only participant setup: do not initiate gh login, OAuth, API-token setup or account switching in teammate workspaces. Commit/test the slice, update the named handoff and push through the owner-specific SSH key. Send the tested branch/head, PR title/body, checks and comparison link to Midhun P M through Codex TUI. The coordinator creates/reviews/merges PRs using the existing 9MidhunPM API account. PR author is therefore 9MidhunPM; original commit author/committer metadata is preserved. SSH-only authentication cannot create PRs as the SSH account through GitHub REST/GraphQL. No participant API login is required for this selected workflow. SSH authentication does not switch the GitHub CLI/API account. Do not run a global gh auth switch, push application changes directly to main or invent a successful push/PR.
 
 The selected user workflow is feature branches and PRs. Organiser clarification, participant permissions and real attribution remain separately evidenced fields; do not mark them verified from this document alone.
 
@@ -61,4 +61,6 @@ The selected user workflow is feature branches and PRs. Organiser clarification,
 
 Confirm useful work is committed, integrated and backed up. Stop only workspace processes. If temporary keys are no longer needed, the account holders revoke only those specific public keys after approval. Remove only agreed temporary clones, keys, containers or volumes. Never delete ~/.ssh, default credentials, global configuration or unrelated projects. No destructive cleanup script is supplied.
 
-Technical reference: https://git-scm.com/docs/git-config . These instructions do not claim that any account authentication or collaborator permission has been tested.
+Technical reference: https://git-scm.com/docs/git-config . See participant handoffs for their SSH authentication/push evidence. API credentials, organiser compliance and unrelated repository permissions are not inferred from Git authentication.
+
+GitHub primary references: [SSH access](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/about-ssh), [REST API authentication](https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api).
