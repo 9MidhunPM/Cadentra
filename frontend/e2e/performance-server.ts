@@ -115,14 +115,14 @@ async function main() {
   if ((sourceConfig.match(/\b10\.0\.1\.20\b/g) || []).length !== 2) {
     throw new Error('Expected exactly two reviewed trusted-peer occurrences; refusing a broader adaptation')
   }
-  for (const expected of ['listen 8080;', 'root /usr/share/nginx/html;', 'server api:8001 resolve;',
+  for (const expected of ['listen 8080;', 'root /usr/share/nginx/html;', 'server cadentra-api-proxy:8001 resolve;',
     '10.0.1.20 1;', 'set_real_ip_from 10.0.1.20;', 'real_ip_header CF-Connecting-IP;', 'if ($cadentra_trusted_ingress_peer = 0) { return 403; }',
     'if ($cadentra_single_cf_address = 0) { return 403; }', 'if ($realip_remote_addr = $remote_addr) { return 403; }']) {
     if (!sourceConfig.includes(expected)) throw new Error(`Reviewed server configuration changed: ${expected}`)
   }
   const adapted = sourceConfig.replace(/\b10\.0\.1\.20\b/g, '127.0.0.1').replace('listen 8080;', 'listen 127.0.0.1:8080;')
     .replace('root /usr/share/nginx/html;', `root ${nginxPath(join(frontend, 'dist'))};`)
-    .replace('server api:8001 resolve;', 'server 127.0.0.1:8004;')
+    .replace('server cadentra-api-proxy:8001 resolve;', 'server 127.0.0.1:8004;')
     .replace(/\s*resolver 127\.0\.0\.11 valid=10s ipv6=off;/, '')
   const serverConfig = join(temporary, 'server.conf')
   writeFileSync(serverConfig, adapted)
@@ -179,7 +179,7 @@ http {
         'Only the exact trusted ingress peer10.0.1.20 is changed to127.0.0.1 at its two reviewed occurrences; singleton/rewrite/strip guards are unchanged.',
         'Startup probes and all browser/API contexts send public fixture CF-Connecting-IP198.51.100.77 to exercise native web ingress validation.',
         'The real API remains APP_ENV=test in an isolated PostgreSQL schema; production API-peer/Traefik/Cloudflare/Docker deployment trust is not established.',
-        'Upstream api:8001 and Docker DNS resolution replaced with the real test API at127.0.0.1:8004.',
+        'Proxy-only upstream cadentra-api-proxy:8001 and Docker DNS resolution replaced with the real test API at127.0.0.1:8004.',
         'Task-local wrapper supplies MIME/PID/log/temp paths; production routing/cache/header directives preserved.'],
     }
     writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), { flag: 'wx' })
