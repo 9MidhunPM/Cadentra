@@ -1,7 +1,7 @@
 # Subscription acceptance cases
 
-Status: CALENDAR, BILLING INPUTS, LIFECYCLE, API, ACTUAL WORKER AND ACTION RACE
-TESTS PASS; JOINT PAYMENT/CUSTOMER-PORTAL BROWSER JOURNEY REMAINS IN INTEGRATION.
+Status: CALENDAR, BILLING INPUTS, LIFECYCLE, API, ACTUAL WORKER, ACTION RACES AND
+THE SUBSCRIPTION CONTRIBUTION TO THE JOINT PAYMENT/PORTAL BROWSER JOURNEY PASS.
 
 Gate A was released on reviewed main 5b78567. Set DATABASE_URL and
 TEST_DATABASE_URL to this workspace's isolated databases before database tests.
@@ -11,9 +11,9 @@ TEST_DATABASE_URL to this workspace's isolated databases before database tests.
 Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions -q` from the
 repository root, with DATABASE_URL and TEST_DATABASE_URL set to the same isolated
 PostgreSQL `*_test` database with reviewed migrations applied. The current owned
-suite contains 124 tests and 80 subtests on reviewed main 382fa2b plus this slice:
+suite contains 124 tests and 80 subtests, integrated through reviewed main ff18b1f:
 10 calendar, 25 billing-input, 52 workflow, 27 API, four worker and six race tests.
-The full integrated backend run passed 314 tests and 121 subtests in 59.25s,
+The full integrated backend run passed 361 tests and 121 subtests in 75.56s,
 including all 124 owned cases, against cadentra_subscriptions_integration_test.
 
 Workflow/API tests exercise real templates, copied defaults, quoted price and
@@ -40,9 +40,12 @@ the subscription service. Separate integration tests establish actual issuance:
 
 Both integration fixtures migrate and clean up only their freshly generated UUID
 schemas. They do not remove public data or other workstreams' financial fixtures.
-PostgreSQL 18.6 at read committed isolation was used. Native staff-browser
-evidence and remaining joint T31 payment/customer-portal checks are recorded in
-handoffs/thanushree-suresh.md.
+PostgreSQL 18.6 at read committed isolation was used. Native staff-browser and
+the completed T31 payment/customer-portal checks are recorded in
+handoffs/thanushree-suresh.md. The actual joint browser scenario passed at clean
+41ef6df, with required states, one invoice, two payments, persisted customer
+actions/linked renewal and cross-customer 404/no-mutation assertions. This is
+separate from the unbound Gherkin specification below.
 
 ### Billing-input tests
 
@@ -115,9 +118,9 @@ boundaries, template line overrides and the lifecycle-specific edit matrix.
 
 The tests use the integrated backend's actor, clock, models, sessions and test
 database fixtures. Worker checks call the shared worker and finalized billing
-issuer. The remaining joint browser journey uses Sherin Saji's shared harness and
-must exercise the actual payment and portal services. No duplicate business logic
-belongs in test steps.
+issuer. The completed joint browser journey uses Sherin Saji's shared harness and
+actual payment/portal services. Its assertions live in
+frontend/e2e/complete-journey.ts. No duplicate business logic belongs in test steps.
 
 Exercise persisted actions and worker catch-up against disposable PostgreSQL.
 For billing-versus-edit/pause/close races, use two independent connections and a
