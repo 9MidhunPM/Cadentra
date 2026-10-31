@@ -146,7 +146,7 @@ def seed(path: Path):
                 "run_id": run_id,
                 "prefix": prefix,
                 "business_date": "2026-11-02",
-                "service_end": "2026-12-02",
+                "service_end": "2027-01-02",
                 "actors": actors,
                 "customers": {
                     key: {"id": str(row.id), "name": row.display_name}
