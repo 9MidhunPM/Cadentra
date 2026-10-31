@@ -26,7 +26,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>(empty);
   const controller = useRef<AbortController | null>(null);
   const generation = useRef(0);
+  const logoutPending = useRef<Promise<void> | null>(null);
   const refresh = useCallback(async () => {
+    // A refresh must not restore an actor while the server invalidates its session.
+    if (logoutPending.current) return;
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
@@ -49,17 +52,32 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback((): Promise<void> => {
+    if (logoutPending.current) return logoutPending.current;
     controller.current?.abort();
     const serial = ++generation.current;
-    try {
-      await apiClient.request<void>('/auth/logout', { method: 'POST' });
-    } catch (error) {
-      if (!(error instanceof ApiError && error.status === 401)) throw error;
-    }
-    if (serial !== generation.current) return;
-    apiClient.setCsrfToken(null);
-    setState({ status: 'anonymous', actor: null, error: null });
+    const request = (async () => {
+      try {
+        await apiClient.request<void>('/auth/logout', { method: 'POST' });
+      } catch (error) {
+        if (!(error instanceof ApiError && error.status === 401)) {
+          // If logout cancelled a refresh, expose recovery instead of leaving an
+          // abandoned loading state. An already authenticated actor is retained.
+          if (serial === generation.current) {
+            setState(current => current.status === 'loading' ? { status: 'error', actor: null, error } : current);
+          }
+          throw error;
+        }
+      }
+      if (serial !== generation.current) return;
+      apiClient.setCsrfToken(null);
+      setState({ status: 'anonymous', actor: null, error: null });
+    })();
+    const pending = request.finally(() => {
+      if (logoutPending.current === pending) logoutPending.current = null;
+    });
+    logoutPending.current = pending;
+    return pending;
   }, []);
 
   useEffect(() => {
