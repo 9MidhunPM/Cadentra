@@ -1,0 +1,2470 @@
+{
+  "sources": [
+    {
+      "path": "/tmp/cadentra-agent4-performance-first.json",
+      "sha256": "0c38093edccf7717b111a9773c7f50c96dd2a9d2bc7468f725ad7a6149bf5104",
+      "metadata": {
+        "started_at": "2026-10-31T05:37:11.265Z",
+        "commit": "bec657aea61260d10c9897abdbfee86996c0faf7",
+        "working_tree_dirty": false,
+        "environment": {
+          "platform": "linux",
+          "release": "7.2.11-arch1-1",
+          "cpus": 16,
+          "cpu_model": "Intel(R) Core(TM) Ultra 7 255H",
+          "memory_bytes": 32972709888,
+          "node": "v26.12.1",
+          "viewport": {
+            "width": 1497,
+            "height": 1049
+          },
+          "base_url": "http://127.0.0.1:5174",
+          "serving": "Vite development server; FastAPI loopback; local PostgreSQL",
+          "seed": {
+            "python": "3.12.13",
+            "platform": "Linux-7.2.11-arch1-1-x86_64-with-glibc2.44",
+            "postgresql": "PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 16.2.1 20260810, 64-bit",
+            "seed_seconds": 2.8474860199985415
+          }
+        },
+        "counts": {
+          "subscriptions": 5000,
+          "billing_periods": 20000,
+          "invoices": 20000,
+          "invoice_lines": 20000,
+          "payments": 20000
+        },
+        "financial_reconciliation": {
+          "invoiced": "2000000.00",
+          "cash": "1500000.00",
+          "paid_invoices": 10000,
+          "partial_invoices": 10000
+        },
+        "method": {
+          "warm": "20 document navigations/interactions in one authenticated context after one excluded warmup",
+          "cold": "5 new browser contexts with empty browser cache, reusing valid auth cookies; server/OS/DB caches stay warm",
+          "browser_ms": "wall time from navigation/action start through required successful API bodies, exact visible data and two animation frames",
+          "api_ms": "independent same-origin APIRequestContext GET including response body; measured after each browser sample",
+          "percentile": "nearest rank; cold n=5 p95 equals maximum; sequential local samples, not concurrent load",
+          "navigation": "document navigations retain browser HTTP cache in warm context; filters include visible control interaction",
+          "no_threshold_claim": true
+        },
+        "browser": "156.0.8078.4"
+      }
+    },
+    {
+      "path": "/tmp/cadentra-agent4-performance-final.json",
+      "sha256": "fe0ba3807bc016cf8e75a6da0771ab0bc86eda461778864247f59040947b6772",
+      "metadata": {
+        "dataset_run": "3ae3a59e9ab9",
+        "measurement_run": "agent4-t30-final-20261031",
+        "started_at": "2026-10-31T05:40:32.631Z",
+        "commit": "bec657aea61260d10c9897abdbfee86996c0faf7",
+        "working_tree_dirty": true,
+        "environment": {
+          "platform": "linux",
+          "release": "7.2.11-arch1-1",
+          "cpus": 16,
+          "cpu_model": "Intel(R) Core(TM) Ultra 7 255H",
+          "memory_bytes": 32972709888,
+          "node": "v26.12.1",
+          "viewport": {
+            "width": 1497,
+            "height": 1049
+          },
+          "base_url": "http://127.0.0.1:5174",
+          "serving": "Vite development server; FastAPI loopback; local PostgreSQL",
+          "seed": {
+            "python": "3.12.13",
+            "platform": "Linux-7.2.11-arch1-1-x86_64-with-glibc2.44",
+            "postgresql": "PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 16.2.1 20260810, 64-bit",
+            "seed_seconds": 2.8474860199985415
+          }
+        },
+        "counts": {
+          "subscriptions": 5000,
+          "billing_periods": 20000,
+          "invoices": 20000,
+          "invoice_lines": 20000,
+          "payments": 20000
+        },
+        "financial_reconciliation": {
+          "invoiced": "2000000.00",
+          "cash": "1500000.00",
+          "paid_invoices": 10000,
+          "partial_invoices": 10000
+        },
+        "method": {
+          "warm": "20 document navigations/interactions in one authenticated context after one excluded warmup",
+          "cold": "5 new browser contexts with empty browser cache, reusing valid auth cookies; server/OS/DB caches stay warm",
+          "browser_ms": "wall time from navigation/action start through required successful API bodies, exact visible data and two animation frames",
+          "api_ms": "independent same-origin APIRequestContext GET including response body; measured after each browser sample",
+          "percentile": "nearest rank; cold n=5 p95 equals maximum; sequential local samples, not concurrent load",
+          "navigation": "document navigations retain browser HTTP cache in warm context; filters include visible control interaction",
+          "no_threshold_claim": true
+        },
+        "browser": "156.0.8078.4",
+        "finished_at": "2026-10-31T05:43:08.821Z"
+      }
+    }
+  ],
+  "counts": {
+    "subscriptions": 5000,
+    "billing_periods": 20000,
+    "invoices": 20000,
+    "invoice_lines": 20000,
+    "payments": 20000
+  },
+  "routes": {
+    "overview-complete": {
+      "scope": "Complete Overview: exact summary, chart and five real overdue invoice rows",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 536.837434,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.25146599999971,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.861135000000104,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 114.12227499999972
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 556.6547770000002,
+          "api_ms": {
+            "/api/v1/reports/summary": 49.316193999999996,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.998426999999992,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 139.8209810000003
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 507.1020020000001,
+          "api_ms": {
+            "/api/v1/reports/summary": 70.4174839999996,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 28.1945139999998,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 111.9064040000003
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 534.0879169999998,
+          "api_ms": {
+            "/api/v1/reports/summary": 76.31634200000008,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 23.528440000000046,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 104.58759199999986
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 514.9831599999998,
+          "api_ms": {
+            "/api/v1/reports/summary": 47.88468599999942,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.35650799999985,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 67.816057
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 492.4585509999997,
+          "api_ms": {
+            "/api/v1/reports/summary": 76.27150799999981,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 24.553243000000293,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 72.74668500000007
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 497.34731699999975,
+          "api_ms": {
+            "/api/v1/reports/summary": 44.629155999999966,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 23.69251500000064,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 97.56466100000034
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 534.2833649999993,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.75761199999943,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 28.904835000001185,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 93.22645499999999
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 523.8610509999999,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.34864600000037,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.45042000000103,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 104.60591999999997
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 505.2980210000005,
+          "api_ms": {
+            "/api/v1/reports/summary": 45.74706700000024,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.278873000001113,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 115.59985300000153
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 511.275431,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.99559899999986,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 28.56396499999937,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 121.29918299999918
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 565.8416209999996,
+          "api_ms": {
+            "/api/v1/reports/summary": 43.09146999999939,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 23.849049999998897,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 111.45461199999954
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 462.4316980000003,
+          "api_ms": {
+            "/api/v1/reports/summary": 43.31116600000132,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 26.56955999999991,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 105.8087689999993
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 472.02178300000014,
+          "api_ms": {
+            "/api/v1/reports/summary": 50.19603300000017,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 18.284433000000718,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 66.35053200000038
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 499.06457600000067,
+          "api_ms": {
+            "/api/v1/reports/summary": 62.047207999999955,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.213308000000325,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 69.352218
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 535.0152070000004,
+          "api_ms": {
+            "/api/v1/reports/summary": 62.89785699999993,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.352131999999983,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 101.97742399999879
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 541.4588100000001,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.81979499999943,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 24.840503999999783,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 106.3670060000004
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 531.0825339999992,
+          "api_ms": {
+            "/api/v1/reports/summary": 50.64156000000003,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 22.929024999999456,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 74.1642150000007
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 478.78994500000044,
+          "api_ms": {
+            "/api/v1/reports/summary": 60.08262999999897,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 21.11476599999878,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 63.97130500000276
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 495.9416609999971,
+          "api_ms": {
+            "/api/v1/reports/summary": 78.30036600000312,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 21.85514400000102,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 119.18113900000026
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 538.937549000002,
+          "api_ms": {
+            "/api/v1/reports/summary": 50.18186799999967,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.203645999998116,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 81.41013100000055
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 547.5042119999998,
+          "api_ms": {
+            "/api/v1/reports/summary": 47.77921299999798,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 21.461535000002186,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 98.10915699999896
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 609.2648379999991,
+          "api_ms": {
+            "/api/v1/reports/summary": 45.103047000000515,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 23.245757000000594,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 108.58239799999865
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 645.7366490000022,
+          "api_ms": {
+            "/api/v1/reports/summary": 46.682160000000295,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 31.11360099999729,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 76.82369499999913
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 577.7980399999979,
+          "api_ms": {
+            "/api/v1/reports/summary": 46.65592000000106,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.23033899999791,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5": 108.16701600000306
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 511.275431,
+          "p95_ms": 556.6547770000002,
+          "max_ms": 565.8416209999996
+        },
+        "api": {
+          "/api/v1/reports/summary": {
+            "n": 20,
+            "p50_ms": 62.047207999999955,
+            "p95_ms": 76.31634200000008,
+            "max_ms": 78.30036600000312
+          },
+          "/api/v1/reports/revenue-series?cadence=DAILY": {
+            "n": 20,
+            "p50_ms": 24.553243000000293,
+            "p95_ms": 28.56396499999937,
+            "max_ms": 28.904835000001185
+          },
+          "/api/v1/invoices?overdue=true&page=1&page_size=5": {
+            "n": 20,
+            "p50_ms": 104.58759199999986,
+            "p95_ms": 121.29918299999918,
+            "max_ms": 139.8209810000003
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 577.7980399999979,
+          "p95_ms": 645.7366490000022,
+          "max_ms": 645.7366490000022
+        },
+        "api": {
+          "/api/v1/reports/summary": {
+            "n": 5,
+            "p50_ms": 46.682160000000295,
+            "p95_ms": 50.18186799999967,
+            "max_ms": 50.18186799999967
+          },
+          "/api/v1/reports/revenue-series?cadence=DAILY": {
+            "n": 5,
+            "p50_ms": 23.245757000000594,
+            "p95_ms": 31.11360099999729,
+            "max_ms": 31.11360099999729
+          },
+          "/api/v1/invoices?overdue=true&page=1&page_size=5": {
+            "n": 5,
+            "p50_ms": 98.10915699999896,
+            "p95_ms": 108.58239799999865,
+            "max_ms": 108.58239799999865
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "overview-summary-chart": {
+      "scope": "Overview summary and chart only; excludes independently failing overdue invoice table",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 604.5218280000008,
+          "api_ms": {
+            "/api/v1/reports/summary": 46.7849669999996,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 22.034069000001182
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 501.62419800000134,
+          "api_ms": {
+            "/api/v1/reports/summary": 49.609769999999116,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.136438000001363
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 529.3764909999991,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.40187499999956,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.790540999998484
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 566.5496219999986,
+          "api_ms": {
+            "/api/v1/reports/summary": 50.08820399999968,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.885169000001042
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 548.7396670000016,
+          "api_ms": {
+            "/api/v1/reports/summary": 43.1084660000015,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 28.09608500000104
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 490.80284799999936,
+          "api_ms": {
+            "/api/v1/reports/summary": 81.71799899999678,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 29.181174999997893
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 457.73685099999784,
+          "api_ms": {
+            "/api/v1/reports/summary": 72.5602429999999,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.513082000001305
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 507.1015640000005,
+          "api_ms": {
+            "/api/v1/reports/summary": 65.65922800000044,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 29.966283999998268
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 458.2657900000013,
+          "api_ms": {
+            "/api/v1/reports/summary": 69.80819799999881,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.233682999998564
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 500.7540970000009,
+          "api_ms": {
+            "/api/v1/reports/summary": 75.29158200000165,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 18.850697999998374
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 511.639095999999,
+          "api_ms": {
+            "/api/v1/reports/summary": 80.62290899999789,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 24.836178999998083
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 502.10401600000114,
+          "api_ms": {
+            "/api/v1/reports/summary": 49.56014000000141,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.33056100000249
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 503.64290400000027,
+          "api_ms": {
+            "/api/v1/reports/summary": 67.62042199999996,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.86765100000048
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 455.81898999999976,
+          "api_ms": {
+            "/api/v1/reports/summary": 42.912624000000505,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 32.982978
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 482.491235999998,
+          "api_ms": {
+            "/api/v1/reports/summary": 59.1242029999994,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 19.74201499999981
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 517.9603100000022,
+          "api_ms": {
+            "/api/v1/reports/summary": 45.45656400000007,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.254085000000487
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 471.1412710000004,
+          "api_ms": {
+            "/api/v1/reports/summary": 73.57176799999797,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 28.504446999999345
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 463.8888240000015,
+          "api_ms": {
+            "/api/v1/reports/summary": 45.27898699999787,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 17.90196399999695
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 494.0602329999965,
+          "api_ms": {
+            "/api/v1/reports/summary": 72.78186900000583,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.932049000002735
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 486.0217879999982,
+          "api_ms": {
+            "/api/v1/reports/summary": 48.639080999993894,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.29149999999936
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 528.0297019999998,
+          "api_ms": {
+            "/api/v1/reports/summary": 44.127888999995776,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 20.95261699999537
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 648.7831640000004,
+          "api_ms": {
+            "/api/v1/reports/summary": 46.68736699999863,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 27.954330000000482
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 505.615549999995,
+          "api_ms": {
+            "/api/v1/reports/summary": 45.57626500000333,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.588520999997854
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 533.9168449999997,
+          "api_ms": {
+            "/api/v1/reports/summary": 44.70826500000112,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 22.185356000001775
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 500.11483499999304,
+          "api_ms": {
+            "/api/v1/reports/summary": 47.214425000005576,
+            "/api/v1/reports/revenue-series?cadence=DAILY": 25.95191899999918
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 500.7540970000009,
+          "p95_ms": 566.5496219999986,
+          "max_ms": 604.5218280000008
+        },
+        "api": {
+          "/api/v1/reports/summary": {
+            "n": 20,
+            "p50_ms": 59.1242029999994,
+            "p95_ms": 80.62290899999789,
+            "max_ms": 81.71799899999678
+          },
+          "/api/v1/reports/revenue-series?cadence=DAILY": {
+            "n": 20,
+            "p50_ms": 25.233682999998564,
+            "p95_ms": 29.966283999998268,
+            "max_ms": 32.982978
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 528.0297019999998,
+          "p95_ms": 648.7831640000004,
+          "max_ms": 648.7831640000004
+        },
+        "api": {
+          "/api/v1/reports/summary": {
+            "n": 5,
+            "p50_ms": 45.57626500000333,
+            "p95_ms": 47.214425000005576,
+            "max_ms": 47.214425000005576
+          },
+          "/api/v1/reports/revenue-series?cadence=DAILY": {
+            "n": 5,
+            "p50_ms": 25.588520999997854,
+            "p95_ms": 27.954330000000482,
+            "max_ms": 27.954330000000482
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json",
+      "scope_note": "Component-only summary/chart measurement; the actual overdue table was available and is included by overview-complete."
+    },
+    "overview-customer-date-filter": {
+      "scope": "Complete filtered Overview: customer search + date range -> exact summary/chart and five real overdue rows, API total5000",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 1224.0291539999962,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 79.88787699999375,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 52.887846999998146,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 101.34450900000229
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1333.341186000005,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 49.72954000000027,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 35.70655799999804,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 52.87108900000021
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1211.1936849999984,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 52.10148599999957,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 37.18973299999925,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 94.1903220000022
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1251.7071060000017,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 44.20166099999915,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 25.294279999994615,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 46.440558000002056
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1261.8026069999978,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 52.88189200000488,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 33.12221500000305,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 115.50958499999979
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1333.9063439999954,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 69.06362100000115,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 52.48076199999923,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 98.93134700000519
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1372.412547,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 72.16917999999714,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 56.285273000001325,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 97.81824600000255
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1210.0345689999958,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 75.17027999999846,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 57.95688599999994,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 97.06938000000082
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1255.5705230000021,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 50.50181299999531,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 31.34164199999941,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 55.02982699999848
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1103.4368039999972,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 74.13900800000556,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 54.6409879999992,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 58.9292889999997
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1251.5182760000025,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 67.67614100000355,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 37.85576800000126,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 97.64948199999344
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1190.7838960000008,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 73.79605900000024,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 57.285445000001346,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 80.55883500000346
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1157.2521780000025,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 72.13124600000447,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 45.540915999998106,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 87.88248900000326
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1266.9224020000038,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 40.80669100000523,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 46.6457470000023,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 54.94519299999956
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1229.4418220000007,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 69.6420980000039,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 52.48999299999559,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 98.05207000000519
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1284.9468590000033,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 68.59398499999952,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 53.78563600000052,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 105.18684300000314
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1198.2676960000026,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 58.92634700000053,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 54.56314199999906,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 110.68404400000145
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1210.7725989999963,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 76.87803300000087,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 46.92762599998969,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 99.72878900000069
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1194.3651710000122,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 72.15039500000421,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 36.44348600000376,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 85.42440999999235
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 1188.2311279999994,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 49.822165999998106,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 50.678350000001956,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 55.74064000000362
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 1305.6585040000064,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 49.98671299999114,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 37.36338999999862,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 92.6793539999926
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 1149.1192070000106,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 77.067280999996,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 39.0029280000017,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 62.70753800000239
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 1169.4842199999985,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 69.19533600000432,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 35.708887000000686,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 92.97043500001018
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 1253.9347509999934,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 82.76137100000051,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 45.750299000006635,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 65.04105799998797
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 1217.1782139999996,
+          "api_ms": {
+            "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 52.838870000006864,
+            "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": 36.27880000000005,
+            "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": 92.26316499999666
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 1224.0291539999962,
+          "p95_ms": 1333.9063439999954,
+          "max_ms": 1372.412547
+        },
+        "api": {
+          "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": {
+            "n": 20,
+            "p50_ms": 68.59398499999952,
+            "p95_ms": 76.87803300000087,
+            "max_ms": 79.88787699999375
+          },
+          "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": {
+            "n": 20,
+            "p50_ms": 46.92762599998969,
+            "p95_ms": 57.285445000001346,
+            "max_ms": 57.95688599999994
+          },
+          "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": {
+            "n": 20,
+            "p50_ms": 94.1903220000022,
+            "p95_ms": 110.68404400000145,
+            "max_ms": 115.50958499999979
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 1217.1782139999996,
+          "p95_ms": 1305.6585040000064,
+          "max_ms": 1305.6585040000064
+        },
+        "api": {
+          "/api/v1/reports/summary?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": {
+            "n": 5,
+            "p50_ms": 69.19533600000432,
+            "p95_ms": 82.76137100000051,
+            "max_ms": 82.76137100000051
+          },
+          "/api/v1/reports/revenue-series?from=2026-07-01&to=2026-11-01&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296&cadence=DAILY": {
+            "n": 5,
+            "p50_ms": 37.36338999999862,
+            "p95_ms": 45.750299000006635,
+            "max_ms": 45.750299000006635
+          },
+          "/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=e50735a5-5db3-4466-ad75-6d711bf22296": {
+            "n": 5,
+            "p50_ms": 92.26316499999666,
+            "p95_ms": 92.97043500001018,
+            "max_ms": 92.97043500001018
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-subscriptions-page-1": {
+      "scope": "Own paginated 25-record table, exact total2500 API validation",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 395.1947999999975,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 18.174262000000454
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 384.7421960000065,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 19.365873000002466
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 381.67458500000066,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 18.762656999999308
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 394.06846199999563,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 14.326193000000785
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 392.41537499999686,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 19.31274399999529
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 434.16946499999904,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 16.351548999999068
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 409.50447699999495,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 25.418917000002693
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 402.25138999999035,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 22.46520099999907
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 470.50458599999547,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 21.781612999999197
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 430.1430379999947,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 16.366938000006485
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 413.8929130000033,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 20.58381699999154
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 424.6353240000026,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 21.0191679999989
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 374.540903000001,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 16.587632000009762
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 356.3438440000027,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 30.35693999999785
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 384.34330000000773,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 22.034922999999253
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 357.51847299998917,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 24.68874599999981
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 380.0424700000003,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 20.414750000010827
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 359.0956349999906,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 17.735555999999633
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 458.2444710000127,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 22.54800699999032
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 406.36757800000487,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 27.93024200000218
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 465.45335599999817,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 18.5695490000071
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 422.47013999999035,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 24.794757000010577
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 474.64832500000193,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 23.002556000006734
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 430.8850289999973,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 21.94103499999619
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 428.1932269999961,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=1&page_size=25": 22.90442500000063
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 394.06846199999563,
+          "p95_ms": 458.2444710000127,
+          "max_ms": 470.50458599999547
+        },
+        "api": {
+          "/api/v1/portal/subscriptions?page=1&page_size=25": {
+            "n": 20,
+            "p50_ms": 20.414750000010827,
+            "p95_ms": 27.93024200000218,
+            "max_ms": 30.35693999999785
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 430.8850289999973,
+          "p95_ms": 474.64832500000193,
+          "max_ms": 474.64832500000193
+        },
+        "api": {
+          "/api/v1/portal/subscriptions?page=1&page_size=25": {
+            "n": 5,
+            "p50_ms": 22.90442500000063,
+            "p95_ms": 24.794757000010577,
+            "max_ms": 24.794757000010577
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-subscriptions-page-2": {
+      "scope": "Own paginated 25-record table, exact total2500 API validation",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 370.22984500000894,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 18.64975699999195
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 380.99564200000896,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 18.402163000006112
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 408.00066200000583,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 16.74577799999679
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 359.8342369999882,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 20.19884500000626
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 358.71362500000396,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 21.268278999996255
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 352.56290699999954,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 19.02248800000234
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 361.47612000000663,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 17.93294800000149
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 361.5061260000075,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 20.168636000002152
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 358.363228000002,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 21.204672000007122
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 389.6453460000048,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 26.446974000005866
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 458.10880899999756,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 19.52866900000663
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 374.87227600000915,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 24.411143999997876
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 426.9546160000027,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 23.84568600000057
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 410.8178029999981,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 22.24260700000741
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 399.7225940000062,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 16.670043999998597
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 370.15871499999776,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 16.217367000004742
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 405.0242889999936,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 22.183399000001373
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 359.9440650000033,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 24.66602600000624
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 429.50960399999167,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 17.65345399999933
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 397.2760969999945,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 21.843198000002303
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 500.9779770000023,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 20.152352999997674
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 456.11163900000975,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 26.085607999993954
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 390.880720000001,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 22.421309000012116
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 443.0249530000001,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 22.160284000012325
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 382.73612299999513,
+          "api_ms": {
+            "/api/v1/portal/subscriptions?page=2&page_size=25": 23.223857999997563
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 374.87227600000915,
+          "p95_ms": 429.50960399999167,
+          "max_ms": 458.10880899999756
+        },
+        "api": {
+          "/api/v1/portal/subscriptions?page=2&page_size=25": {
+            "n": 20,
+            "p50_ms": 20.168636000002152,
+            "p95_ms": 24.66602600000624,
+            "max_ms": 26.446974000005866
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 443.0249530000001,
+          "p95_ms": 500.9779770000023,
+          "max_ms": 500.9779770000023
+        },
+        "api": {
+          "/api/v1/portal/subscriptions?page=2&page_size=25": {
+            "n": 5,
+            "p50_ms": 22.421309000012116,
+            "p95_ms": 26.085607999993954,
+            "max_ms": 26.085607999993954
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-invoices-page-1": {
+      "scope": "Own paginated 25-record invoice/payment/balance table, exact total10000 API validation",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 442.8134890000074,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 53.272110999998404
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 484.0404930000077,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 80.5527940000029
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 494.88344200000574,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 81.11918799999694
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 469.0566209999961,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 87.3381459999946
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 493.014777999997,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 53.761350000000675
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 501.29955000001064,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 51.95522099999653
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 468.884395999994,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 69.80339999998978
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 466.9088819999888,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 81.76736600000004
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 504.5837620000093,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 55.253965000010794
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 460.9907399999938,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 106.41379500000039
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 494.47469499999715,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 81.14837899999111
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 511.9191310000024,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 85.435375999994
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 493.3875209999969,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 62.353590999991866
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 519.5335029999987,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 54.27286899999308
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 519.0635249999905,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 58.527061000000685
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 473.9811869999976,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 49.202224000007845
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 482.67644100000325,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 72.20616200000222
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 463.38212799999746,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 84.26773000000685
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 461.17385300000024,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 70.66494899999816
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 471.8571459999948,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 60.36993800000346
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 604.8786059999984,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 52.93082900000445
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 483.9689740000031,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 79.17813100000785
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 572.0345740000048,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 80.77898599999025
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 534.4827430000005,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 78.97663699999976
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 533.5799470000056,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=1&page_size=25": 69.96750000001339
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 482.67644100000325,
+          "p95_ms": 519.0635249999905,
+          "max_ms": 519.5335029999987
+        },
+        "api": {
+          "/api/v1/portal/invoices?page=1&page_size=25": {
+            "n": 20,
+            "p50_ms": 69.80339999998978,
+            "p95_ms": 87.3381459999946,
+            "max_ms": 106.41379500000039
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 534.4827430000005,
+          "p95_ms": 604.8786059999984,
+          "max_ms": 604.8786059999984
+        },
+        "api": {
+          "/api/v1/portal/invoices?page=1&page_size=25": {
+            "n": 5,
+            "p50_ms": 78.97663699999976,
+            "p95_ms": 80.77898599999025,
+            "max_ms": 80.77898599999025
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-invoices-page-2": {
+      "scope": "Own paginated 25-record invoice/payment/balance table, exact total10000 API validation",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 443.971366999991,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 49.75794900000619
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 520.9265679999953,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 55.59185300000536
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 549.1957269999984,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 64.5413969999936
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 435.01544300001115,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 75.67908300001
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 480.5598739999987,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 81.03715100001136
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 480.51335299998755,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 54.25829599999997
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 498.4880170000106,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 91.60114899999462
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 540.5618060000124,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 84.01462200000242
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 466.33611999999266,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 77.21006399999897
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 475.31283399999666,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 68.50493900000583
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 444.8298610000056,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 50.67743700000574
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 390.87308699999994,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 77.24860599999374
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 495.1740080000018,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 77.99929399999382
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 493.19915699999547,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 49.342640000002575
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 441.8991779999924,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 63.56155800000124
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 402.0578289999976,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 50.40869699999166
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 445.75964699999895,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 53.28467300000193
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 425.8573710000055,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 74.47229900000093
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 473.0529610000085,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 48.13441800000146
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 487.9524570000067,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 69.92366400000174
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 563.3208900000027,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 75.21671100000094
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 555.1957499999844,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 64.5353489999834
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 564.0743080000102,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 82.25024299998768
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 482.1277509999927,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 53.507047999999486
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 493.03776099998504,
+          "api_ms": {
+            "/api/v1/portal/invoices?page=2&page_size=25": 51.92254299999331
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 473.0529610000085,
+          "p95_ms": 540.5618060000124,
+          "max_ms": 549.1957269999984
+        },
+        "api": {
+          "/api/v1/portal/invoices?page=2&page_size=25": {
+            "n": 20,
+            "p50_ms": 64.5413969999936,
+            "p95_ms": 84.01462200000242,
+            "max_ms": 91.60114899999462
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 555.1957499999844,
+          "p95_ms": 564.0743080000102,
+          "max_ms": 564.0743080000102
+        },
+        "api": {
+          "/api/v1/portal/invoices?page=2&page_size=25": {
+            "n": 5,
+            "p50_ms": 64.5353489999834,
+            "p95_ms": 82.25024299998768,
+            "max_ms": 82.25024299998768
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-account": {
+      "scope": "Persisted customer profile",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 322.59006399998907,
+          "api_ms": {
+            "/api/v1/portal/me": 14.33804499998223
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 375.16912900001626,
+          "api_ms": {
+            "/api/v1/portal/me": 14.649978000001283
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 357.08304199998383,
+          "api_ms": {
+            "/api/v1/portal/me": 14.377848000003723
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 432.8102310000104,
+          "api_ms": {
+            "/api/v1/portal/me": 15.088723000022583
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 350.17148600000655,
+          "api_ms": {
+            "/api/v1/portal/me": 16.63302300000214
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 332.0555239999958,
+          "api_ms": {
+            "/api/v1/portal/me": 17.617208000010578
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 323.1539370000246,
+          "api_ms": {
+            "/api/v1/portal/me": 20.87536700000055
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 375.38707900000736,
+          "api_ms": {
+            "/api/v1/portal/me": 13.909187000012025
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 348.89680200000294,
+          "api_ms": {
+            "/api/v1/portal/me": 15.482454000011785
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 308.0879779999959,
+          "api_ms": {
+            "/api/v1/portal/me": 16.35529599999427
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 369.6200339999923,
+          "api_ms": {
+            "/api/v1/portal/me": 11.384474999998929
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 413.0349569999962,
+          "api_ms": {
+            "/api/v1/portal/me": 16.249597999994876
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 296.144117000018,
+          "api_ms": {
+            "/api/v1/portal/me": 16.055911999981618
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 325.82715900000767,
+          "api_ms": {
+            "/api/v1/portal/me": 16.427988999988884
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 358.21658999999636,
+          "api_ms": {
+            "/api/v1/portal/me": 16.398209000006318
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 321.48836600000504,
+          "api_ms": {
+            "/api/v1/portal/me": 12.551716999994824
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 326.9874490000075,
+          "api_ms": {
+            "/api/v1/portal/me": 16.985486999998102
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 327.64609100000234,
+          "api_ms": {
+            "/api/v1/portal/me": 16.01612399998703
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 298.2512080000015,
+          "api_ms": {
+            "/api/v1/portal/me": 16.82293200001004
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 332.0104829999909,
+          "api_ms": {
+            "/api/v1/portal/me": 18.08207199999015
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 364.641026999976,
+          "api_ms": {
+            "/api/v1/portal/me": 16.096248000016203
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 419.8302060000133,
+          "api_ms": {
+            "/api/v1/portal/me": 15.774002000020118
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 397.9573130000208,
+          "api_ms": {
+            "/api/v1/portal/me": 12.42580799999996
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 374.90804100001696,
+          "api_ms": {
+            "/api/v1/portal/me": 12.250250999990385
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 372.73005800001556,
+          "api_ms": {
+            "/api/v1/portal/me": 11.524267000000691
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 332.0104829999909,
+          "p95_ms": 413.0349569999962,
+          "max_ms": 432.8102310000104
+        },
+        "api": {
+          "/api/v1/portal/me": {
+            "n": 20,
+            "p50_ms": 16.055911999981618,
+            "p95_ms": 18.08207199999015,
+            "max_ms": 20.87536700000055
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 374.90804100001696,
+          "p95_ms": 419.8302060000133,
+          "max_ms": 419.8302060000133
+        },
+        "api": {
+          "/api/v1/portal/me": {
+            "n": 5,
+            "p50_ms": 12.42580799999996,
+            "p95_ms": 16.096248000016203,
+            "max_ms": 16.096248000016203
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-subscription-drilldown": {
+      "scope": "Own subscription snapshot and four real invoice links",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 348.33085500000743,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 14.532597000012174
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 407.3731529999932,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 20.914159000007203
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 339.98597199999494,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 23.467772000003606
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 358.7197449999803,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 23.5413009999902
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 320.9197609999974,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 25.365993999992497
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 368.9741220000142,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 24.926754000014625
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 373.35152100000414,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 25.06657299998915
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 317.0161310000112,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 24.176245000009658
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 370.9000989999913,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 23.26455600000918
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 373.61615200000233,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 27.35837800000445
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 399.9576010000019,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 24.099986000015633
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 403.19913399999496,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 26.320519000000786
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 408.8049600000086,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 23.69265800001449
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 339.62673700001324,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 26.040055000019493
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 372.07889099998283,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 21.061421999998856
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 409.62109100000816,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 20.17042000000947
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 345.99991499999305,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 19.73277999999118
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 358.65004399997997,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 25.678937999997288
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 420.60259600001154,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 27.791453000012552
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 363.5750939999998,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 27.376927000004798
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 438.48732999997446,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 25.37039399999776
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 400.16505300000426,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 27.762675999983912
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 419.21490799999447,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 29.249107999989064
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 397.52081000001635,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 17.969874000002164
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 423.1616299999878,
+          "api_ms": {
+            "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": 26.355470000009518
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 368.9741220000142,
+          "p95_ms": 409.62109100000816,
+          "max_ms": 420.60259600001154
+        },
+        "api": {
+          "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": {
+            "n": 20,
+            "p50_ms": 24.099986000015633,
+            "p95_ms": 27.376927000004798,
+            "max_ms": 27.791453000012552
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 419.21490799999447,
+          "p95_ms": 438.48732999997446,
+          "max_ms": 438.48732999997446
+        },
+        "api": {
+          "/api/v1/portal/subscriptions/30d2a8f9-cf72-4361-8bdc-5c10cb383fd8": {
+            "n": 5,
+            "p50_ms": 26.355470000009518,
+            "p95_ms": 29.249107999989064,
+            "max_ms": 29.249107999989064
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-final.json"
+    },
+    "portal-invoice-drilldown": {
+      "scope": "Own stored invoice, line and recorded payment",
+      "status": "measured",
+      "samples": [
+        {
+          "mode": "warm",
+          "browser_ms": 359.12852099999986,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 25.592371000000185
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 370.29753600000004,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 29.174979999999778
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 348.03235600000016,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 26.46203800000012
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 397.56572000000006,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 28.482782999999927
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 469.74123299999974,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 29.4389799999999
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 403.3597070000005,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 25.294847999999547
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 399.07148899999993,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 26.777570000000196
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 389.49400400000013,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 33.75729300000057
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 401.1252799999993,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 31.529880999999477
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 419.8570120000004,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 28.670858999999837
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 435.63203800000065,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 28.209431000000222
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 374.17894199999955,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 30.13449700000001
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 405.3201419999996,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 32.07018199999948
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 385.4134089999998,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 27.817317000000912
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 380.5676000000003,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 29.246962000001076
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 386.30878499999926,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 30.962072000000262
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 415.5466950000009,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 32.777250999999524
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 355.53241100000014,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 28.517955000001166
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 378.91066899999896,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 30.963501999998698
+          }
+        },
+        {
+          "mode": "warm",
+          "browser_ms": 412.4628739999989,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 29.299042000000554
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 489.9513370000004,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 30.706428999999844
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 505.70617200000015,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 35.84093500000017
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 472.08894599999985,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 28.64234000000033
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 503.6637919999994,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 31.738649000000805
+          }
+        },
+        {
+          "mode": "cold",
+          "browser_ms": 474.68757500000174,
+          "api_ms": {
+            "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": 28.478198000000702
+          }
+        }
+      ],
+      "warm": {
+        "browser": {
+          "n": 20,
+          "p50_ms": 389.49400400000013,
+          "p95_ms": 435.63203800000065,
+          "max_ms": 469.74123299999974
+        },
+        "api": {
+          "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": {
+            "n": 20,
+            "p50_ms": 29.174979999999778,
+            "p95_ms": 32.777250999999524,
+            "max_ms": 33.75729300000057
+          }
+        }
+      },
+      "cold": {
+        "browser": {
+          "n": 5,
+          "p50_ms": 489.9513370000004,
+          "p95_ms": 505.70617200000015,
+          "max_ms": 505.70617200000015
+        },
+        "api": {
+          "/api/v1/portal/invoices/28103b5a-20d9-49d5-b8f4-e5d3b4303b44": {
+            "n": 5,
+            "p50_ms": 30.706428999999844,
+            "p95_ms": 35.84093500000017,
+            "max_ms": 35.84093500000017
+          }
+        }
+      },
+      "source_artifact": "/tmp/cadentra-agent4-performance-first.json"
+    }
+  },
+  "gaps": [
+    {
+      "surface": "staff-subscriptions",
+      "reason": "Owner API /api/v1/subscriptions HTTP501; no successful navigation measurements"
+    },
+    {
+      "surface": "staff-invoices",
+      "reason": "Owner UI remains a placeholder; no successful navigation measurements"
+    }
+  ],
+  "limitations": [
+    "Local Vite/FastAPI/PostgreSQL sequential benchmark; no production or concurrent-load claim.",
+    "Cold means new browser context; server, PostgreSQL and OS caches stay warm.",
+    "Cold n=5 nearest-rank p95 equals maximum.",
+    "Owner nested-address privacy regression remains pending; this performance run does not establish privacy correctness."
+  ],
+  "retained_failures": [
+    "/tmp/cadentra-agent4-performance-results",
+    "/tmp/cadentra-agent4-performance-retry-results"
+  ],
+  "corrections": [
+    "Initial run lost prior worker raw records and captured canceled duplicate requests; only its preserved successful invoice-detail route is used.",
+    "Final run includes initial navigation in filtered Overview timer, only ignores transport-confirmed canceled requests, persists dataset/run-specific artifacts and reuses privately cached real sessions."
+  ]
+}

@@ -1,14 +1,15 @@
 /** Real-data T30 measurements. No interception, synthetic fetches, or fake successes. */
 import { execFileSync } from 'node:child_process'
-import { readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { cpus, platform, release, totalmem } from 'node:os'
 import { performance } from 'node:perf_hooks'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
 type Json = Record<string, unknown>
+type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>
 type Fixture = {
-  test_only: boolean; kind: string; database: string;
-  actors: Record<string, { email: string; password: string }>;
+  test_only: boolean; kind: string; database: string; run: string;
+  actors: Record<string, { email: string; password: string; storage_state?: StorageState }>;
   customers: string[]; counts: Record<string, number>;
   first_subscription: { id: string; number: string }; first_invoice: { id: string; number: string };
   seed_environment: Json; financial_reconciliation: Json;
@@ -24,7 +25,13 @@ const baseURL = 'http://127.0.0.1:5174'
 const artifactPath = process.env.CADENTRA_PERFORMANCE_ARTIFACT!
 const warmSamples = 20
 const coldSamples = 5
-const report: Json = {
+const measurementRun = process.env.CADENTRA_PERFORMANCE_RUN!
+const existing: Json | null = existsSync(artifactPath) ? JSON.parse(readFileSync(artifactPath, 'utf8')) : null
+if (existing && (existing.dataset_run !== fixture.run || existing.measurement_run !== measurementRun)) {
+  throw new Error('Artifact belongs to another dataset/run; use a new artifact filename')
+}
+const report: Json = existing || {
+  dataset_run: fixture.run, measurement_run: measurementRun,
   started_at: new Date().toISOString(), commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   working_tree_dirty: Boolean(execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()),
   environment: { platform: platform(), release: release(), cpus: cpus().length, cpu_model: cpus()[0]?.model,
@@ -165,11 +172,19 @@ const routes: Route[] = [
   })),
 ]
 async function authenticatedContext(browser: Browser, actor: string) {
-  const context = await browser.newContext({ baseURL, viewport: { width: 1497, height: 1049 } })
-  const response = await context.request.post('/api/v1/auth/login', {
-    headers: { Origin: baseURL }, data: { email: fixture.actors[actor].email, password: fixture.actors[actor].password },
-  })
-  expect(response.status()).toBe(200)
+  const credentials = fixture.actors[actor]
+  const context = await browser.newContext({ baseURL, storageState: credentials.storage_state,
+    viewport: { width: 1497, height: 1049 } })
+  if (!credentials.storage_state) {
+    const response = await context.request.post('/api/v1/auth/login', {
+      headers: { Origin: baseURL }, data: { email: credentials.email, password: credentials.password },
+    })
+    expect(response.status()).toBe(200)
+    credentials.storage_state = await context.storageState()
+    // Keep cookies beside credentials in the same mode0600 manifest. Normal
+    // fixture cleanup removes both, including after a worker restart.
+    writeFileSync(credentialPath, JSON.stringify(fixture), { mode: 0o600 })
+  }
   return context
 }
 async function sample(context: BrowserContext, route: Route) {
@@ -177,18 +192,25 @@ async function sample(context: BrowserContext, route: Route) {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   try {
+    const start = performance.now()
     if (route.prepare) await route.prepare(page)
-    const responses = Promise.all(route.apis.map(api => page.waitForResponse(response => {
+    const responses = Promise.all(route.apis.map(api => page.waitForResponse(async response => {
       const actual = new URL(response.url())
       const wanted = new URL(api.path, baseURL)
-      return actual.pathname === wanted.pathname && [...wanted.searchParams].every(([key, value]) => actual.searchParams.get(key) === value)
+      if (actual.pathname !== wanted.pathname || ![...wanted.searchParams].every(([key, value]) => actual.searchParams.get(key) === value)) return false
+      const failure = await response.finished()
+      if (failure) {
+        const networkError = response.request().failure()?.errorText || ''
+        if (/ERR_ABORTED|cancelled|canceled|NS_BINDING_ABORTED/i.test(networkError)) return false
+        throw failure
+      }
+      expect(response.status(), `${route.key}: ${api.path}`).toBe(200)
+      // Read immediately after successful completion. StrictMode's canceled
+      // request is ignored only when transport confirms an abort above.
+      api.validate(await response.json())
+      return true
     })))
-    const start = performance.now()
-    const [bodies] = await Promise.all([responses, route.action ? route.action(page) : page.goto(route.path)])
-    for (const [index, response] of bodies.entries()) {
-      expect(response.status(), `${route.key}: ${route.apis[index].path}`).toBe(200)
-      route.apis[index].validate(await response.json())
-    }
+    await Promise.all([responses, route.action ? route.action(page) : page.goto(route.path)])
     await route.complete(page)
     await page.evaluate(async () => {
       await document.fonts.ready
@@ -237,6 +259,7 @@ for (const route of routes) {
         }
         const page = await context.newPage()
         await page.goto(route.path)
+        await expect(page.locator('main h1')).toBeVisible()
         const placeholder = page.getByText('This feature is not implemented yet.', { exact: false })
         if (await placeholder.isVisible()) {
           const reason = 'Owner UI remains a placeholder; no successful navigation measurements'
@@ -265,6 +288,6 @@ for (const route of routes) {
       // Playwright skip throws internally; preserve its explicit dependency status.
       if (results[route.key].status !== 'dependency-gap') results[route.key].status = 'failed'
       throw error
-    } finally { await context.close(); save() }
+    } finally { save(); await context.close() }
   })
 }

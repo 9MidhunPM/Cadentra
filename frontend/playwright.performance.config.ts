@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
+if (!process.env.CADENTRA_PERFORMANCE_RUN) throw new Error('Set a unique CADENTRA_PERFORMANCE_RUN for this measurement invocation')
 if (!process.env.CADENTRA_PERFORMANCE_CREDENTIALS) throw new Error('Set CADENTRA_PERFORMANCE_CREDENTIALS to a private T30 fixture manifest')
 if (!process.env.CADENTRA_PERFORMANCE_ARTIFACT?.startsWith('/tmp/')) throw new Error('Set CADENTRA_PERFORMANCE_ARTIFACT to a JSON artifact under /tmp')
 export default defineConfig({
