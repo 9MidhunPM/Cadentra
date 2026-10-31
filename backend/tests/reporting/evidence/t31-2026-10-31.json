@@ -1,0 +1,158 @@
+{
+  "scenario": "T31",
+  "started_at": "2026-10-31T06:50:00.857Z",
+  "finished_at": "2026-10-31T06:50:16.271Z",
+  "status": "passed",
+  "git_start": {
+    "head": "41ef6df0521d853348803cd71471d5852b7bc313",
+    "dirty": false
+  },
+  "git_end": {
+    "head": "41ef6df0521d853348803cd71471d5852b7bc313",
+    "dirty": false
+  },
+  "browser": {
+    "name": "chromium",
+    "version": "156.0.8078.4"
+  },
+  "viewports": {
+    "staff": {
+      "width": 1440,
+      "height": 1000
+    },
+    "customer_a_desktop": {
+      "width": 1440,
+      "height": 1000
+    },
+    "customer_b": {
+      "width": 390,
+      "height": 844
+    },
+    "customer_a_mobile": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "requested_business_date": "2026-11-02",
+  "verified": {
+    "business_clock_and_empty_baseline": {
+      "verified_at": "2026-10-31T06:50:01.757Z",
+      "facts": {
+        "as_of": "2026-11-02",
+        "active_subscriptions": 0,
+        "outstanding_now": "0.00"
+      }
+    },
+    "paid_invoice_after_reload": {
+      "verified_at": "2026-10-31T06:50:07.673Z",
+      "facts": {
+        "currency": "INR",
+        "total": "4970.16",
+        "paid_amount": "4970.16",
+        "balance_due": "0.00",
+        "status": "PAID",
+        "payments": [
+          "2000.00",
+          "2970.16"
+        ],
+        "payment_count": 2,
+        "initial_run_created": 1,
+        "second_run_created": 0
+      }
+    },
+    "report_after_reload": {
+      "verified_at": "2026-10-31T06:50:09.010Z",
+      "facts": {
+        "active_subscriptions": 1,
+        "invoiced": "4970.16",
+        "payments_received": "4970.16",
+        "outstanding": "0.00",
+        "customer_filter_applied": true
+      }
+    },
+    "portal_invoice_reload_and_print": {
+      "verified_at": "2026-10-31T06:50:11.013Z",
+      "facts": {
+        "paid_invoice_reloaded": true,
+        "authenticated_print": true,
+        "print_total": "4970.16",
+        "private_note_absent": true,
+        "staff_identity_absent": true,
+        "internal_cost_labels_absent": true,
+        "mobile_overflow_absent": true
+      }
+    },
+    "pause": {
+      "verified_at": "2026-10-31T06:50:11.980Z",
+      "facts": {
+        "effective_on": "2026-12-02",
+        "state": "ACTIVE",
+        "notice_focused": true,
+        "persisted_after_reload": true
+      }
+    },
+    "cancel_scheduled_pause": {
+      "verified_at": "2026-10-31T06:50:12.615Z",
+      "facts": {
+        "interval": null,
+        "notice_focused": true,
+        "persisted_after_reload": true
+      }
+    },
+    "schedule_close": {
+      "verified_at": "2026-10-31T06:50:13.618Z",
+      "facts": {
+        "effective_on": "2026-12-02",
+        "state": "ACTIVE",
+        "connected_trigger_focused": true,
+        "persisted_after_reload": true,
+        "settled_invoice_unchanged": true
+      }
+    },
+    "renewal": {
+      "verified_at": "2026-10-31T06:50:14.695Z",
+      "facts": {
+        "state": "DRAFT",
+        "start_date": "2026-12-02",
+        "end_date": "2027-01-02",
+        "linked_to_original": true,
+        "staff_review_notice": true,
+        "persisted_after_reload": true,
+        "invoice_count": 1,
+        "payment_count": 2
+      }
+    },
+    "foreign_isolation_and_safe_projections": {
+      "verified_at": "2026-10-31T06:50:16.167Z",
+      "facts": {
+        "read_statuses": [
+          "subscription:404",
+          "invoice:404",
+          "print:404"
+        ],
+        "action_statuses": [
+          "pause:404",
+          "resume:404",
+          "close:404",
+          "renew:404"
+        ],
+        "all_owner_subscription_ids_unchanged": true,
+        "owner_subscription_count": 2,
+        "original_revision_unchanged": true,
+        "invoice_count": 1,
+        "payment_count": 2,
+        "total": "4970.16",
+        "paid_amount": "4970.16",
+        "balance_due": "0.00",
+        "customer_lists_empty": true,
+        "checked_customer_projections_exclude_private_fields": true
+      }
+    },
+    "browser_errors": {
+      "verified_at": "2026-10-31T06:50:16.266Z",
+      "facts": {
+        "page_error_count": 0
+      }
+    }
+  }
+}

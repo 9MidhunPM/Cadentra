@@ -1,10 +1,11 @@
 # Sherin Saji: handoff
 
-Status: CUSTOMER LIFECYCLE SLICE GREEN; FULL BILLING JOURNEY AND FINAL BENCHMARK PENDING
+Status: FULL LOCAL BILLING/CUSTOMER JOURNEY PASSED; FINAL ALL-SURFACE BENCHMARK PENDING
 
 Role: Experience & Reporting
-Branch: feature/portal-lifecycle
-Reviewed main: 382fa2b (subscription workflow, safe projections and invoice-period runtime)
+Branch: feature/experience-validation
+Journey runtime: reviewed mainff18b1f (billing, lifecycle, safe portal and static package integrated)
+Passing journey/test-only focus correction: 41ef6df0521d853348803cd71471d5852b7bc313
 Shared dialog focus recovery: 47195fe (coordinator-approved optional returnFocusRef)
 Customer action delegation: e918b0c
 Canonical lifecycle UI: 10eb6ef
@@ -16,7 +17,7 @@ Delegated invoice detail/print: 53fd86b
 Large-data measurement harness: 5bbdfd7
 Latest reviewed-main merge: 3604b87
 Performance evidence and reliable capture: 6ec57bb
-Prepared full-journey harness: 776a780 (source checks only; browser execution pending)
+Full-journey harness: 776a780, completed with test-only corrections/evidence in41ef6df
 Previous foundation PR2, themes PR5 and reporting/portal reads PR10 are integrated.
 Setup verification commit: c4194af
 
@@ -46,6 +47,8 @@ The UI uses invoice_references, pause_interval, server effective dates, stored l
 - Delegated portal PostgreSQL tests: **70 pass**. Own pause/cancel/resume/close dates and linked-draft renewal persist; foreign/missing records share404 before invalid semantic bodies; role/CSRF/Origin/query guards and policy/due-billing failures leave state/audit/financial records unchanged. Invoice nested-address privacy, escaped print and read-only queries remain green. Owner sanitizers are reused unchanged.
 - Report and portal screenshots inspected on desktop/mobile in the approved themes. Current portal captures are under /tmp/cadentra-live6-lifecycle-776a780-results/ and /tmp/cadentra-live-mobile-stepper-results/. These fictional fixtures do not establish the complete financial journey.
 - Frontend build about524kB minified/161kB gzip plus separate95kB Motion features. Vite now reports a500kB chunk warning after owner screens were integrated; do not suppress it or interpret build size as latency. Final integrated timing remains pending.
+- T31 actual browser journey: **1/1 passed in16.6 seconds**, clean41ef6df at start/end, real Chromium/cookies/API/PostgreSQL, no request interception. Created catalog/config/template/subscription; quoted, confirmed and activated; generated exactly one4970.16 invoice; recorded2000.00+2970.16; verified PAID0.00 after reload; reconciled reports/portal; printed safely; executed customer pause/cancel/close/linked Draft renewal and foreign404/no-mutation checks. [Sanitized per-stage proof](../backend/tests/reporting/evidence/t31-2026-10-31.json).
+- T31 processes stopped. Cleanup transaction rolled back at immutable rule-history DELETE guards; all guards remain enabled. The isolated fixture and private0600 manifest are preserved by coordinator decision. The paid-mobile PNG is a resize-transition frame, not settled visual evidence; subsequent mobile actions and the renewal capture are clear. Settled paid-invoice recapture will use the fresh benchmark namespace, without touching retained history.
 
 ## Runtime and reproducible evidence
 
@@ -70,11 +73,13 @@ Coordinator approved backward-compatible ConfirmDialog.returnFocusRef on31Octobe
 
 ## Remaining role acceptance work
 
-- T06: delegated reads/print/actions and safe projections pass70 PostgreSQL cases and live read isolation. The prepared T31 scenario will additionally exercise all four own actions and foreign revision protection through real browser contexts.
+- T06: delegated reads/print/actions and safe projections pass70 PostgreSQL cases plus the full real-browser own/foreign lifecycle scenario. Revision, complete subscription-ID set, invoice and payment state remain unchanged after foreign attempts.
 - T28: reporting SQL/HTTP reconciliation and the full real Overview including the overdue table pass. Preserve these checks through later owner merges.
-- T31: prepared real product/variant/plan -> quotation -> active -> invoice -> payments2000.00+2970.16 -> report/portal reload/print -> customer pause/cancel/close/linked Draft journey. The fixture term ends2027-01-02 so Dec2 remains an eligible future boundary. Execution waits the billing owner's corrected uncertain-payment UI; do not consume the earlier3076 UI head or call the prepared test passing.
+- T31: **PASSED locally**, including the complete financial and customer-action journey. Source/method/status and all milestones are recorded in the sanitized evidence; no production deployment or external-delivery claim follows.
 - T30 historical baseline: **10 reporting/portal views,250 raw samples**,5000 subscriptions/20000 invoices plus payments. Complete Overview warm p50/p95/max511.3/556.7/565.8ms; full customer/date filter1224.0/1333.9/1372.4ms. The then-missing staff surfaces were honestly excluded. Final current-runtime/all-surface measurement is pending after T31. [Exact method, provenance and raw API/browser timings](../backend/tests/reporting/evidence/README.md). Fixtures/manifests were cleaned without dropping a database/schema.
 - Only after required scope is green: optional CycleGuard and invoice explanation polish.
+
+Final T30 preparation uses the coordinator-approved new cadentra_performance_test and a fresh UUID run schema. Strict test guards retain APP_ENV=test, psycopg, cadentra user and127.0.0.1:55431; experience_test remains untouched. Test-only schema creation/migration and exact owned-namespace teardown follow the existing reviewed issuance-test pattern, with no production migration edits or guard disabling. This preparation is not a measured result yet.
 
 ## Publishing and coordination
 

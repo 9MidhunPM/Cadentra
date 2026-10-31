@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -16,7 +16,7 @@ describe('route recovery', () => {
     }], { initialEntries: ['/broken'] })
     render(<RouterProvider router={router} />)
     const heading = await screen.findByRole('heading', { name: 'We couldn’t open this page' })
-    expect(heading).toHaveFocus()
+    await waitFor(() => expect(heading).toHaveFocus())
     expect(document.title).toBe('Page unavailable · Cadentra')
     expect(screen.queryByText(/PRIVATE_STACK/)).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('link', { name: 'Return to your workspace' }))

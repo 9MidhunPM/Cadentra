@@ -52,6 +52,7 @@ Fill in only after verification:
 - Demonstration video: not recorded
 - Tested commit: see `handoffs/RELEASE.md` (checks and remaining gaps recorded separately)
 - Implemented requirements and remaining gaps: `docs/15-REQUIREMENTS.md`
+- Current project/team status: [single HTML report](frontend/public/PROJECT_STATUS.html), also served at `/PROJECT_STATUS.html`
 - Team: Midhun P M, Thanushree Suresh, Noel Biju, Sherin Saji; record contributions as they land
 
 Do not include passwords, private keys, tokens, personal email bodies or private organiser correspondence in the public repository.

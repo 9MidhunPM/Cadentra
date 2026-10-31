@@ -1,10 +1,18 @@
 # Release evidence
 
-Status: LOCAL FOUNDATION, IDENTITY/CATALOG, SUBSCRIPTIONS, RECURRING BILLING AND REPORTING/PORTAL READS VERIFIED. FULL PRODUCT INTEGRATION CONTINUES.
+Status: CORE PRODUCT JOURNEY VERIFIED LOCALLY; PRODUCTION INGRESS AND DEPLOYMENT ACCEPTANCE CONTINUE.
 
-## Candidate and checks
+## Current release checkpoint
 
-Latest verified main:18e88ff7e1b9abfb2d17c4be50b2e929267c437f (first owner SSH notice merge, after billing PR13). Migration head:0002;27 tables. Dependencies are locked in backend/uv.lock and frontend/package-lock.json.
+Verified remote main:00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd. Portal lifecycleff18b1f, root workflow/deployment manifesteb8d8fd and Noel Biju's invoice URL filters00ffa99 are integrated by their owners. The actual T31 full browser journey passed1/1 in16.6s at harness41ef6df/runtimeff18; sanitized evidence was independently inspected by Noel Biju and Thanushree Suresh. This is owner execution, not a coordinator rerun. Its test/evidence source471808 remains on its feature branch pending owner-main authorization.
+
+The root production security candidate passes393 backend and164 frontend tests, Ruff, lint/typecheck, build, pack and whitespace. Independent proxy/settings review passes37 tests. A completed scoped50-file API security scan found one Medium shared-authentication-quota issue; the API/Compose remediation is reviewed, and the separately owned production NGINX correction/runtime checks remain pending. No broader no-vulnerability claim is made.
+
+The user explicitly approved storing the generated Cadentra credentials in its private Dokploy environment; saving succeeded. The Cadentra-only Cloudflare middleware is attached to its domain. No containers or public application have started yet. External SMTP is user-deferred; final all-pageT30 remains open. See the single saved status page at frontend/public/PROJECT_STATUS.html for the full current requirement/team/gate ledger.
+
+## Historical candidate and checks
+
+Earlier verified main:18e88ff7e1b9abfb2d17c4be50b2e929267c437f (first owner SSH notice merge, after billing PR13). Migration head:0002;27 tables. Dependencies are locked in backend/uv.lock and frontend/package-lock.json.
 
 Combined mainbeedbbd plus corrected billing5037de0 passes329 backend tests plus121 subtests against real PostgreSQL18.6, with committed financial races isolated in a separate test database. All143 frontend tests, typecheck/lint/build, full backend Ruff, pack validation and whitespace checks pass. Independent review found no reporting/portal merge blocker. These checks do not establish the complete financial browser journey.
 
