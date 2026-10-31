@@ -102,7 +102,7 @@ A=admin, S=staff, C=customer-own-record. Role checks are cumulative only where l
 | GET /invoices/{id}/payments | A,S | Noel Biju | actual invoice-linked payments |
 | POST /invoices/{id}/payments | A,S | Noel Biju | PaymentWrite, 201 or matching replay |
 | GET /reports/summary | A,S | Sherin Saji | from,to,customer_id; DashboardSummary |
-| GET /reports/revenue-series | A,S | Sherin Saji | bounded from,to,cadence; actual data series |
+| GET /reports/revenue-series | A,S | Sherin Saji | bounded from,to,cadence,customer_id?; actual data series |
 | GET /reports/cycleguard | A,S | Sherin Saji | optional alerts with source links |
 | GET /portal/me | C | Sherin Saji | own safe customer profile |
 | GET /portal/subscriptions | C | Sherin Saji | own paginated subscriptions |
@@ -162,3 +162,5 @@ Tax/discount PATCH requests add effective_from (at least the next business day),
 Product tax membership is resolved for every service period by Catalog.get_product_tax_ids(db,product_id,period_start), independently of frozen prices; future-valid memberships are not frozen out at quotation. Base-fee lines retain the explicitly selected stable plan tax IDs from plan_snapshot, with revision/rate resolved at period_start. Cancel a wholly unapplied scheduled pause only with an audit event; once PAUSED outcomes exist retain history and resume no earlier than the next unprocessed original boundary on/after today.
 
 Reporting revenue series: {data:{range_from,range_to,currency,cadence,buckets:[{period_start,period_end,invoiced_gross,cash_received}]}}. Supported cadence DAILY/MONTHLY, at most366-day query range, decimal-string amounts and exclusive upper dates. Default range is month-to-date. This report reads stored invoice/payment dates and amounts; it does not trigger billing.
+
+Quotation validity days copied from templates persist as positive quotation_valid_days metadata in plan_snapshot and a safe response field. Confirmation rejects changed contractual plan terms with QUOTATION_PLAN_CHANGED; see domain rules.

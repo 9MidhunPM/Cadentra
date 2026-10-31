@@ -67,3 +67,7 @@ Container tags/digests: python:3.12.13-slim-bookworm, postgres:18.6-bookworm, uv
 ## Foundation coordination decisions
 
 2026-10-31: coordinator confirmed typed session/actor/clock/money imports, immutable cycle/pricing DTO boundaries, template/edit/date rules, stable tax/discount identities with retained revisions, issue-date catch-up billing and serial hourly PR integration. See API/domain/data-model documents for exact contracts. Other feature owners retain implementation ownership. Native PostgreSQL test verification is distinct from unperformed Docker/deployment/email tests.
+
+2026-10-31 user clarification: participants remain SSH-key-only and do not log into gh. Coordinator creates/reviews/merges prepared PRs with the existing 9MidhunPM API account; do not claim that PR author is the SSH account. Original participant commit metadata is preserved. All three workstreams received this correction through Codex TUI.
+
+Experience update: Sherin Saji's user-selected Graphite Mint default dark / Sage Commerce light baseline is integrated through PR5, with shared semantic tokens and accessible motion/navigation. Root identity/catalog screens use these exports.

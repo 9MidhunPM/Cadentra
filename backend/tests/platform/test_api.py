@@ -6,17 +6,14 @@ from app.core.auth import Actor, Role, require_customer_ownership
 from app.core.errors import DomainError
 
 
-def test_health_and_unimplemented_feature(client):
+def test_health_and_error_envelope(client):
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     assert response.json()["data"]["status"] == "ready"
-    response = client.get("/api/v1/subscriptions")
-    assert response.status_code == 501
-    assert response.json()["error"]["code"] == "NOT_IMPLEMENTED"
-    assert response.json()["error"]["request_id"]
     response = client.get("/not-a-route")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "NOT_FOUND"
+    assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
 
 
 def test_customer_ownership_hides_other_record():
@@ -29,6 +26,8 @@ def test_customer_ownership_hides_other_record():
 
 
 def test_malformed_csrf_is_forbidden_not_server_error(client):
+    from app.core.config import get_settings
+
     account = {"name": "CSRF test", "email": "csrf@example.com", "password": "ValidPass!"}
     assert client.post("/api/v1/auth/signup", json=account).status_code == 201
     assert (
@@ -39,7 +38,10 @@ def test_malformed_csrf_is_forbidden_not_server_error(client):
     )
     response = client.post(
         "/api/v1/auth/logout",
-        headers=[(b"x-csrf-token", b"\xff"), (b"origin", b"http://localhost:5171")],
+        headers=[
+            (b"x-csrf-token", b"\xff"),
+            (b"origin", get_settings().allowed_origins[0].encode()),
+        ],
     )
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "INVALID_CSRF"

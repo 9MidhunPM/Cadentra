@@ -1,6 +1,6 @@
 from datetime import timedelta
 from urllib.parse import parse_qs, urlparse
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import func, select
@@ -36,7 +36,11 @@ def login(client, email="person@example.com", password=PASSWORD):
 
 
 def reset_token(db_session):
-    row = db_session.scalar(select(EmailOutbox).where(EmailOutbox.kind == "RESET"))
+    row = db_session.scalar(
+        select(EmailOutbox).where(
+            EmailOutbox.kind == "RESET", EmailOutbox.recipient == "person@example.com"
+        )
+    )
     return parse_qs(urlparse(row.payload["reset_url"]).query)["token"][0]
 
 
@@ -47,8 +51,22 @@ def test_signup_is_atomic_normalized_and_cannot_escalate(client, db_session):
     assert "password" not in str(first.json())
     assert signup(client, "person@example.com").status_code == 409
     assert signup(client, "other@example.com", role="ADMIN").status_code == 422
-    assert db_session.scalar(select(func.count()).select_from(User)) == 1
-    assert db_session.scalar(select(func.count()).select_from(Customer)) == 1
+    assert (
+        db_session.scalar(
+            select(func.count())
+            .select_from(User)
+            .where(User.normalized_email.in_(("person@example.com", "other@example.com")))
+        )
+        == 1
+    )
+    assert (
+        db_session.scalar(
+            select(func.count())
+            .select_from(Customer)
+            .where(Customer.email.in_(("person@example.com", "other@example.com")))
+        )
+        == 1
+    )
 
 
 @pytest.mark.parametrize("password", ["Abcdefg!", "abcdefgh!", "ABCDEFGH!", "Abcdefghi"])
@@ -57,7 +75,14 @@ def test_password_requirements_reject_invalid_without_partial_customer(
 ):
     response = signup(client, password=password)
     assert response.status_code == 422
-    assert db_session.scalar(select(func.count()).select_from(Customer)) == 0
+    assert (
+        db_session.scalar(
+            select(func.count())
+            .select_from(Customer)
+            .where(Customer.email.in_(("person@example.com", "other@example.com")))
+        )
+        == 0
+    )
 
 
 def test_password_nine_characters_without_digit_is_valid(client):
@@ -85,7 +110,14 @@ def test_login_session_logout_require_real_cookie_and_csrf(client, db_session):
     assert bad.status_code == 403
     assert client.post("/api/v1/auth/logout").status_code == 200
     assert client.get("/api/v1/auth/session").status_code == 401
-    assert db_session.scalar(select(SessionRecord)).revoked_at is not None
+    assert (
+        db_session.scalar(
+            select(SessionRecord)
+            .join(User, User.id == SessionRecord.user_id)
+            .where(User.normalized_email == "person@example.com")
+        ).revoked_at
+        is not None
+    )
 
 
 def test_login_rejects_wrong_password_and_missing_origin(client):
@@ -98,7 +130,11 @@ def test_login_rejects_wrong_password_and_missing_origin(client):
 def test_expired_session_cannot_authenticate(client, db_session):
     signup(client)
     login(client)
-    record = db_session.scalar(select(SessionRecord))
+    record = db_session.scalar(
+        select(SessionRecord)
+        .join(User, User.id == SessionRecord.user_id)
+        .where(User.normalized_email == "person@example.com")
+    )
     record.expires_at = get_clock().now() - timedelta(seconds=1)
     db_session.commit()
     assert client.get("/api/v1/auth/session").status_code == 401
@@ -114,7 +150,11 @@ def test_reset_is_generic_hashed_single_use_and_revokes_session(client, db_sessi
     assert known.status_code == unknown.status_code == 202
     assert known.json() == unknown.json()
     raw = reset_token(db_session)
-    record = db_session.scalar(select(PasswordResetToken))
+    record = db_session.scalar(
+        select(PasswordResetToken)
+        .join(User, User.id == PasswordResetToken.user_id)
+        .where(User.normalized_email == "person@example.com")
+    )
     assert raw != record.token_hash
     assert raw not in str(known.json())
     db_session.rollback()
@@ -138,9 +178,11 @@ def test_expired_reset_cannot_change_password(client, db_session):
     signup(client)
     client.post("/api/v1/auth/password-reset/request", json={"email": "person@example.com"})
     raw = reset_token(db_session)
-    db_session.scalar(select(PasswordResetToken)).expires_at = get_clock().now() - timedelta(
-        seconds=1
-    )
+    db_session.scalar(
+        select(PasswordResetToken)
+        .join(User, User.id == PasswordResetToken.user_id)
+        .where(User.normalized_email == "person@example.com")
+    ).expires_at = get_clock().now() - timedelta(seconds=1)
     db_session.commit()
     assert (
         client.post(
@@ -176,8 +218,9 @@ def test_admin_only_staff_and_operator_customer_crud(client, db_session):
         ).status_code
         == 403
     )
+    customer_email = f"billing-{uuid4()}@example.com"
     created = client.post(
-        "/api/v1/customers", json={"display_name": "Billing Person", "email": "billing@example.com"}
+        "/api/v1/customers", json={"display_name": "Billing Person", "email": customer_email}
     )
     assert created.status_code == 201
     identifier = created.json()["data"]["id"]
@@ -187,7 +230,7 @@ def test_admin_only_staff_and_operator_customer_crud(client, db_session):
         ).status_code
         == 200
     )
-    listing = client.get("/api/v1/customers?q=Billing").json()
+    listing = client.get(f"/api/v1/customers?q={customer_email}").json()
     assert listing["total"] == 1
     assert listing["items"][0]["company_name"] == "Brightloop"
     assert client.get(f"/api/v1/customers/{identifier}").status_code == 200

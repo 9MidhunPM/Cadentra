@@ -6,9 +6,24 @@ x-backend: &backend
   env_file: .env
   environment:
     DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cadentra}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-cadentra_platform}
+    SMTP_HOST: ${COMPOSE_SMTP_HOST:-mailpit}
+    SMTP_PORT: ${SMTP_PORT:-1025}
   init: true
 
 services:
+  mailpit:
+    image: axllent/mailpit:v1.33.0
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+    ports:
+      - "127.0.0.1:${MAILPIT_WEB_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+    volumes:
+      - mailcapture:/data
+    # Development capture only. No relay/forwarding or public inbox is configured.
+
   db:
     image: postgres:18.6-bookworm
     environment:
@@ -39,6 +54,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/v1/health', timeout=3)"]
       interval: 10s
@@ -52,8 +69,11 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_started
     restart: "no"
     # Explicitly enable once lifecycle, billing and outbox services are integrated.
 
 volumes:
   database:
+  mailcapture:
