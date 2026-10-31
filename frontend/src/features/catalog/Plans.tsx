@@ -288,12 +288,13 @@ export function Plans() {
                       render: (row: Plan) => (
                         <Button
                           variant="secondary"
+                          aria-label={`Edit ${row.name}`}
                           onClick={() => {
                             setSelectedTaxes([...row.tax_rule_ids]);
                             setEditing(row);
                           }}
                         >
-                          Edit {row.name}
+                          Edit
                         </Button>
                       ),
                     },

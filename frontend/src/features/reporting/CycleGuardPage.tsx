@@ -177,9 +177,8 @@ export function CycleGuardPage() {
   return (
     <section className="cycle-guard">
       <PageHeader
-        eyebrow="BILLING HEALTH"
         title="CycleGuard"
-        description="Every exception has a reason. Every reason leads to a record."
+        description="Review billing exceptions from your stored records."
         actions={
           <Button
             variant="secondary"
@@ -192,17 +191,12 @@ export function CycleGuardPage() {
       />
       <div className="cycle-guard-intro">
         <span className="cycle-guard-mark">
-          <ShieldCheck size={24} aria-hidden="true" />
+          <ShieldCheck size={18} aria-hidden="true" />
         </span>
-        <div>
-          <h2>A clear next place to look.</h2>
-          <p>
-            Review overdue balances, pending billing cycles and invoice email
-            failures from your stored records. Opening this view does not run
-            billing or resend email.
-          </p>
-        </div>
-        <span className="cycle-guard-readonly">Read-only review</span>
+        <p>
+          Read-only review of overdue balances, pending billing cycles and invoice
+          email failures. Opening this view does not run billing or resend email.
+        </p>
       </div>
       <div className="cycle-guard-toolbar">
         <div
