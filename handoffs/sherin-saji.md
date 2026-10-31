@@ -130,3 +130,9 @@ Implementation: bbb5ffc31160ab8204caf0109269fca58c9139d9
 Both Overview overdue links retain only the applied customer_id. Unsubmitted customer/date edits do not affect navigation; from/to remain absent because overdue is current-state data. This pairs with Noel Biju's reviewed URL-filter support. No financial calculations, backend endpoints or policy changes.
 
 Executed: red-before-fix regression, eight reporting tests, typecheck, scoped lint, production build and diff checks pass. Existing bundle warning remains recorded. No browser/database mutations performed by this slice. Ready for exact code review and a serialized owner SSH integration window.
+
+## Proxy-only production API alias
+
+Branch: feature/frontend-proxy-alias; implementation/evidence 5e7ad4e, base25e6351. The coordinator observed Dokploy adding its default network during the real deployment attempt. Production NGINX now resolves only cadentra-api-proxy:8001; the coordinator owns that alias on the dedicated private proxy network. Development api:8001 and all trust/header guards remain unchanged.
+
+Executed: all26 native checks pass again; the DNS fixture resolves only the new alias and verifies the exact query. Shell/Python syntax, Ruff F checks and whitespace pass. Updated configuration hash and method are in frontend/e2e/evidence/trusted-ingress-native.{json,md}. All listeners stopped, no DB touched. Real Docker routing/network/source-IP verification remains the deployment owner's separate gate. Final T30 API launch remains held until this correction is reviewed and settled.

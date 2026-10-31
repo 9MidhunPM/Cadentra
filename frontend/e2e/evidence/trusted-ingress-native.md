@@ -1,6 +1,6 @@
 # Trusted-ingress native evidence
 
-Base: `00ffa99`, isolated `feature/frontend-trusted-ingress` worktree. Native run: **26 checks passed**; all test listeners stopped. No database, real API, Cloudflare, Traefik or Docker execution occurred.
+Base: `25e6351`, isolated `feature/frontend-proxy-alias` worktree. Native run: **26 checks passed**; all test listeners stopped. No database, real API, Cloudflare, Traefik or Docker execution occurred.
 
 Exact command from the worktree root:
 
@@ -16,6 +16,10 @@ The NGINX 1.30.6 native binary was rebuilt from the previously signature-verifie
 `CADENTRA_TRUSTED_INGRESS=true` selects the separate production configuration. Compose must explicitly set this value; the coordinator confirmed that wiring. Unset or `false` selects the existing development configuration. Other values, including an explicitly empty value, exit64. The development `nginx.conf` remains byte-identical: SHA256 `96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99`.
 
 Production trusts only the original Traefik socket peer `10.0.1.20`. It reads `CF-Connecting-IP`, rejects missing, malformed, comma-separated or duplicate values and requires a successful changed-address rewrite. IPv4 shape checks reject invalid octets and leading zeros; NGINX realip parses the complete IPv4/IPv6 address. Wrong peers and no-rewrite identities return403 before upstream access.
+
+The production upstream is `cadentra-api-proxy:8001`. The coordinator observed that Dokploy also attaches its default network, so this alias must resolve only on the dedicated proxy network. Using the generic `api` service alias could select an address on another attached network. The development configuration retains `api:8001` unchanged. Native DNS resolves only `cadentra-api-proxy` and asserts that NGINX requested that exact alias; actual Dokploy network resolution remains a deployment integration check.
+
+Production configuration SHA256 for this rerun: `f6c02b8a318ded01f463bd4f816b8ca12282e64b7e31f477442f1daf4d61ee65`.
 
 The proxy overwrites incoming internal identity fields with exactly one `X-Cadentra-Client-IP: $remote_addr`, and removes `X-Forwarded-For`, `Forwarded`, `X-Real-IP` and `CF-Connecting-IP`. Native raw HTTP checks transmitted duplicate headers separately, including mixed-case names. Expanded IPv6 normalized to `2001:db8::1`; spoofed internal duplicates were overwritten once. Origin, Cookie, CSRF, Host, request body/query, upstream404, response cookies, DNS configuration, SPA fallback, asset cache/gzip and HTML referrer policy remain intact.
 
