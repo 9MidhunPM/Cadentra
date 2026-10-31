@@ -6,13 +6,13 @@ Cadentra is the four-person team's application for the **Subscription Management
 
 ## Current checkpoint
 
-The planning pack and teammate startup instructions are ready. The backend foundation now supplies models/migration, identity/customer/catalog APIs and runtime commands. **Gate A is pending combined frontend/API verification**; read the current release handoff before beginning dependent services. Midhun P M owns the first repository setup and shared backend baseline. The approved remote is https://github.com/9MidhunPM/Cadentra. The user authorized one initial planning-pack commit/push to `main`; subsequent application changes use feature branches and PRs.
+**Gate A passed locally.** Reviewed main now includes persistent identity/catalog, subscription workflows, recurring billing, payment/rule APIs, reports and owned portal reads. Final UI, delegated portal actions and end-to-end acceptance work continues; read [release evidence](handoffs/RELEASE.md) for exact tested commits and limits. Midhun P M owns shared backend infrastructure and coordination. The approved remote is https://github.com/9MidhunPM/Cadentra. The current delivery workflow is exact code/test review by Midhun P M, followed by each owner's local reviewed merge and normal SSH push to main in a serialized turn. Earlier PRs remain historical records; new PRs are not required.
 
 ## Team and startup prompts
 
-| Contributor | Responsibility | Role file | Prompt | Starting feature branch |
+| Contributor | Responsibility | Role file | Prompt | Historical initial branch |
 |---|---|---|---|---|
-| Midhun P M | Coordination, Platform & Catalog | `team/midhun-p-m/AGENTS.md` | `prompts/00-BOOTSTRAP.md`, then `prompts/01-PLATFORM.md` | `feature/platform-foundation` |
+| Midhun P M | Coordination, Platform & Catalog | `team/midhun-p-m/AGENTS.md` | `prompts/01-PLATFORM.md` (bootstrap prompt is historical) | `feature/platform-foundation` |
 | Thanushree Suresh | Subscription Workflows | `team/thanushree-suresh/AGENTS.md` | `prompts/02-SUBSCRIPTIONS.md` | `feature/subscription-workflows` |
 | Noel Biju | Billing & Payments | `team/noel-biju/AGENTS.md` | `prompts/03-BILLING.md` | `feature/billing-payments` |
 | Sherin Saji | Experience & Reporting | `team/sherin-saji/AGENTS.md` | `prompts/04-EXPERIENCE.md` | `feature/frontend-foundation` |
@@ -22,13 +22,16 @@ There are four human owners. Each person's assistant works on that person's assi
 ## Start in this order
 
 1. Read root `AGENTS.md`, your named role file above, `docs/01-MVP.md`, and `docs/08-EXECUTION-PLAN.md`. Each startup prompt explicitly loads its role file; nested instruction files are not automatically discovered from a root session.
-2. Use your own independent clone. Inspect existing local work and preserve it. Fetch `origin`, then create the listed feature branch from the reviewed `origin/main` baseline if it does not exist. If the branch already exists, inspect it and continue safely. Keep branch names about features, not people.
+2. Use your own independent clone. Inspect existing local work and preserve it. Fetch `origin`, then create a descriptive feature branch from reviewed `origin/main` for the next slice. The table lists the historical initial branches; preserve them. If the branch already exists, inspect it and continue safely. Keep branch names about features, not people.
 3. Run `python3 scripts/check_pack.py` and `bash scripts/preflight.sh`. These verify the planning assets and local setup; they do not prove account authentication or application correctness. Follow `docs/13-GIT-IDENTITIES.md` for participant-controlled authentication.
-4. **Before Gate A:** Midhun P M builds the shared backend/models/migration/helpers/stubs on `feature/platform-foundation`. Sherin Saji can start the frontend shell, reusable primitives, transport and feature placeholders on `feature/frontend-foundation`. Thanushree Suresh and Noel Biju can review contracts, prepare domain test cases and record interface requests in their handoffs. They must not initialize competing applications or migrations.
-5. **Gate A:** Midhun P M integrates the backend and frontend foundation PRs. The database migration applies; API and frontend boot; all agreed module placeholders import; API/auth/error/money shapes and shared frontend exports are agreed. Domain implementation starts from this integrated baseline.
+4. **Historical foundation ownership (already integrated):** Midhun P M supplied the backend/models/migration/helpers/stubs; Sherin Saji supplied the frontend shell, reusable primitives, transport and feature placeholders. Continue feature work against that shared baseline and current handoffs. Do not reinitialize the application or create a competing migration history.
+5. **Gate A was verified:** The backend and frontend foundation changes were integrated and verified. Existing PR records describe the historical process. The database migration applies; API and frontend boot; all agreed module placeholders import; API/auth/error/money shapes and shared frontend exports are agreed. Domain implementation starts from this integrated baseline.
 6. Deliver a small working slice within your owned paths. Run actual tests; review the diff; update your named handoff with the exact implementation commit, results, blockers and shared change requests.
-7. Push your feature branch and create a PR targeting `main` using your authorized account. If you cannot create it, prepare the title, body, checks and comparison link, then ask Midhun P M to create it. See `docs/09-INTEGRATION.md`. All subsequent application changes go through this workflow.
-8. Midhun P M coordinates review and integration; each contributor then brings the reviewed baseline into their own branch without rewriting shared history.
+7. Send the exact ready feature head, expected main SHA, changed paths, test results and dependencies to Midhun P M through Codex TUI. Midhun P M reviews that code and evidence, then gives GO for one owner to publish at a time. Incomplete or failing slices wait; hourly checkpoints do not bypass review.
+8. After GO, the owner fetches/rechecks main against the approved SHA, performs the reviewed local merge in a clean checkout, reruns affected checks and pushes main normally using their own verified SSH identity. If remote main changes, conflicts change the result, or a push is rejected, stop and refetch/review before another attempt. Never force, delete, rewrite shared history or push an unreviewed slice.
+9. Report the resulting main SHA and results so Midhun P M can release the next turn. Midhun P M reviews code/tests and coordinates turns; there is no current coordinator gh/API PR-creation/merge step. Midhun P M's existing default SSH identity is verified as 9MidhunPM; other owners retain their assigned keys. Preserve global Git/SSH/auth settings. See `docs/09-INTEGRATION.md` and `docs/13-GIT-IDENTITIES.md`.
+
+Midhun P M owns the user-authorized Dokploy subdomain demo deployment. Record the actual deployed commit, origin and smoke results in release evidence; local Gate A verification does not establish deployment success.
 
 ## First product milestone
 
@@ -40,4 +43,4 @@ Complete this persisted, permission-checked journey first. Optional **CycleGuard
 
 The eight-hour schedule is an aggressive target relative to the actual permitted coding start; the portal timeline takes precedence. Aim for the paid-invoice journey by hour 4; prioritize required coverage and fixes after hour 6. Keep required gaps explicit.
 
-The team has selected feature branches and PRs. The historical event sources still contain a single-branch ambiguity and do not establish unrestricted assistant-use permission; Midhun P M records any organiser clarification separately. Choosing the team's workflow does not verify portal submission, hourly participation, account ownership or deployment.
+The user selected owner-operated local merges and normal SSH pushes to main after exact review and serialized GO. The historical event sources still contain a single-branch ambiguity and do not establish unrestricted assistant-use permission; Midhun P M records any organiser clarification separately. Choosing the team's workflow does not verify portal submission, hourly participation, account ownership or deployment.

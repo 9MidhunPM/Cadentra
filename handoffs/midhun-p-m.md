@@ -1,51 +1,42 @@
 # Midhun P M: handoff
 
-Status: CORE LOCAL INTEGRATION VERIFIED THROUGH PR12; FINAL UI/JOURNEY ACCEPTANCE IN PROGRESS
-
+Status: CORE LOCAL INTEGRATION VERIFIED; FINAL UI/JOURNEY ACCEPTANCE IN PROGRESS
 Role: Platform & Catalog; team coordination and integration
-Branch: feature/integration-readiness
-Implementation commit: f6f3f79a024cd4da1bc049f8aecb0d1c68ac9df5; reviewed main integration commit b86e3a3f07f1e484fc25c25c7f60ff318ed9714a; final evidence/precision commit follows.
+Branch: feature/release-verification
+Reviewed main: beedbbdda87774ac6813d3c3e8036db5df465ca3 (PR15)
+Root source anchors: f6f3f79 backend foundation;065ac50 identity/catalog screens;111a904 local mail and fixture corrections;4ba636f bounded product search/readiness evidence.
 
-## Delivered slice
+## Delivered behavior
 
-Shared PostgreSQL ORM (27 tables), static Alembic0001, atomic numbering, retained tax/discount revision guards, settings, synchronous request/auth sessions, Actor/role/CSRF/origin dependencies, money/clock/error helpers, health and feature router imports. Identity/customer/catalog APIs persist real records. SMTP outbox distinguishes acceptance from external delivery. Standalone worker refuses unavailable lifecycle/billing services rather than reporting fake success. Compose/native Make targets, non-destructive idempotent demo seed and smoke checker are included.
+One FastAPI/PostgreSQL foundation with27 models, migrations0001/0002, retained revision guards, numbering, shared Decimal/clock/error/session/role/CSRF/origin interfaces and explicit caller-owned transactions. Shared models/migrations/dependencies remain coordinator-owned.
 
-## Tests actually executed
+Persistent signup/login/logout/reset, admin staff provisioning, customers/products/variants/plans and corresponding themed screens. Snapshot helpers preserve frozen prices while resolving product tax membership at each period. Named tax selection retains unavailable/off-page assignments. Product search now accepts at most200characters, trims whitespace, performs case-insensitive literal name matching and shares row/count filters with pagination.
 
-Backend implementation initially passed50PostgreSQL tests; after calendar integration and migration0002 the combined suite passed74tests after pricing integration (calendar checks also exercise80subtests). Frontend typecheck/lint/build and47unit/component tests pass. A real Chromium browser through localhost:5171 Vite -> localhost:8001 FastAPI -> PostgreSQL passed health200, signup201, login/session200, customer403forcatalog, missingCSRF403, renderedcustomer navigation, logout200 and subsequent401 with zero page errors. Screenshot inspected locally; test accounts are fictional. Tests cover signup/login/logout/reset/staff/customer permissions, catalog prices/plans/snapshots, decimal context, malformed CSRF, seed login/idempotency, outbox payload/retry/SMTP adapter behavior and database uniqueness/revision guards. Migrations0001/0002 apply to isolated native PostgreSQL18.6 databases; Alembic drift check passes.
+Bounded SMTP outbox plus standalone one-batch CLI; pinned loopback Mailpit capture; Compose/native Make paths; explicit non-destructive demo seed. Worker imports actual lifecycle/billing/outbox services and commits their agreed transaction boundaries. No scheduler starts inside the API.
 
-No real external email, true financial service races, complete product browser journey, benchmark or Docker deployment is claimed. Native runtime uses signed packages under /tmp, no system install.
+## Evidence actually executed
 
-## Shared exports
+- Shared Gate A main5b78567 passed real API/frontend/PostgreSQL auth/CSRF/role/logout browser checks. Historical foundation suite74backend/47frontend; later source checkpoints remain in PRs.
+- Identity/catalog screens pass10identity+10catalog component tests, actual admin customer/product/variant/plan persistence, staff provisioning and real backend403 restrictions. Stale-list regression and named tax retention are covered.
+- Local reset browser -> outbox -> actual SMTP/Mailpit API/web inbox -> reset form -> new-password login passes with fictional data. Invoice owner separately verified invoice SMTP acceptance/web capture. External delivery is user-deferred until configured.
+- Combined main382fa2b:291backend tests plus121subtests, unchanged113frontend tests, type/lint/build/Ruff/pack/whitespace pass. PR14 adds23 independently passing actual PostgreSQL guard/worker/three-connection lock-order cases; PR15 adds a real product-search regression (red123/120 then all13catalog tests pass). No later unified315-test run is claimed yet.
+- Dedicated worker_smoke_test: actual auth/customer/subscription API setup, CONFIRMED -> standalone worker ACTIVE/one4680.00invoice/oneperiod/cursor1, then a second worker process preserving exactly the same outcome:PASS.
+- Fresh remote clone382fa2b: genuinely new venv/npm install from committed locks/cache, new database migrations/no-drift, seed1/1/1/1 then0/0/0/0, build/type/lint and actual same-origin Gate A browser:PASS. Its portal screenshot captured a loading skeleton; completed portal rendering/full journey is not claimed. Evidence:/tmp/cadentra-reproduction-evidence-382fa2b/RESULTS.md.
 
-Models: app.models; app.db.base.Base; app.db.session get_session/SessionFactory (no implicit commit). Core: auth Actor/Role/require_actor/require_role; clock get_clock; money money/money_string; errors DomainError. Catalog.service exports get_plan_snapshot/get_product_snapshot/get_product_tax_ids. See API contract for exact shared DTO/date/template/revision semantics.
+## Coordination and remaining gates
 
-## Coordination
+PRs1-12 integrated foundations, immutable pricing inputs, APIs, themes, reporting/portal reads, subscription workflows and recurring issuer. PR14 integrates actual worker/action races; PR15 supplies product search and corrected readiness evidence. PR13 was held when an independent new regression proved payment key loss across route unmount. Noel corrected retained actor/invoice command state, fresh-history reconciliation and product-picker pagination before integration. The final corrected slice independently passes329backend/121subtests+143frontend and is merged at6cd8b74. Sherin's delegated portal actions/live evidence and final full journey/performance are next.
 
-Frontend foundation PR2 and subscription calendar PR1 reviewed and integrated. Billing pricing PR3 reviewed and integrated with final precision head76c1bd6. Hourly ready-slice/main synchronization requested from all three teammates; merges remain serial and review-gated.
+All three contributor SSH accounts have repository write access; main has no protection rules. Their own keys can push local merges without coordinator credentials. The subsequent explicit user instruction now selects owner local merges/normal SSH main pushes after serialized exact-head review, with no coordinator gh/API PR actions. Midhun's default SSH identity verified9MidhunPM; source instructions and Git/integration docs are updated. Participants do not log into gh or change global account settings. Coordinator-created PRs preserve original commit authorship. Hourly ready-slice/main coordination continues through Codex TUI; next checkpoint06:36UTC. No unattended scheduler is installed.
 
-## Current dependency
+GitGuardian PR9/12 repeats one synthetic password in mocked identity tests; findings were examined, documented and left visible without broad suppression. PR10/11/14/15 checks pass. No live credential was found among those flagged inputs.
 
-Reviewed main382fa2b integrates the subscription workflows and recurring issuer. Billing UI remains held for review findings; portal actions and the full browser journey are next. Coordinate readiness gates and owner corrections while preserving named ownership. Earlier sections retain historical Gate A evidence.
+Docker/container execution, public deployment, every final page under two seconds, external delivery and submission/video/evaluator acceptance remain unverified or deferred. Native runtime is task-owned under/tmp; no system install, production routing change or destructive database cleanup occurred. Template role CRUD means the frozen create/read/update scope; no DELETE/archive endpoint is implied.
 
-## Identity/catalog experience and local mail capture
+## Owner SSH workflow and Dokploy preparation
 
-UI implementation commit065ac50 supplies sign-in/signup/reset/staff forms and customer/product/variant/plan operations. The themed UI passes91unit/component checks, type/lint/build and actual PostgreSQL/browser customer/product/variant/plan persistence plus staff provisioning/403 denial. Independent review caught stale pagination data; corrected with regression tests. Named tax selection preserves unavailable/off-page selections and exposes no raw UUID input.
+At user instruction, review-only coordination now gates owner normal SSH merges to main. Thanushree's first owner push18e88ff is verified after reviewed billing13 main6cd8. Sherin packaging76ec051 has the next serialized window, then portal09d4 after its combined361backend/121subtest+156frontend check. UpdatedAGENTS/startup/prompts/process docs are ready for durable publication.
 
-The local mail slice adds pinned Mailpit Compose wiring, explicit one-batch outbox CLI and real native capture at127.0.0.1:1025/inbox8025. A fictional QA account completed browser reset request -> SMTP outbox -> Mailpit capture -> reset form -> new-password sign-in; token removed from URL. The full current native suite passed104backend tests and91frontend tests before billing API integration. Docker execution and external delivery remain NOT RUN. No real recipient or credential was committed.
+The user explicitly authorized deployment of a workable demo. Dokploy projectCadentra/environmentproduction/Composecadentra-demo and HTTPSroutecadentra.midhunpm.in:web8080 are prepared. Root compose.dokploy.yaml has no host ports/profiles, private PostgreSQL/Mailpit, ordered migrations/idempotent bootstrap and one worker; only web joinsdokploy-network. Actual image build/public runtime remains pending. Rootcompleted strengthened local Gate A with renderedemptyportal, randomQApassword andzeroerrors.
 
-SSH-only clarification is recorded: teammates push with verified owner keys and send prepared PR metadata; coordinator9MidhunPM creates PRs. No participant gh login/token setup.
-
-After incorporating the financial API/privacy commits, the fresh combined suite passed140backend tests and91frontend tests. Native admin browser coverage includes staff creation and confirmed backend403 for a staff product mutation. Filtered Mailpit web inbox shows the fictional reset capture; the token was consumed and removed from the reset URL. Docker and external email remain unverified.
-
-## Integration checkpoint after PR10
-
-Reviewed main48c7896 integrates identity/catalog and reporting/portal reads. The independently combined suite passes214backend tests/121subtests and104frontend tests plus type/lint/build/Ruff/pack/whitespace. PR9 local SMTP/reset/inbox proof is separate from external delivery, which is skipped until configured. PR9 scanner findings were reviewed as one synthetic mocked-test password repeated eight times; the failed check remains documented without broad suppression. PR10 scanner passes.
-
-Direct SSH merges are technically available: all three teammate accounts have write access and main is unprotected. The user asked a capability question; no switch away from selected PR review was inferred. PR11 is under independent lifecycle review and combined verification, with a named-plan display follow-up requested. Worker/issuer, portal actions, full T31, fresh-clone and final performance remain gates. No deployment or external delivery claim.
-
-## PR12 and product lookup correction
-
-Combined291backend/121subtests plus unchanged113frontend pass at382fa2b. Actual dedicated-database worker subprocess activation/one4680.00invoice and second-process restart idempotency pass. Fresh remote clone with new venv/npm install from locked caches, new database migration/no-drift, seed twice and actual same-origin Gate A passes. Exact reproduction source382fa2b; evidence /tmp/cadentra-reproduction-evidence-382fa2b/RESULTS.md. The screenshot remains a loading skeleton, not full portal proof. Docker/public deployment/external delivery remain unverified or deferred.
-
-PR13 held despite304backend/130frontend green because an independent added regression proves payment key loss after route unmount; Noel is fixing retained command/reconciliation and product picker pagination. Root adds actual bounded literal q search to GET/products; red regression123/120 then13catalog PostgreSQL tests, Ruff and whitespace pass. Rows and total share the same filter; role/decimal contracts unchanged. New worker/action test slice cd529df is independently reviewing.
+Deployment checkpoint: automatic approval review rejected saving newly generated Cadentra database/admin credentials to the private Dokploy environment, requiring explicit authorization for that sensitive egress. No credentials were saved remotely, and the Compose remains idle; root will complete independent code/demo checks before requesting the narrow approval. No alternate API or indirect path will bypass this rejection.

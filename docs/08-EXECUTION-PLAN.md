@@ -16,11 +16,11 @@ Relative to the actual permitted coding start. This is a proposed work allocatio
 
 ## Start from the first planning commit
 
-The documentation commit establishes main and is not Gate A. Read START_HERE.md and the assigned team role, create a feature-named branch from reviewed origin/main in your independent clone, and follow docs/09-INTEGRATION.md for PR delivery. Midhun P M starts feature/platform-foundation; Sherin Saji starts feature/frontend-foundation. Thanushree Suresh and Noel Biju may review contracts and prepare domain test cases on feature/subscription-workflows and feature/billing-payments. Full domain implementation waits for the shared Gate A baseline; no second scaffold is created.
+The documentation commit establishes main and is not Gate A. Read START_HERE.md and the assigned team role, create a feature-named branch from reviewed origin/main in your independent clone, and follow docs/09-INTEGRATION.md for exact-head review, a serialized GO and owner SSH publication to main. Midhun P M starts feature/platform-foundation; Sherin Saji starts feature/frontend-foundation. Thanushree Suresh and Noel Biju may review contracts and prepare domain test cases on feature/subscription-workflows and feature/billing-payments. Full domain implementation waits for the shared Gate A baseline; no second scaffold is created.
 
 ## Midhun P M: coordinator responsibilities
 
-Review Gate A and all contract changes. Run the complete product regularly. Integrate small working slices every 20-30 minutes when feasible, with the required hourly contribution rhythm as an external constraint. Check that each participant understands and accurately owns their contribution. Review feature PRs and merge tested slices into main so the evaluated code stays current. A teammate assistant opens its PR when authorized; if unavailable, it supplies the prepared PR details to Midhun P M. Record the actual tested commit.
+Review Gate A and all contract changes. Run the complete product regularly. Integrate small working slices every 20-30 minutes when feasible, with the required hourly contribution rhythm as an external constraint. Check that each participant understands and accurately owns their contribution. Review each exact tested feature head and serialize GO slots naming the owner and expected remote main SHA. The owner merges locally, tests the integration result and pushes main through their own SSH identity; Midhun P M verifies the resulting remote head before releasing the slot. The coordinator no longer creates or merges PRs through gh/API. A changed base or reviewed head requires renewed coordination. Record the actual tested commit.
 
 ## Team delivery slices
 
@@ -40,3 +40,9 @@ Freeze all optional work immediately. Finish one real customer -> subscription -
 ## At hour 6
 
 No new architecture, libraries, gateway, chatbot or redesign. Changes must fix correctness, required coverage, deployment or demonstrated usability. Record any uncompleted requirement honestly. Rehearse a backup local demo, but do not present it as deployed.
+
+## Current integration and demo checkpoint
+
+The latest user policy supersedes the earlier PR workflow while retaining historical contribution records. Thanushree Suresh's owner push at 18e88ff was verified on main at 06:31 UTC on 31 October 2026; Sherin Saji's production head prefix 76ec is authorized next and other owners wait. Always use the latest GO and expected remote main SHA rather than assuming this checkpoint is current.
+
+The user authorized a workable Dokploy demo subdomain. Midhun P M is preparing cadentra.midhunpm.in: DNS resolves and the project exists, but deployment/public-origin verification is pending. Record a live URL only after the deployment and functional smoke flow pass.
