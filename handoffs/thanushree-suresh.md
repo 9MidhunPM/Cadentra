@@ -1,104 +1,140 @@
 # Thanushree Suresh: handoff
 
-Status: CALENDAR AND PERSISTENT BILLING INPUTS VERIFIED; WORKFLOWS/API/UI IN PROGRESS
+Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
 
 Role: Subscription Workflows
-Branch: feature/subscription-lifecycle
-Reviewed Gate A main: 5b7856792780b38823d90a8fb01e2cdff82f22f2
-Getter implementation commit: a40fe5ade884f5d765fe1f05ee1df22ad70c7bdb
-Calendar implementation: bdb1cf29447ca9d7303d27e049dd61ac31ad6214 (integrated in PR #1)
-Carried audit regressions: 6db99a6 (original dbbbeb0 remains on the prior branch)
+Branch: feature/subscription-actions
+Reviewed main incorporated: 9136adf (Gate A, calendar/getter and billing rule helpers)
+Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
+Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
+Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
+Frozen policy verification: 2d61b8d51a45a2df13edb8a868950046ca887a76
+Prior getter implementation a40fe5a and calendar bdb1cf2 were integrated in PRs #6/#1.
 
 ## Delivered behavior
 
-The calendar preserves original daily/weekly/monthly/yearly anchors, caps exclusive
-service ends and closure dates, and handles exhausted or very large cycle indices.
-The persistent getter reads only the next unprocessed ACTIVE subscription cycle,
-returns one BASE line plus already-priced product lines, resolves product tax
-identities for each period start and preserves frozen plan/product prices. It
-never creates an invoice/period, advances a cursor, selects rates/discounts or commits.
+Templates and copied drafts persist plan/lines/validity. Explicit line arrays
+replace template lines; null/empty overrides fail validation. Template copies
+serialize with edits under a refreshed row lock. Quotation validity survives
+reload and later template edits. Explicit issue days update the copied default.
 
-DTOs and nested snapshots are copied into immutable mappings/tuples. The explicit
-snapshot_to_json helper materializes fresh JSON dictionaries/lists for billing's
-invoice persistence. Base-fee tax IDs come from plan_snapshot.tax_rule_ids; product
-memberships use Catalog.get_product_tax_ids. Due-date checks belong to the worker.
+Draft -> Quotation -> Confirmed -> Active -> Closed is enforced. Confirmation
+rejects changed quoted plan price, cadence, quantity, policies or selected plan
+tax IDs with QUOTATION_PLAN_CHANGED/409; staff revise/reissue rather than silently
+accept changed terms. Product prices stay frozen until revision/reissue.
 
-Prepared lifecycle inventory: 71 expanded cases. Those scenarios remain unbound;
-their presence is not proof of implemented lifecycle/API/browser behavior.
+Pause/resume/early-close/expiry/linked renewal and next-cycle line changes enforce
+frozen plan flags and customer ownership. Due periods block repricing/schedule
+changes. Exhausted periods cannot accept next-cycle edits or a false resume at
+expiry. Pending unapplied pauses can be cancelled with an audit; started/processed
+pause history remains intact. Lifecycle processing activates eligible records and
+defers final closure until earlier periods have durable outcomes. All mutations
+use caller-owned transactions, subscription row locks and redacted audits.
 
-## Implemented interfaces
+Staff screens use actual APIs and shared routing/client/UI: paginated/filterable
+lists, template creation/editing, multi-line drafts and variants, quotations,
+confirmation disclosure, lifecycle controls, renewal and active line edits.
+Server errors preserve form values. Dates and effective changes are explicit.
+Line amounts and period-specific tax references come from the backend; the client
+never calculates invoice totals. Invoice references link to billing records.
 
-app.modules.subscriptions.calendar exports CycleSnapshot and get_cycle_bounds.
+## Interfaces for billing and customer portal
+
+app.modules.subscriptions.calendar exports frozen CycleSnapshot and get_cycle_bounds.
 app.modules.subscriptions.service exports BillableInputs, BillableLine,
-get_billable_inputs(db, subscription_id, cycle_index), and snapshot_to_json(value).
+get_billable_inputs, snapshot_to_json, get_subscription_for_actor, apply_action,
+and process_lifecycle. Query/action facades return a raw safe detail dictionary;
+HTTP wrappers add the data envelope.
 
-BillableInputs fields: subscription_id, customer_id, revision, plan_id, currency,
-payment_terms_days, cycle_index, period_start, period_end, effective_end, paused,
-plan_snapshot, lines. BillableLine fields: stable_line_key, product_id, variant_id,
-description, quantity, unit_price (Decimal), selected_tax_ids (UUID tuple),
-source_snapshot. BASE has quantity 1; product unit_price already includes variant
-adjustment. Snapshot mappings are read-only: call snapshot_to_json before JSONB writes.
+- Billing owns the subscription lock and transaction, reuses durable period
+  outcomes first, and requests only next_cycle_index. Inputs contain one BASE
+  line (quantity 1) and already-adjusted product prices, UUID tax-ID tuples and
+  recursively immutable source snapshots. snapshot_to_json returns independent
+  JSON dictionaries/lists for invoice persistence. No getter commits or reprices.
+- Portal writes use with db.begin(): apply_action(db, actor, id, action, payload).
+  The service rechecks ownership/policy and validates payloads. Customer actions
+  are limited to pause/resume/close/renew; renew returns a linked DRAFT only.
+- Safe detail includes allowed_actions, paused, pause_interval, pause_effective_on,
+  resume_effective_on, close_effective_on, prior_subscription_id, quotation_valid_days,
+  next_billing_date, public plan/lines, server line_total and invoice_references.
+  Taxes are metadata previews at tax_preview_on; final invoice snapshots remain
+  authoritative. Read-only rule resolution is delegated to billing.rules.
+- Missing and foreign protected records share NOT_FOUND/404 and the message
+  Record not found. Public projections constrain field types, remove malformed
+  nested metadata and reject invalid or empty financial snapshots with generic
+  INVALID_SNAPSHOT/409. Costs and staff-only notes are not returned.
 
-Caller contract: hold the subscription row lock and own the transaction; reuse
-persisted period outcomes before asking for mutable current inputs. Negative or
-noninteger indices are INVALID_CYCLE/409 before lookup. Missing record is 404;
-non-ACTIVE, earlier/future cursor and exhausted periods follow docs/05 error codes.
+Example authenticated requests (substitute actual IDs; shared CSRF applies):
+POST /api/v1/subscriptions/{id}/issue-quotation with {"valid_days":14}
+POST /api/v1/subscriptions/{id}/confirm with {}
+POST /api/v1/subscriptions/{id}/renew with
+{"start_date":"2027-05-01","end_date":"2027-08-01"}
+Dates above illustrate a request, not a production clock override.
 
 ## Checks actually run
 
-Against the getter implementation and this workspace's isolated native PostgreSQL
-test database cadentra_subscriptions_test, with DATABASE_URL/TEST_DATABASE_URL set
-locally and Python 3.12.13 from the pinned foundation environment:
+Python 3.12.13; reviewed migrations 0001/0002. The final owned suite uses the fresh
+isolated cadentra_subscriptions_verify_test database. The original workstream test
+DB is preserved for investigation of retained upstream race-test fixtures.
 
-- backend/.venv/bin/python -m pytest backend/tests/subscriptions/test_billable_inputs.py -q:
-  25 passed (including independent JSON materialization added after the 24-case first run).
-- backend/.venv/bin/python -m pytest backend/tests -q: 99 passed, 121 subtests passed.
+- backend/.venv/bin/python -m pytest backend/tests/subscriptions -q:
+  101 passed, 80 subtests passed. Includes 10 calendar, 25 billing-input,
+  39 workflow and 27 API cases. No missing-service skips.
+- Real template copy/edit race uses independent connections and observes an
+  actual PostgreSQL lock wait; cached template rows refresh coherently.
+- Policy tests cover disabled pause/close/renew for staff and an actual customer
+  owner, asserting conflict/no mutation/no misleading action hint.
+- npm test: 79 passed across the current shared+feature frontend suite.
+- npm run typecheck, npm run lint, npm run build: PASS.
 - backend/.venv/bin/ruff check backend scripts/smoke.py: PASS.
-- Ruff format/check for new service and test files: PASS.
 - python3 scripts/check_pack.py and git diff --check: PASS.
-- Independent standards and specification reviews: no blocking findings.
-- Getter tests first failed collection before service.py existed, then passed
-  against actual models/catalog helpers and PostgreSQL; no missing-service skips.
-- Calendar: 10 tests passed on both the original host and foundation Python 3.12.
-- Shared frontend baseline: typecheck, lint, 47 unit tests and build passed locally.
+- Independent standards/specification/UI reviews found issues that were fixed;
+  final focused reviews have no remaining blocker in the owned code.
 
-Database fixtures roll back their work; tests use only agent-2's isolated test
-DB. No migrations, shared models, dependency manifests, other feature code or
-another contributor's handoff were edited by this slice.
+Native Chromium QA used the real API/PostgreSQL at http://127.0.0.1:5172 through
+its same-origin proxy (API 8002), at 1440x1000 and 390x844. Browser plugin was not
+available; existing Playwright was used. The flow exercised real staff login,
+template14 -> draft/reload -> quotation -> acknowledged confirmation -> ACTIVE
+and reload, frozen variant price/line amount, tax names/rates, and a rejected
+DUE_BILLING_PENDING edit with preserved form input. No page error, blank screen,
+framework overlay or page-width overflow; the deliberately exercised 409 is the
+only expected console error. Screenshots were inspected. Temporary QA scripts,
+reports and screenshots stay outside the repository in /tmp/cadentra-agent2-qa.
 
-## Current work and remaining acceptance
+## Remaining integration gates and honest limits
 
-Persistent templates, draft/quotation/confirmation/activation, policy actions,
-worker lifecycle integration, safe customer query/action services and staff UI
-are being implemented in owned paths. T10-T13, T33-T34, cross-customer T06 and
-integrated browser T31 still need actual service/API/browser evidence. Financial
-concurrency remains a joint integration check with Noel Biju. No deployment or
-external email delivery is claimed.
+The last broad backend run after billing PR #7 reported 176 passed/8 failed:
+the obsolete coordinator-owned subscriptions501 assertion, committed financial
+race fixtures polluting global empty-table assumptions, and two owned assertions
+that were subsequently made before/after or baseline-relative. The final owned
+101-case suite passes in a clean DB. Root/Noel are fixing shared tests/fixture
+isolation; do not claim the full integrated suite is green until it is rerun.
+No global truncate, financial-data deletion or database drop was performed.
 
-Gate A is released and incorporated, with migrations 0001/0002 and shared imports.
-No additional model or migration change is requested. Schema needs, if discovered,
-will be sent to Midhun P M with type/nullability/default/rationale. Frozen contracts
-remain coordinator-owned; docs/05 and docs/06 are authoritative.
+T09-T13/T33/T34 have service/API evidence, with lifecycle catch-up tests using
+seeded durable outcomes. Still required before full-role goal completion:
+1. Reviewed merge and a green full integrated suite after the owner fixes.
+2. Actual billing-generated pause/catch-up/expiry outcomes and a real
+   billing-versus-action/line-edit race using the final recurring issuer.
+3. Joint T31 through invoice creation/payment/customer-portal reload, plus live
+   portal ownership isolation. The native staff journey proves only its portion.
+No deployment, external email delivery or hardware/performance claim is made.
 
-## Git and integration
+## Coordination and PR
 
-SSH gh-agent2 authenticated thanushreesuresh and pushes use that key with
-IdentitiesOnly. Existing global credentials and author configuration are preserved.
-The available CLI/API login is 9MidhunPM, so Midhun P M creates the prepared PR.
-Previous subscription PR #1 is merged. Current branch incorporates reviewed main
-without rebasing shared history; keep atomic commits at most 30 minutes apart
-while active and refresh/incorporate reviewed main at least hourly. Coordinator
-serializes tested PR integration; do not bypass checks to meet a checkpoint.
+SSH-only: push with verified gh-agent2/IdentitiesOnly, preserve real commit author,
+and send tested heads to Midhun P M. No gh login, OAuth/token setup or global
+account switching. Coordinator creates/reviews/merges PRs using existing auth.
+Keep atomic active-work commits within 30 minutes, incorporate reviewed main at
+least hourly, and report ready slices sooner. Preserve both earlier feature branches.
 
-## Prepared PR
-
-Title: Expose immutable subscription period inputs for billing
+Title: Implement persisted subscription workflows and staff screens
 Target: main
-Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-lifecycle
+Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-actions
 
-Description: Read the next unprocessed subscription cycle through immutable
-pricing inputs, preserving frozen prices and original calendar bounds while
-resolving product-tax memberships per service period. Provide explicit JSON
-materialization for invoice snapshots. Real PostgreSQL contract tests and the
-full backend suite pass. Lifecycle/API/UI work remains in progress and is not
-claimed by this getter slice.
+Description: Persist templates, copied quotations, lifecycle/policy actions and
+safe customer service boundaries, connected to real staff screens. Preserve
+quoted terms, original calendar anchors, due-period guards and immutable billing
+inputs. Add PostgreSQL/API, real template-concurrency and browser evidence.
+Owned tests pass; shared broad-suite fixture/test corrections and joint financial
+worker/portal end-to-end gates remain explicit integration dependencies.
