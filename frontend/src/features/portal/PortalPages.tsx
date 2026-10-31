@@ -73,6 +73,55 @@ function usePage() {
   const page = Number.isSafeInteger(value) && value > 0 ? value : 1;
   return { page, change: (next: number) => setSearch({ page: String(next) }) };
 }
+
+function PortalListState({
+  data,
+  record,
+  onFirstPage,
+  children,
+}: {
+  data: { items: unknown[]; total: number; page: number };
+  record: "subscription" | "invoice";
+  onFirstPage: () => void;
+  children: ReactNode;
+}) {
+  if (data.items.length) return <>{children}</>;
+  const records = `${record}s`;
+  const noPageRecords = data.page > 1 || data.total > 0;
+  return (
+    <div className="portal-surface portal-empty-page">
+      <EmptyState
+        title={noPageRecords ? `No ${records} on this page` : `No ${records} yet`}
+        description={`${data.total} ${data.total === 1 ? record : records} in total. No records on page ${data.page}.`}
+      />
+      {data.page > 1 && (
+        <Button variant="secondary" onClick={onFirstPage}>
+          Back to first page
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function PortalTableScroll({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="portal-table-scroll"
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+    >
+      {children}
+    </div>
+  );
+}
+
 function ServicePeriod({ start, end }: { start: string; end: string }) {
   return (
     <span className="portal-date-range">
@@ -112,53 +161,59 @@ export function SubscriptionListPage() {
       />
       <PortalState {...result}>
         {result.data && (
-          <DataTable
-            caption="My subscriptions"
-            rows={result.data.items}
-            columns={[
-              {
-                key: "number",
-                header: "Subscription",
-                render: (row) => (
-                  <Link
-                    className="portal-record-link"
-                    to={`/portal/subscriptions/${encodeURIComponent(row.id)}`}
-                  >
-                    {row.number}
-                    <ArrowUpRight size={13} aria-hidden="true" />
-                  </Link>
-                ),
-              },
-              {
-                key: "state",
-                header: "Status",
-                render: (row) => <StatusBadge status={row.state} />,
-              },
-              {
-                key: "dates",
-                header: "Service period",
-                render: (row) => (
-                  <ServicePeriod start={row.start_date} end={row.end_date} />
-                ),
-              },
-              {
-                key: "close",
-                header: "Scheduled closure",
-                render: (row) =>
-                  row.close_effective_on ? (
-                    <DateLabel value={row.close_effective_on} />
-                  ) : (
-                    "—"
+          <PortalListState
+            data={result.data}
+            record="subscription"
+            onFirstPage={() => change(1)}
+          >
+            <DataTable
+              caption="My subscriptions"
+              rows={result.data.items}
+              columns={[
+                {
+                  key: "number",
+                  header: "Subscription",
+                  render: (row) => (
+                    <Link
+                      className="portal-record-link"
+                      to={`/portal/subscriptions/${encodeURIComponent(row.id)}`}
+                    >
+                      {row.number}
+                      <ArrowUpRight size={13} aria-hidden="true" />
+                    </Link>
                   ),
-              },
-            ]}
-            getRowKey={(row) => row.id}
-            page={result.data.page}
-            pageSize={result.data.page_size}
-            total={result.data.total}
-            onPageChange={change}
-            emptyTitle="No subscriptions yet"
-          />
+                },
+                {
+                  key: "state",
+                  header: "Status",
+                  render: (row) => <StatusBadge status={row.state} />,
+                },
+                {
+                  key: "dates",
+                  header: "Service period",
+                  render: (row) => (
+                    <ServicePeriod start={row.start_date} end={row.end_date} />
+                  ),
+                },
+                {
+                  key: "close",
+                  header: "Scheduled closure",
+                  render: (row) =>
+                    row.close_effective_on ? (
+                      <DateLabel value={row.close_effective_on} />
+                    ) : (
+                      "—"
+                    ),
+                },
+              ]}
+              getRowKey={(row) => row.id}
+              page={result.data.page}
+              pageSize={result.data.page_size}
+              total={result.data.total}
+              onPageChange={change}
+              emptyTitle="No subscriptions yet"
+            />
+          </PortalListState>
         )}
       </PortalState>
     </section>
@@ -178,72 +233,78 @@ export function InvoiceListPage() {
       />
       <PortalState {...result}>
         {result.data && (
-          <DataTable
-            caption="My invoices"
-            rows={result.data.items}
-            columns={[
-              {
-                key: "number",
-                header: "Invoice",
-                render: (row) => (
-                  <Link
-                    className="portal-record-link"
-                    to={`/portal/invoices/${encodeURIComponent(row.id)}`}
-                  >
-                    {row.number}
-                    <ArrowUpRight size={13} aria-hidden="true" />
-                  </Link>
-                ),
-              },
-              {
-                key: "due",
-                header: "Due date",
-                render: (row) => <DateLabel value={row.due_date} />,
-              },
-              {
-                key: "total",
-                header: "Total",
-                render: (row) => (
-                  <Money amount={row.total} currency={row.currency} />
-                ),
-              },
-              {
-                key: "paid",
-                header: "Recorded payments",
-                render: (row) => (
-                  <Money amount={row.paid_amount} currency={row.currency} />
-                ),
-              },
-              {
-                key: "balance",
-                header: "Balance",
-                render: (row) => (
-                  <div>
-                    <Money amount={row.balance_due} currency={row.currency} />
-                    {["DRAFT", "CANCELLED"].includes(row.status) && (
-                      <p className="portal-muted">Not payable</p>
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: "status",
-                header: "Status",
-                render: (row) => (
-                  <div className="portal-statuses">
-                    <StatusBadge status={row.collection_status} />
-                    {row.overdue && <StatusBadge status="OVERDUE" />}
-                  </div>
-                ),
-              },
-            ]}
-            getRowKey={(row) => row.id}
-            page={result.data.page}
-            pageSize={result.data.page_size}
-            total={result.data.total}
-            onPageChange={change}
-            emptyTitle="No invoices yet"
-          />
+          <PortalListState
+            data={result.data}
+            record="invoice"
+            onFirstPage={() => change(1)}
+          >
+            <DataTable
+              caption="My invoices"
+              rows={result.data.items}
+              columns={[
+                {
+                  key: "number",
+                  header: "Invoice",
+                  render: (row) => (
+                    <Link
+                      className="portal-record-link"
+                      to={`/portal/invoices/${encodeURIComponent(row.id)}`}
+                    >
+                      {row.number}
+                      <ArrowUpRight size={13} aria-hidden="true" />
+                    </Link>
+                  ),
+                },
+                {
+                  key: "due",
+                  header: "Due date",
+                  render: (row) => <DateLabel value={row.due_date} />,
+                },
+                {
+                  key: "total",
+                  header: "Total",
+                  render: (row) => (
+                    <Money amount={row.total} currency={row.currency} />
+                  ),
+                },
+                {
+                  key: "paid",
+                  header: "Recorded payments",
+                  render: (row) => (
+                    <Money amount={row.paid_amount} currency={row.currency} />
+                  ),
+                },
+                {
+                  key: "balance",
+                  header: "Balance",
+                  render: (row) => (
+                    <div>
+                      <Money amount={row.balance_due} currency={row.currency} />
+                      {["DRAFT", "CANCELLED"].includes(row.status) && (
+                        <p className="portal-muted">Not payable</p>
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (row) => (
+                    <div className="portal-statuses">
+                      <StatusBadge status={row.collection_status} />
+                      {row.overdue && <StatusBadge status="OVERDUE" />}
+                    </div>
+                  ),
+                },
+              ]}
+              getRowKey={(row) => row.id}
+              page={result.data.page}
+              pageSize={result.data.page_size}
+              total={result.data.total}
+              onPageChange={change}
+              emptyTitle="No invoices yet"
+            />
+          </PortalListState>
         )}
       </PortalState>
     </section>
@@ -416,6 +477,7 @@ function SubscriptionContent({
                 <dt>Renewed from</dt>
                 <dd>
                   <Link
+                    className="portal-inline-link"
                     to={`/portal/subscriptions/${encodeURIComponent(row.prior_subscription_id)}`}
                   >
                     View previous subscription
@@ -527,7 +589,7 @@ function SubscriptionContent({
             {row.tax_preview_basis}.
           </p>
           {row.lines.length ? (
-            <div className="portal-table-scroll">
+            <PortalTableScroll label="Agreed product lines">
               <table>
                 <thead>
                   <tr>
@@ -562,7 +624,7 @@ function SubscriptionContent({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </PortalTableScroll>
           ) : (
             <EmptyState title="No product lines" />
           )}
@@ -602,7 +664,7 @@ function SubscriptionContent({
                     to={`/portal/invoices/${encodeURIComponent(invoice.id)}`}
                   >
                     <FileText size={16} aria-hidden="true" />
-                    {invoice.number}
+                    <span className="portal-record-number">{invoice.number}</span>
                     <StatusBadge status={invoice.status} />
                     <ArrowUpRight size={13} aria-hidden="true" />
                   </Link>
@@ -754,12 +816,30 @@ export function InvoiceDetailPage() {
           <div className="portal-detail-layout">
             <div className="portal-detail-main">
               <div className="portal-surface">
-                <div className="portal-section-heading">
-                  <h2>{row.number}</h2>
-                  <div className="portal-statuses">
-                    <StatusBadge status={row.collection_status} />
-                    {row.overdue && <StatusBadge status="OVERDUE" />}
+                <div className="portal-section-heading portal-invoice-heading">
+                  <div className="portal-invoice-identity">
+                    <h2>{row.number}</h2>
+                    <div className="portal-statuses">
+                      <StatusBadge status={row.collection_status} />
+                      {row.overdue && <StatusBadge status="OVERDUE" />}
+                    </div>
                   </div>
+                  <dl
+                    className="portal-heading-balance"
+                    aria-label="Invoice balance summary"
+                  >
+                    <dt>
+                      {["DRAFT", "CANCELLED"].includes(row.status)
+                        ? "Document balance"
+                        : "Remaining balance"}
+                    </dt>
+                    <dd>
+                      <Money amount={row.balance_due} currency={row.currency} />
+                    </dd>
+                    {["DRAFT", "CANCELLED"].includes(row.status) && (
+                      <dd className="portal-muted">Not payable</dd>
+                    )}
+                  </dl>
                 </div>
                 <p className="portal-muted">
                   {row.seller_snapshot?.name || "Brightloop Software"}
@@ -815,7 +895,7 @@ export function InvoiceDetailPage() {
                     </dd>
                   </div>
                 </dl>
-                <div className="portal-table-scroll">
+                <PortalTableScroll label="Stored invoice lines">
                   <table>
                     <thead>
                       <tr>
@@ -874,7 +954,7 @@ export function InvoiceDetailPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </PortalTableScroll>
                 <dl className="portal-totals">
                   {[
                     ["Subtotal", row.subtotal],
@@ -894,7 +974,7 @@ export function InvoiceDetailPage() {
               <div className="portal-surface">
                 <h2>Recorded payments</h2>
                 {row.payments.length ? (
-                  <div className="portal-table-scroll">
+                  <PortalTableScroll label="Recorded payments">
                     <table>
                       <thead>
                         <tr>
@@ -920,7 +1000,7 @@ export function InvoiceDetailPage() {
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                  </PortalTableScroll>
                 ) : (
                   <p className="portal-muted">
                     No payments have been recorded.
