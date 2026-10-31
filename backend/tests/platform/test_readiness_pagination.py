@@ -21,11 +21,11 @@ from app.modules.identity.rate_limit import reset_rate_limits
 @pytest.mark.parametrize(
     "revisions,status",
     [
-        (["0002"], 200),
+        (["0003"], 200),
         (["0001"], 503),
         (["unknown-revision"], 503),
         ([], 503),
-        (["0002", "unknown-revision"], 503),
+        (["0003", "unknown-revision"], 503),
     ],
 )
 def test_readiness_requires_exactly_the_current_migration(revisions, status):
@@ -42,7 +42,7 @@ def test_readiness_requires_exactly_the_current_migration(revisions, status):
         response = client.get("/api/v1/health")
     assert response.status_code == status
     if status == 200:
-        assert response.json()["data"] == {"status": "ready", "migration": "0002"}
+        assert response.json()["data"] == {"status": "ready", "migration": "0003"}
     else:
         assert response.json()["error"]["code"] == "NOT_READY"
         assert "unknown-revision" not in response.text

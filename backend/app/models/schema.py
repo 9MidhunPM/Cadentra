@@ -78,8 +78,23 @@ class User(Record, Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
 
 
+class DevAccessGrant(Record, Base):
+    __tablename__ = "dev_access_grants"
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    operator_admin_id: Mapped[UUID] = fk("users.id", index=True)
+    original_session_id: Mapped[UUID] = fk("sessions.id")
+    dev_csrf: Mapped[str] = mapped_column(String(128))
+    credential_fingerprint: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class SessionRecord(Record, Base):
     __tablename__ = "sessions"
+    dev_grant_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("dev_access_grants.id", ondelete="RESTRICT",
+            use_alter=True, name="fk_sessions_dev_grant_id_dev_access_grants"), index=True
+    )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     user_id: Mapped[UUID] = fk("users.id", index=True)
     csrf_token: Mapped[str] = mapped_column(String(128))

@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     smtp_starttls: bool = False
     worker_poll_seconds: int = Field(default=30, gt=0)
     worker_batch_size: int = Field(default=100, gt=0, le=1000)
+    dev_tools_enabled: bool = False
+    demo_instance: bool = False
+    dev_password_hash: str = Field(default="", repr=False)
+    dev_grant_cookie_name: str = "cadentra_dev_grant"
+
     demo_admin_email: str = "admin@example.com"
     demo_admin_password: str = Field(default="", repr=False)
 

@@ -5,6 +5,9 @@ x-backend-environment: &backend-environment
   APP_ORIGIN: ${APP_ORIGIN:?Set the HTTPS app origin in the private Dokploy environment}
   ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set explicit HTTPS allowed origins privately}
   SESSION_COOKIE_SECURE: "true"
+  DEV_TOOLS_ENABLED: ${DEV_TOOLS_ENABLED:-false}
+  DEMO_INSTANCE: ${DEMO_INSTANCE:-false}
+  DEV_PASSWORD_HASH: ${DEV_PASSWORD_HASH:-}
   TRUSTED_WEB_PROXY_IPS: "172.31.250.2"
   DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cadentra}:${POSTGRES_PASSWORD:?Set the database password privately}@db:5432/${POSTGRES_DB:-cadentra_demo}
   BUSINESS_TIMEZONE: ${BUSINESS_TIMEZONE:-Asia/Kolkata}

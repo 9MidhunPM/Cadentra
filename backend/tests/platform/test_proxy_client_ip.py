@@ -38,7 +38,7 @@ def application(monkeypatch):
     # Health DB behavior is outside these middleware tests: this adapter only
     # lets accepted readiness requests reach the existing health handler.
     app.dependency_overrides[get_session] = lambda: SimpleNamespace(
-        execute=lambda statement: None, scalars=lambda statement: SimpleNamespace(all=lambda: ["0002"])
+        execute=lambda statement: None, scalars=lambda statement: SimpleNamespace(all=lambda: ["0003"])
     )
 
     @app.get("/test/client")
