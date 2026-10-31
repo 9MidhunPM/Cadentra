@@ -1,7 +1,7 @@
 # Subscription acceptance cases
 
-Status: CALENDAR, BILLING INPUTS, LIFECYCLE AND API TESTS PASS;
-ACTUAL WORKER/ACTION RACES AND JOINT PORTAL JOURNEY REMAIN IN INTEGRATION.
+Status: CALENDAR, BILLING INPUTS, LIFECYCLE, API, ACTUAL WORKER AND ACTION RACE
+TESTS PASS; JOINT PAYMENT/CUSTOMER-PORTAL BROWSER JOURNEY REMAINS IN INTEGRATION.
 
 Gate A was released on reviewed main 5b78567. Set DATABASE_URL and
 TEST_DATABASE_URL to this workspace's isolated databases before database tests.
@@ -11,8 +11,10 @@ TEST_DATABASE_URL to this workspace's isolated databases before database tests.
 Run `backend/.venv/bin/python -m pytest backend/tests/subscriptions -q` from the
 repository root, with DATABASE_URL and TEST_DATABASE_URL set to the same isolated
 PostgreSQL `*_test` database with reviewed migrations applied. The current owned
-suite passes 114 tests and 80 subtests on reviewed main 13f2fef plus the boundary
-coverage in this slice: 10 calendar, 25 billing-input, 52 workflow and 27 API tests.
+suite contains 124 tests and 80 subtests on reviewed main 382fa2b plus this slice:
+10 calendar, 25 billing-input, 52 workflow, 27 API, four worker and six race tests.
+The full integrated backend run passed 314 tests and 121 subtests in 59.25s,
+including all 124 owned cases, against cadentra_subscriptions_integration_test.
 
 Workflow/API tests exercise real templates, copied defaults, quoted price and
 policy snapshots, required states, exclusive deadlines, activation dates,
@@ -22,11 +24,25 @@ actual customer policy denials, and a two-connection template copy/edit lock rac
 Due-cycle tests reject line edits, pause and close without changing records or
 audits. Renewal rejects both overlapping terms and backdated expired gaps.
 
-Some lifecycle tests deliberately seed durable billing outcomes to isolate the
-subscription service. They do not establish actual recurring-worker issuance or
-billing/action concurrency. Record those separate integration results before
-marking T13/T33/T34 complete. Native staff-browser evidence and remaining joint
-T31 payment/customer-portal checks are recorded in handoffs/thanushree-suresh.md.
+Some lifecycle unit tests deliberately seed durable billing outcomes to isolate
+the subscription service. Separate integration tests establish actual issuance:
+
+- `test_worker_integration.py` creates subscriptions through the real required
+  states and invokes the shared lifecycle/billing/outbox worker. It verifies
+  bounded downtime catch-up, historical PAUSED outcomes, deferred terminal
+  closure, original monthly anchors, full-priced shortened final cycles and
+  early-close preservation of confirmed unpaid debt.
+- `test_billing_action_races.py` runs the real issuer against edit/pause/close in
+  both lock orders. Three distinct physical connections verify actual PostgreSQL
+  Lock waits and blocker PIDs. Old invoice IDs, dates and snapshots stay intact;
+  accepted actions affect only the next cycle, and rejected actions do not mutate
+  revisions, lines, schedules or audits.
+
+Both integration fixtures migrate and clean up only their freshly generated UUID
+schemas. They do not remove public data or other workstreams' financial fixtures.
+PostgreSQL 18.6 at read committed isolation was used. Native staff-browser
+evidence and remaining joint T31 payment/customer-portal checks are recorded in
+handoffs/thanushree-suresh.md.
 
 ### Billing-input tests
 
@@ -95,12 +111,12 @@ reported independently above.
 Additional scenarios cover minimum product quantity, requested-start availability
 boundaries, template line overrides and the lifecycle-specific edit matrix.
 
-## Remaining integration verification
+## Integration boundaries
 
-Use the integrated backend's actor, clock, models, sessions and test database
-fixtures. Actual worker checks must call the shared worker and finalized billing
-issuer. Permission checks must exercise the real portal service. Keep the joint
-browser journey in Sherin Saji's shared harness. No duplicate business logic
+The tests use the integrated backend's actor, clock, models, sessions and test
+database fixtures. Worker checks call the shared worker and finalized billing
+issuer. The remaining joint browser journey uses Sherin Saji's shared harness and
+must exercise the actual payment and portal services. No duplicate business logic
 belongs in test steps.
 
 Exercise persisted actions and worker catch-up against disposable PostgreSQL.
