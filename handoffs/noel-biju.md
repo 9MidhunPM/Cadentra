@@ -5,6 +5,7 @@ Status: BILLING INTEGRATED; FULL T31 FUNCTIONAL JOURNEY PASSED; FINAL T30 EXTERN
 Role: Billing & Payments
 Branch: feature/billing-closeout
 Reviewed main incorporated: 00ffa99d1c05e7bc562f1ff71a9d781be17cd2fd (invoice URL correction, portal lifecycle, production frontend package and durable owner-SSH workflow)
+Latest reviewed sync: 89017d67c0a866e56536aa9972bf11c6164967f9 (coordinator's backend client-IP/security and status changes); billing implementation files remain identical to 00ffa99.
 Issuer implementation: 41dffac6a826930198e53242ed3b5e0e94cd619e
 Published issuer review head: 96b2a85b19207bf3772574b9c11bdecab577ad74
 Controlled invoice-race extension: 45c7465 (preserved from 7ca967f on the prior branch)
@@ -111,6 +112,8 @@ The completion audit's three own-scope evidence gaps are closed by the focused P
 The payment/picker UI and URL correction are integrated, and the full functional T31 journey passed. Remaining: Sherin Saji's final actual billing-page T30 measurements on the corrected main and a fresh isolated namespace. The earlier benchmark explicitly excluded placeholder staff billing surfaces; it does not count as those measurements. Preserve immutable rule history during fixture handling and resolve any billing defects exposed by the final run before marking the workstream complete.
 
 The coordinator explicitly paused final T30 execution until the reviewed production client-IP/proxy contract is settled. That prerequisite remained open on 2026-10-31 at 07:42 UTC; no final benchmark runner or completed measurements were available. The guarded fixture preparation and other owners' proxy work are separate from Noel's completed billing implementation. To finish this workstream, obtain the exact reviewed runtime head and final raw T30 artifact for the 5,000-subscription/20,000-invoice dataset, inspect actual billing-page counts and timings, fix any billing defect, then publish the final handoff through coordinator review and the serialized owner-SSH workflow. No timings or completed performance status are inferred from the earlier partial benchmark.
+
+The backend portion was subsequently published at main 89017d6. The coordinator's 07:45 update still requires native production NGINX validation and exact review; final T30 remains held until that external prerequisite changes.
 
 Keep atomic active-work commits no more than 30 minutes apart. Incorporate reviewed main at least hourly and send exact tested heads to Midhun P M. The coordinator's latest workflow instruction is owner SSH integration after code review and an explicit serialized go-ahead, with no new GitHub API/PR merge operations. Preserve historical PR records and original authorship; never force-push.
 
