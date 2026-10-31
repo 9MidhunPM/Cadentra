@@ -45,7 +45,8 @@ the completed T31 payment/customer-portal checks are recorded in
 handoffs/thanushree-suresh.md. The actual joint browser scenario passed at clean
 41ef6df, with required states, one invoice, two payments, persisted customer
 actions/linked renewal and cross-customer 404/no-mutation assertions. This is
-separate from the unbound Gherkin specification below.
+separate from the unbound Gherkin specification below. The sanitized actual-run
+report is committed at backend/tests/reporting/evidence/t31-2026-10-31.json.
 
 ### Billing-input tests
 

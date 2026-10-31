@@ -15,6 +15,7 @@ Actual worker/action race verification: a9817959c5af35b06b5d1eecdf3279974423334a
 Theme notice contrast fix: a9b7a0c1b9f6b453395565effc1f34457c5079d6
 Owner SSH integration: 18e88ff7e1b9abfb2d17c4be50b2e929267c437f
 Joint browser/test-only correction: 41ef6df0521d853348803cd71471d5852b7bc313 (Sherin Saji)
+Committed browser proof: 471808e69c2760571086ad6d6880ef03ff21eb82 (Sherin Saji)
 Prior getter implementation a40fe5a and calendar bdb1cf2 were integrated in PRs #6/#1.
 
 ## Delivered behavior
@@ -171,7 +172,9 @@ invoice/payment counts and settled amounts stayed unchanged; safe projections an
 zero browser page errors were asserted. All ten verification stages are present.
 
 Reproducible assertion source: frontend/e2e/complete-journey.ts and
-frontend/playwright.journey.config.ts. Local sanitized proof and screenshots are
+frontend/playwright.journey.config.ts. The inspected sanitized report is committed
+at backend/tests/reporting/evidence/t31-2026-10-31.json; its method is in that
+directory's README. It exactly matches the local actual-run report. Screenshots are
 under /home/midhun/Coading/Cadentra/agent4/frontend/test-results/complete-journey/
 complete-journey.ts-T31-pr-5f403-nd-isolated-customer-portal-complete-journey/.
 The report is T31-evidence.json; renewal, paid-invoice, reconciled-report and print
