@@ -134,6 +134,36 @@ def payload(amount, key, **kwargs):
     )
 
 
+def test_customer_projection_excludes_nested_private_address_fields(invoice_case):
+    iid, _, customer_id, factory = invoice_case
+    with factory() as db, db.begin():
+        row = db.get(Invoice, iid)
+        row.customer_snapshot = {
+            "display_name": "Customer",
+            "email": "customer@example.invalid",
+            "billing_address": {
+                "city": "Kochi",
+                "line1": "Example Street",
+                "staff_notes": "SECRET_CUSTOMER_ADDRESS",
+                "country": {"name": "India", "private": "NESTED_SECRET"},
+            },
+        }
+        row.seller_snapshot = {
+            "name": "Brightloop",
+            "address": {"city": "Kochi", "internal_cost": "SECRET_SELLER_ADDRESS"},
+        }
+    actor = Actor(uuid4(), "CUSTOMER", customer_id)
+    with factory() as db:
+        detail = invoices.get_invoice_for_actor(db, actor, iid)
+        printable = invoices.render_invoice_for_actor(db, actor, iid)
+    assert detail["customer_snapshot"]["billing_address"] == {
+        "city": "Kochi",
+        "line1": "Example Street",
+    }
+    assert detail["seller_snapshot"]["address"] == {"city": "Kochi"}
+    assert "SECRET_" not in printable and "NESTED_SECRET" not in printable
+
+
 def test_partial_full_and_matching_replay_after_paid(invoice_case):
     iid, actor, _, factory = invoice_case
     with factory() as db:
