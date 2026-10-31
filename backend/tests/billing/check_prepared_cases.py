@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check prepared fixture expectations with the planning oracle, not the app."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -48,7 +49,8 @@ class PreparedPricingCases(unittest.TestCase):
     def test_line_order_does_not_change_discount_assignment(self):
         calculate = load_reference()
         case = next(
-            case for case in load_cases(CASES_FILE)
+            case
+            for case in load_cases(CASES_FILE)
             if case["id"] == "remainder_tie_uses_key_not_input_order"
         )
         original = calculate(case)
@@ -57,12 +59,12 @@ class PreparedPricingCases(unittest.TestCase):
         actual = calculate(reordered)
         for key in ("subtotal", "discount", "tax", "total"):
             self.assertEqual(original[key], actual[key])
-        original_allocations = dict(zip(
-            (line["key"] for line in case["lines"]), original["line_discounts"]
-        ))
-        reordered_allocations = dict(zip(
-            (line["key"] for line in reordered["lines"]), actual["line_discounts"]
-        ))
+        original_allocations = dict(
+            zip((line["key"] for line in case["lines"]), original["line_discounts"], strict=True)
+        )
+        reordered_allocations = dict(
+            zip((line["key"] for line in reordered["lines"]), actual["line_discounts"], strict=True)
+        )
         self.assertEqual(original_allocations, reordered_allocations)
 
     def test_fixture_money_is_finite_decimal_text(self):

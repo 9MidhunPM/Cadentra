@@ -59,3 +59,7 @@ After integration each teammate fetches the reviewed baseline and merges main in
 ## Gate A merge
 
 The first documentation commit is ready for teammate onboarding, not full domain implementation. Midhun P M creates the backend models/migration, shared dependencies and importable module stubs; Sherin Saji creates shared frontend primitives, feature UI stubs and route imports. Both foundations must be integrated and boot together, the migration must apply, all feature imports must work and API/error/auth/amount shapes must agree before full subscription and billing work begins. Every domain branch then incorporates the same reviewed Gate A baseline.
+
+## Hourly integration checkpoints
+
+The user requested hourly branch integration on 31 October 2026. During active work each contributor checks reviewed origin/main at least hourly, incorporates it without rewriting history, and reports tested slice heads/PRs and dependencies. Midhun P M serializes ready PR merges and reports failures instead of merging broken work to satisfy a timer. Ready slices may integrate earlier. This is the active team workflow, not an unattended system scheduler or proof of organiser compliance.

@@ -8,7 +8,6 @@ from pathlib import Path
 
 from app.modules.subscriptions.calendar import CycleSnapshot, get_cycle_bounds
 
-
 CASES = json.loads(Path(__file__).with_name("calendar_cases.json").read_text())
 CADENCES = ("DAILY", "WEEKLY", "MONTHLY", "YEARLY")
 
@@ -36,13 +35,18 @@ class CycleBoundsTests(unittest.TestCase):
                     start_date=date.fromisoformat(case["anchor"]),
                     end_date=date.fromisoformat(case["end_date"]),
                     cadence=case["cadence"],
-                    close_effective_on=(date.fromisoformat(case["close_effective_on"])
-                                        if case["close_effective_on"] else None),
+                    close_effective_on=(
+                        date.fromisoformat(case["close_effective_on"])
+                        if case["close_effective_on"]
+                        else None
+                    ),
                 )
                 self.assertEqual(
                     get_cycle_bounds(snapshot, case["cycle_index"]),
-                    (date.fromisoformat(case["expected_start"]),
-                     date.fromisoformat(case["expected_end"])),
+                    (
+                        date.fromisoformat(case["expected_start"]),
+                        date.fromisoformat(case["expected_end"]),
+                    ),
                 )
 
     def test_invalid_cycle_indices_raise_value_error(self):
@@ -58,14 +62,16 @@ class CycleBoundsTests(unittest.TestCase):
                 get_cycle_bounds(snapshot, 10**40)
 
     def test_invalid_snapshot_dates_are_rejected(self):
-        valid = {"start_date": date(2027, 1, 1), "end_date": date(2028, 1, 1),
-                 "cadence": "DAILY"}
+        valid = {"start_date": date(2027, 1, 1), "end_date": date(2028, 1, 1), "cadence": "DAILY"}
         invalid_fields = (
-            {"start_date": "2027-01-01"}, {"start_date": None},
+            {"start_date": "2027-01-01"},
+            {"start_date": None},
             {"start_date": datetime(2027, 1, 1)},
-            {"end_date": "2028-01-01"}, {"end_date": None},
+            {"end_date": "2028-01-01"},
+            {"end_date": None},
             {"end_date": datetime(2028, 1, 1)},
-            {"end_date": date(2027, 1, 1)}, {"end_date": date(2026, 12, 31)},
+            {"end_date": date(2027, 1, 1)},
+            {"end_date": date(2026, 12, 31)},
             {"close_effective_on": "2027-02-01"},
             {"close_effective_on": datetime(2027, 2, 1)},
             {"close_effective_on": date(2026, 12, 31)},
@@ -77,20 +83,19 @@ class CycleBoundsTests(unittest.TestCase):
     def test_a_cycle_starting_at_expiry_or_closure_does_not_exist(self):
         for close in (None, date(2027, 2, 28)):
             with self.subTest(close=close):
-                snapshot = CycleSnapshot(date(2027, 1, 31), date(2027, 2, 28),
-                                         "MONTHLY", close)
-                self.assertEqual(get_cycle_bounds(snapshot, 0),
-                                 (date(2027, 1, 31), date(2027, 2, 28)))
+                snapshot = CycleSnapshot(date(2027, 1, 31), date(2027, 2, 28), "MONTHLY", close)
+                self.assertEqual(
+                    get_cycle_bounds(snapshot, 0), (date(2027, 1, 31), date(2027, 2, 28))
+                )
                 self.assertIsNone(get_cycle_bounds(snapshot, 1))
-        closed_at_start = CycleSnapshot(date(2027, 1, 31), date(2028, 1, 1),
-                                        "MONTHLY", date(2027, 1, 31))
+        closed_at_start = CycleSnapshot(
+            date(2027, 1, 31), date(2028, 1, 1), "MONTHLY", date(2027, 1, 31)
+        )
         self.assertIsNone(get_cycle_bounds(closed_at_start, 0))
 
     def test_early_close_caps_service_before_original_expiry(self):
-        snapshot = CycleSnapshot(date(2027, 1, 31), date(2027, 8, 1),
-                                 "MONTHLY", date(2027, 3, 31))
-        self.assertEqual(get_cycle_bounds(snapshot, 1),
-                         (date(2027, 2, 28), date(2027, 3, 31)))
+        snapshot = CycleSnapshot(date(2027, 1, 31), date(2027, 8, 1), "MONTHLY", date(2027, 3, 31))
+        self.assertEqual(get_cycle_bounds(snapshot, 1), (date(2027, 2, 28), date(2027, 3, 31)))
         self.assertIsNone(get_cycle_bounds(snapshot, 2))
 
     def test_arbitrarily_large_valid_indices_are_exhausted_without_overflow(self):
@@ -103,19 +108,24 @@ class CycleBoundsTests(unittest.TestCase):
         for cadence in CADENCES:
             with self.subTest(cadence=cadence):
                 snapshot = CycleSnapshot(date(9999, 12, 30), date.max, cadence)
-                self.assertEqual(get_cycle_bounds(snapshot, 0),
-                                 (date(9999, 12, 30), date.max))
+                self.assertEqual(get_cycle_bounds(snapshot, 0), (date(9999, 12, 30), date.max))
                 self.assertIsNone(get_cycle_bounds(snapshot, 1))
 
     def test_snapshot_is_frozen_and_repeated_queries_do_not_mutate_it(self):
         snapshot = CycleSnapshot(date(2027, 1, 31), date(2028, 1, 1), "MONTHLY")
-        before = (snapshot.start_date, snapshot.end_date, snapshot.cadence,
-                  snapshot.close_effective_on)
+        before = (
+            snapshot.start_date,
+            snapshot.end_date,
+            snapshot.cadence,
+            snapshot.close_effective_on,
+        )
         first = get_cycle_bounds(snapshot, 1)
         get_cycle_bounds(snapshot, 2)
         self.assertEqual(get_cycle_bounds(snapshot, 1), first)
-        self.assertEqual((snapshot.start_date, snapshot.end_date, snapshot.cadence,
-                          snapshot.close_effective_on), before)
+        self.assertEqual(
+            (snapshot.start_date, snapshot.end_date, snapshot.cadence, snapshot.close_effective_on),
+            before,
+        )
         with self.assertRaises(FrozenInstanceError):
             snapshot.start_date = date(2027, 2, 28)
 

@@ -1,14 +1,14 @@
 """Actual-calculator acceptance: PYTHONPATH=backend python3 -m unittest discover -s backend/tests/billing -p test_pricing.py -v."""
+
 from __future__ import annotations
 
 import json
 import unittest
 from dataclasses import FrozenInstanceError
-from decimal import Decimal, ROUND_DOWN, localcontext
+from decimal import ROUND_DOWN, Decimal, localcontext
 from pathlib import Path
 
 from app.modules.billing.pricing import PricingLine, SelectedDiscount, calculate_invoice
-
 
 ROOT = Path(__file__).resolve().parents[3]
 ZERO = Decimal("0.00")
@@ -16,19 +16,32 @@ ZERO = Decimal("0.00")
 
 def fixture_inputs(case: dict) -> tuple[tuple[PricingLine, ...], SelectedDiscount | None]:
     """Normalize source fixtures to the agreed, already-priced line boundary."""
-    lines = [PricingLine(
-        stable_line_key="BASE", quantity=1, unit_price=Decimal(case["base_fee"]),
-        tax_rates=tuple(Decimal(rate) for rate in case["base_tax_rates"]),
-    )]
-    lines.extend(PricingLine(
-        stable_line_key=line["key"], quantity=line["quantity"],
-        unit_price=Decimal(line["price"]) + Decimal(line["variant_delta"]),
-        tax_rates=tuple(Decimal(rate) for rate in line["tax_rates"]),
-    ) for line in case["lines"])
+    lines = [
+        PricingLine(
+            stable_line_key="BASE",
+            quantity=1,
+            unit_price=Decimal(case["base_fee"]),
+            tax_rates=tuple(Decimal(rate) for rate in case["base_tax_rates"]),
+        )
+    ]
+    lines.extend(
+        PricingLine(
+            stable_line_key=line["key"],
+            quantity=line["quantity"],
+            unit_price=Decimal(line["price"]) + Decimal(line["variant_delta"]),
+            tax_rates=tuple(Decimal(rate) for rate in line["tax_rates"]),
+        )
+        for line in case["lines"]
+    )
     rule = case["discount"]
-    discount = None if rule is None else SelectedDiscount(
-        kind=rule["kind"], value=Decimal(rule["value"]),
-        eligible_line_keys=frozenset(rule["eligible_keys"]),
+    discount = (
+        None
+        if rule is None
+        else SelectedDiscount(
+            kind=rule["kind"],
+            value=Decimal(rule["value"]),
+            eligible_line_keys=frozenset(rule["eligible_keys"]),
+        )
     )
     return tuple(lines), discount
 
@@ -52,8 +65,10 @@ class PricingAcceptanceTests(unittest.TestCase):
                 result = calculate_invoice(lines, discount)
                 expected = case["expected"]
                 for attribute, fixture_key in (
-                    ("subtotal", "subtotal"), ("discount_total", "discount"),
-                    ("tax_total", "tax"), ("total", "total"),
+                    ("subtotal", "subtotal"),
+                    ("discount_total", "discount"),
+                    ("tax_total", "tax"),
+                    ("total", "total"),
                 ):
                     actual = getattr(result, attribute)
                     self.assert_money(actual)
@@ -77,8 +92,12 @@ class PricingAcceptanceTests(unittest.TestCase):
                     self.assertEqual(item.tax_total, sum(item.tax_amounts, ZERO))
                     self.assertEqual(item.total, item.taxable_amount + item.tax_total)
                     for amount in (
-                        item.gross, item.discount, item.taxable_amount,
-                        item.tax_total, item.total, *item.tax_amounts,
+                        item.gross,
+                        item.discount,
+                        item.taxable_amount,
+                        item.tax_total,
+                        item.total,
+                        *item.tax_amounts,
                     ):
                         self.assert_money(amount)
                 for attribute in ("discount_total", "tax_total", "total"):
@@ -90,11 +109,13 @@ class PricingAcceptanceTests(unittest.TestCase):
                 self.assertEqual(result.subtotal, sum((item.gross for item in result.lines), ZERO))
 
     def test_remainder_ties_follow_stable_keys_under_permutation(self):
-        lines = tuple(PricingLine(key, 1, Decimal("0.05"), (Decimal("10"),))
-                      for key in ("Z", "A", "M"))
+        lines = tuple(
+            PricingLine(key, 1, Decimal("0.05"), (Decimal("10"),)) for key in ("Z", "A", "M")
+        )
         discount = SelectedDiscount("FIXED", Decimal("0.01"), frozenset({"Z", "A", "M"}))
         first = calculate_invoice(lines, discount)
         reversed_result = calculate_invoice(tuple(reversed(lines)), discount)
+
         def allocations(result):
             return {item.line.stable_line_key: item.discount for item in result.lines}
 
@@ -149,9 +170,16 @@ class PricingAcceptanceTests(unittest.TestCase):
         self.assertEqual(calculate_invoice((line,), rule).discount_total, ZERO)
 
     def test_multiple_tax_amounts_are_rounded_separately(self):
-        result = calculate_invoice((PricingLine(
-            "L1", 1, Decimal("0.05"), (Decimal("10"), Decimal("10")),
-        ),))
+        result = calculate_invoice(
+            (
+                PricingLine(
+                    "L1",
+                    1,
+                    Decimal("0.05"),
+                    (Decimal("10"), Decimal("10")),
+                ),
+            )
+        )
         self.assertEqual(result.lines[0].tax_amounts, (Decimal("0.01"), Decimal("0.01")))
         self.assertEqual(result.tax_total, Decimal("0.02"))
         self.assertEqual(result.total, Decimal("0.07"))
@@ -166,14 +194,29 @@ class PricingAcceptanceTests(unittest.TestCase):
     def test_inputs_and_results_are_immutable(self):
         line = PricingLine("L1", 2, Decimal("10.00"), (Decimal("18"),))
         discount = SelectedDiscount("PERCENT", Decimal("10"), frozenset({"L1"}))
-        original = (line.quantity, line.unit_price, line.tax_rates, discount.value, discount.eligible_line_keys)
+        original = (
+            line.quantity,
+            line.unit_price,
+            line.tax_rates,
+            discount.value,
+            discount.eligible_line_keys,
+        )
         result = calculate_invoice((line,), discount)
         self.assertEqual(
-            (line.quantity, line.unit_price, line.tax_rates, discount.value, discount.eligible_line_keys), original,
+            (
+                line.quantity,
+                line.unit_price,
+                line.tax_rates,
+                discount.value,
+                discount.eligible_line_keys,
+            ),
+            original,
         )
         for instance, attribute, replacement in (
-            (line, "quantity", 99), (discount, "value", ZERO),
-            (result, "total", ZERO), (result.lines[0], "discount", ZERO),
+            (line, "quantity", 99),
+            (discount, "value", ZERO),
+            (result, "total", ZERO),
+            (result.lines[0], "discount", ZERO),
         ):
             with self.subTest(type=type(instance).__name__):
                 with self.assertRaises(FrozenInstanceError):
@@ -181,17 +224,27 @@ class PricingAcceptanceTests(unittest.TestCase):
 
     def test_invalid_line_values_are_rejected(self):
         invalid = (
-            {"stable_line_key": ""}, {"quantity": 0}, {"quantity": -1},
-            {"quantity": True}, {"quantity": Decimal("1")}, {"quantity": 1.5},
-            {"unit_price": 0.1}, {"unit_price": Decimal("-0.01")},
-            {"unit_price": Decimal("NaN")}, {"unit_price": Decimal("Infinity")},
-            {"tax_rates": (0.1,)}, {"tax_rates": (Decimal("-0.01"),)},
-            {"tax_rates": (Decimal("100.01"),)}, {"tax_rates": (Decimal("NaN"),)},
+            {"stable_line_key": ""},
+            {"quantity": 0},
+            {"quantity": -1},
+            {"quantity": True},
+            {"quantity": Decimal("1")},
+            {"quantity": 1.5},
+            {"unit_price": 0.1},
+            {"unit_price": Decimal("-0.01")},
+            {"unit_price": Decimal("NaN")},
+            {"unit_price": Decimal("Infinity")},
+            {"tax_rates": (0.1,)},
+            {"tax_rates": (Decimal("-0.01"),)},
+            {"tax_rates": (Decimal("100.01"),)},
+            {"tax_rates": (Decimal("NaN"),)},
             {"tax_rates": (Decimal("Infinity"),)},
         )
         for changes in invalid:
             with self.subTest(changes=changes):
-                values = dict(stable_line_key="L1", quantity=1, unit_price=Decimal("1.00"), tax_rates=())
+                values = dict(
+                    stable_line_key="L1", quantity=1, unit_price=Decimal("1.00"), tax_rates=()
+                )
                 values.update(changes)
                 with self.assertRaises(ValueError):
                     calculate_invoice((PricingLine(**values),))
@@ -204,14 +257,19 @@ class PricingAcceptanceTests(unittest.TestCase):
     def test_invalid_selected_discounts_are_rejected(self):
         line = PricingLine("L1", 1, Decimal("100.00"), ())
         invalid = (
-            {"kind": "OTHER"}, {"value": 0.1}, {"value": Decimal("-0.01")},
-            {"value": Decimal("NaN")}, {"value": Decimal("Infinity")},
+            {"kind": "OTHER"},
+            {"value": 0.1},
+            {"value": Decimal("-0.01")},
+            {"value": Decimal("NaN")},
+            {"value": Decimal("Infinity")},
             {"kind": "PERCENT", "value": Decimal("100.01")},
             {"eligible_line_keys": frozenset({"MISSING"})},
         )
         for changes in invalid:
             with self.subTest(changes=changes):
-                values = dict(kind="FIXED", value=Decimal("1.00"), eligible_line_keys=frozenset({"L1"}))
+                values = dict(
+                    kind="FIXED", value=Decimal("1.00"), eligible_line_keys=frozenset({"L1"})
+                )
                 values.update(changes)
                 with self.assertRaises(ValueError):
                     calculate_invoice((line,), SelectedDiscount(**values))

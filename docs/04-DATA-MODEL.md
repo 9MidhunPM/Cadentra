@@ -1,6 +1,6 @@
-# Data model: proposed shared baseline
+# Data model: shared baseline
 
-Midhun P M owns implementation and migrations. This is a specification, not migration code. IDs are UUIDs except sequential human-readable document references. Dates are ISO dates in the chosen business timezone; timestamps are UTC. Monetary columns are NUMERIC(18,2); rates may use NUMERIC(9,4). JSON amounts are decimal strings.
+Midhun P M owns implementation and migrations. The ORM exports live in app.models; Alembic revision 0001 implements this baseline. IDs are UUIDs except sequential human-readable document references. Dates are ISO dates in the chosen business timezone; timestamps are UTC. Monetary columns are NUMERIC(18,2); rates may use NUMERIC(9,4). JSON amounts are decimal strings.
 
 ## Tables
 
@@ -13,8 +13,9 @@ Midhun P M owns implementation and migrations. This is a specification, not migr
 | products | id, name, product_type text, sales_price, cost_price, notes, active |
 | product_variants | id, product_id FK, attribute_name, attribute_value, price_delta, active |
 | plans | id, name, base_fee, currency, cadence DAILY/WEEKLY/MONTHLY/YEARLY, min_quantity, available_from, available_until nullable, allow_pause, allow_early_close, allow_renew, auto_close |
-| tax_rules | id, name, rate_percent, valid_from, valid_until nullable, active |
-| product_taxes | product_id, tax_rule_id; composite unique |
+| tax_rules | stable id, created_at; configurable values belong to retained revisions |
+| tax_rule_revisions | id, tax_rule_id FK, effective_from, effective_until nullable, name, rate_percent, valid_from, valid_until nullable, active, created_at |
+| tax_revision_products | tax_rule_revision_id, product_id; composite primary key, immutable revision membership |
 | plan_taxes | plan_id, tax_rule_id; composite unique; tax applies to plan base-fee line |
 | quotation_templates | id, name, plan_id FK, valid_days positive, active |
 | quotation_template_lines | id, template_id FK, product_id FK, variant_id nullable FK, quantity positive |
@@ -22,11 +23,12 @@ Midhun P M owns implementation and migrations. This is a specification, not migr
 | subscription_lines | id, subscription_id FK, product_id, variant_id nullable, description, quantity, unit_price, price_snapshot JSON, selected_tax_ids JSON |
 | subscription_pauses | id, subscription_id FK, starts_on, ends_on nullable; only one open interval per subscription |
 | billing_periods | id, subscription_id, cycle_index, period_start, period_end exclusive, disposition INVOICED/PAUSED, explanation, created_at |
-| invoices | id, number unique, subscription_id, billing_period_id unique, customer_id, status DRAFT/CONFIRMED/PAID/CANCELLED, currency, invoice_date, due_date, customer_snapshot JSON, seller_snapshot JSON, subtotal, discount_total, tax_total, total, discount_rule_id nullable, calculation_snapshot JSON, confirmed_at, cancelled_at, cancellation_reason |
+| invoices | id, number unique, subscription_id, billing_period_id unique, customer_id, status DRAFT/CONFIRMED/PAID/CANCELLED, currency, invoice_date, due_date, customer_snapshot JSON, seller_snapshot JSON, subtotal, discount_total, tax_total, total, discount_rule_id nullable, discount_rule_revision_id nullable, calculation_snapshot JSON, confirmed_at, cancelled_at, cancellation_reason |
 | invoice_lines | id, invoice_id FK, stable_line_key, description, product_id nullable, variant_id nullable, quantity, unit_price, gross, discount, taxable_amount, tax_total, total, source_snapshot JSON |
-| invoice_line_taxes | id, invoice_line_id FK, tax_rule_id nullable, name_snapshot, rate_snapshot, amount |
-| discount_rules | id, name, kind FIXED/PERCENT, value, scope SUBSCRIPTION/PRODUCTS, min_purchase, min_quantity, starts_on, ends_on nullable exclusive, usage_limit nullable, uses_count, active |
-| discount_products | discount_rule_id, product_id; composite unique |
+| invoice_line_taxes | id, invoice_line_id FK, tax_rule_id nullable, tax_rule_revision_id nullable, name_snapshot, rate_snapshot, amount |
+| discount_rules | stable id, uses_count, created_at; usage counter is shared across revisions |
+| discount_rule_revisions | id, discount_rule_id FK, effective_from, effective_until nullable, name, kind FIXED/PERCENT, value, scope SUBSCRIPTION/PRODUCTS, min_purchase, min_quantity, starts_on, ends_on nullable exclusive, usage_limit nullable, active, created_at |
+| discount_revision_products | discount_rule_revision_id, product_id; composite primary key, immutable revision membership |
 | discount_redemptions | id, discount_rule_id FK, invoice_id unique, amount, created_at |
 | payments | id, invoice_id FK, method MANUAL/BANK_TRANSFER/UPI/CASH/CARD_EXTERNAL/OTHER, amount, paid_on, note, external_reference nullable, request_key, request_payload_hash, created_by, created_at |
 | email_outbox | id, kind RESET/INVOICE, aggregate_id, recipient, subject, payload JSON, dedupe_key unique, status PENDING/SENDING/SENT/FAILED, attempts, last_error, next_attempt_at, created_at |
@@ -58,3 +60,9 @@ Current subscription lines may be updated for the next unprocessed cycle, but on
 Creating signup user + customer is atomic. Advancing a due cycle, adding the period, creating its invoice, recording a discount use and advancing next_cycle_index are one transaction. Payment idempotency lookup, remaining-balance validation, insertion and invoice paid-state update run while holding an invoice row lock. Invoice cancellation and payment entry use the same lock discipline.
 
 Document views derive paid_amount from payments and balance from invoice.total - paid_amount; avoid storing independently drifting balance columns. Denormalized counters are allowed only where the same transaction maintains them.
+
+## Retained rule revisions
+
+Tax and discount resource IDs remain stable parent UUIDs. Resolve the immutable revision applicable at service period_start, separately checking its eligibility window. Revision intervals are nonoverlapping [effective_from,effective_until), with UNIQUE(parent,effective_from). Database guards serialize parent writes, reject overlap and payload/deletion changes, and allow only closing an open predecessor. Create product memberships in the same transaction as their revision. Selected plan/line tax IDs reference stable rules; invoices retain both stable and selected-revision references plus calculation snapshots. Discount usage never resets when a revision changes.
+
+Migration0002 stores discount revision value as NUMERIC(20,4), preserving four-decimal percentage values. A database check requires FIXED values at cent precision; percentage values remain bounded0-100. Downgrade refuses loss of retained precision.
