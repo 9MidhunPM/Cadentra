@@ -1,16 +1,18 @@
 # Sherin Saji: handoff
 
-Status: REPORTING AND PORTAL READ SLICE IMPLEMENTED; OWNER DELEGATION AND FULL JOURNEY IN PROGRESS
+Status: REPORTING AND PORTAL READ SLICE GREEN; LIFECYCLE DELEGATION AND FULL JOURNEY IN PROGRESS
 
 Role: Experience & Reporting
 Branch: feature/reporting-portal
-Reviewed main: 9136adf (Gate A, subscription billing inputs, financial invoice/rule/payment APIs)
+Reviewed main: 0b257c8 (Gate A, financial APIs, invoice privacy fix and scoped race-fixture cleanup)
 Reporting/portal backend: 2f33f9a
 Reporting/portal frontend: 9edb851
 Real browser harness: fcdfb7c
 Delegated invoice detail/print: 53fd86b
 Large-data measurement harness: 5bbdfd7
-Latest reviewed-main merge: 0f97181
+Latest reviewed-main merge: 2120602
+Performance evidence and reliable capture: 6ec57bb
+Prepared full-journey harness: 1b03ec4 (source checks only; browser execution pending)
 Previous foundation PR 2 and interface-experience PR 5 are integrated.
 Setup verification commit: c4194af
 
@@ -22,7 +24,7 @@ Reports read committed PostgreSQL data with Decimal totals serialized as strings
 
 Overview now fetches real summary/series/overdue invoices, supports applied date/customer filters, exact accessible chart data, refresh and the owner's run-due endpoint. Displayed financial values remain server decimal strings. Numeric conversion is limited to approximate chart coordinates/axis labels. The mobile chart measures its container so labels retain readable size. Errors in independent resources remain visible.
 
-Portal reads derive ownership from the authenticated CUSTOMER actor. Profile, paginated subscriptions/invoices and subscription detail are implemented. Foreign subscription detail returns 404; customer_id overrides are rejected. Invoice list balances come from grouped recorded payments, with separate collection_status and overdue values. Customer projections omit internal costs, audit details and staff notes. Pagination rejects offsets exceeding PostgreSQL bigint limits.
+Portal reads derive ownership from the authenticated CUSTOMER actor. Profile, paginated subscriptions/invoices and subscription detail are implemented. Foreign subscription detail returns 404; customer_id overrides are rejected. Invoice list balances come from grouped recorded payments, with separate collection_status and overdue values. Profile, temporary subscription and delegated invoice projections omit internal costs, audit details and staff notes, including nested address metadata. Pagination rejects offsets exceeding PostgreSQL bigint limits.
 
 Portal frontend provides account, own subscription/invoice lists, subscription detail and stored invoice detail/print. Invoice detail and escaped HTML printing delegate to Noel Biju's services, with private/no-store responses and matching print security headers. Actions are displayed only when returned in allowed_actions; the UI does not infer plan policy. Lifecycle delegation to Thanushree Suresh remains pending; renewal will create a draft for staff review.
 
@@ -30,12 +32,12 @@ Portal frontend provides account, own subscription/invoice lists, subscription d
 
 31 October 2026:
 
-- Full backend at 0f97181's predecessor bb31d5e / reviewed main8c13b42: **159 tests and 121 subtests pass**, real PostgreSQL at 127.0.0.1:55431, cadentra_experience_test. Each ordinary test rolls back its outer transaction. This includes 17 reporting service, 19 report HTTP and 24 portal cases. Billing PR7 landed afterward and requires the next integrated rerun.
+- Full backend at **2120602: 209 tests and 121 subtests pass**, real PostgreSQL at 127.0.0.1:55431, cadentra_experience_test. This includes 17 reporting service, 19 report HTTP and 38 portal cases. Each ordinary test rolls back its outer transaction; the committed financial race fixtures now clean only their own UUID graph. A subsequent read-only check confirmed zero subscriptions, invoices, payments, users, customers, plans and products remain.
 - Reporting/backend Ruff: pass. Source fixtures exercise real login, cookie/session auth, roles, range/cadence validation, Decimal reconciliation, owner isolation, safe projections and PostgreSQL pagination bounds.
 - Frontend full lint/test/build after invoice DTO alignment and the keyboard regression: **84 tests pass**, typecheck/build pass. Customer-search Enter cannot submit filters while loading or empty. Invoice lines display stored discounts/taxes/totals and safe address fields.
 - Fixture browser suite: **24 desktop/mobile cases pass, two platform-specific skips**. This suite explicitly mocks session/business reads and proves shell/keyboard/theme/reduced-motion behavior, not database correctness.
 - Separate live browser suite after invoice integration: **six desktop/mobile cases pass, no skips**, real HTTP/cookies/PostgreSQL, no route interception, zero page errors. It verifies totals, filters, reload persistence, own lists/profile, foreign-subscription404, customer/report403 and own/foreign invoice detail/print200/404.
-- Delegated portal PostgreSQL tests: **37 pass, one privacy regression fails**. The failing test proves upstream billing forwards nested staff_notes/internal_cost fields inside imported address JSON. Noel and the coordinator have the exact regression; do not bypass it or claim privacy completion until the owner fix is integrated. Other cases verify foreign404, staff403, anonymous401, forbidden query422, escaped print, headers and read-only SQL.
+- Delegated portal PostgreSQL tests: **38 pass**. The original nested-address privacy regression failed before Noel's scalar whitelist fix (73cdbcc), then passed after the reviewed PR8 merge. Other cases verify foreign404, staff403, anonymous401, forbidden query422, escaped print, headers and read-only SQL. The portal delegates unchanged to the billing owner; no duplicate sanitizer was introduced.
 - Final live screenshots inspected at 1497x1049 desktop and 390px mobile in both approved themes. The responsive chart is readable and the actual overdue table now renders via billing PR7. Artifacts remain local under /tmp/cadentra-agent4-live-final-evidence/.
 - Frontend production build about 471 kB minified /148 kB gzip plus a separate95 kB Motion feature chunk; these are sizes, not page timings. No unmeasured <2s assertion.
 
@@ -60,10 +62,10 @@ Shared UI exports Button, PageHeader, DataTable, Money, DateLabel, StatusBadge, 
 
 ## Remaining role acceptance work
 
-- T06: delegate invoice detail/escaped print and all lifecycle actions to the actual owner services; test foreign reads/prints/all mutations404, CSRF, safe nested projections, no mutation on failed access, scheduled effective dates and linked draft renewal.
-- T28: current reporting SQL/HTTP reconciliation passes. Re-run integrated suite after owner merges and compare full real Overview including overdue table.
+- T06: delegated invoice detail/escaped print and nested-address privacy pass. Delegate lifecycle actions to the actual owner service and test all foreign mutations404, CSRF, no mutation on failed access, scheduled effective dates and linked draft renewal.
+- T28: reporting SQL/HTTP reconciliation and the full real Overview including the overdue table pass. Preserve these checks through later owner merges.
 - T31: complete real product/variant/plan -> quotation -> active -> invoice -> payments2000.00+2970.16 -> report/portal reload/print journey. Owners' staff feature UIs and subscription workflow are not yet integrated. Four read cases do not establish this full journey.
-- T30: explicit5000-subscription/20000-invoice plus payments dataset seeded and reconciled; measurements are running, no timing result claimed yet. Record commit/dirty state, environment, exact persisted counts, raw20warm+5fresh-context samples per ready route, browser/API p50/p95/max and all dependency gaps. Fresh browser contexts do not cold-start PostgreSQL/OS caches. Do not count placeholder/error pages as successful measurements.
+- T30: **10 reporting/portal views measured, 250 raw browser samples**, using exactly 5000 subscriptions and 20000 invoices plus periods/lines/payments. Complete Overview warm p50/p95/max: 511.3/556.7/565.8 ms; fresh-context: 577.8/645.7/645.7 ms. Full customer/date filtering including navigation: 1224.0/1333.9/1372.4 ms warm, 1217.2/1305.7/1305.7 ms fresh. Staff subscription API501 and invoice UI placeholder remain explicit gaps. These local sequential measurements are a baseline, not proof of every page or the later privacy-merged runtime. [Method, all route timings and raw API/browser samples](../backend/tests/reporting/evidence/README.md). All fixture rows and private manifests were cleaned; no database/schema was dropped.
 - Only after required scope is green: optional CycleGuard and invoice explanation polish.
 
 ## Publishing and coordination

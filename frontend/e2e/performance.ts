@@ -110,7 +110,7 @@ const routes: Route[] = [
       await expect(page.getByText('Overdue invoices unavailable', { exact: true })).toHaveCount(0)
     } },
   { key: 'overview-summary-chart', actor: 'staff', path: '/overview', apis: [summaryApi(), seriesApi()],
-    scope: 'Overview summary and chart only; excludes independently failing overdue invoice table',
+    scope: 'Overview summary and chart components only; excludes the independently loaded overdue invoice table',
     complete: page => overviewComplete(page) },
   { key: 'overview-customer-date-filter', actor: 'staff', path: '/overview', dependency: true,
     apis: [summaryApi(true), seriesApi(true), listApi(`/api/v1/invoices?overdue=true&page=1&page_size=5&customer_id=${fixture.customers[0]}`, 5000, 5)],
