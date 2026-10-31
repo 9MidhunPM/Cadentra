@@ -3,8 +3,8 @@
 Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
 
 Role: Subscription Workflows
-Branch: feature/subscription-integration
-Reviewed main incorporated: 382fa2b69035e86bf928cb879349cc2d3440dc1b (PRs #11/#12 merged)
+Branch: feature/subscription-acceptance
+Reviewed main incorporated: beedbbdda87774ac6813d3c3e8036db5df465ca3 (PRs #14/#15 merged)
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -12,6 +12,7 @@ Frozen policy verification: 2d61b8d51a45a2df13edb8a868950046ca887a76
 Named template plan labels: c046593f7e91b9fdd58f0b2d16dbd863988fdae5
 Lifecycle/availability boundary coverage: 3f759740b2196f3d8973ba5798214d85d18f3980
 Actual worker/action race verification: a9817959c5af35b06b5d1eecdf3279974423334a
+Theme notice contrast fix: a9b7a0c1b9f6b453395565effc1f34457c5079d6
 Prior getter implementation a40fe5a and calendar bdb1cf2 were integrated in PRs #6/#1.
 
 ## Delivered behavior
@@ -20,6 +21,9 @@ Templates and copied drafts persist plan/lines/validity. Explicit line arrays
 replace template lines; null/empty overrides fail validation. Template copies
 serialize with edits under a refreshed row lock. Quotation validity survives
 reload and later template edits. Explicit issue days update the copied default.
+Coordinator clarification: the role's "Template CRUD" shorthand means the frozen
+GET/POST/PATCH create/read/update scope. The source brief does not require deletion
+or archival. No implicit DELETE/archive API or UI was added.
 
 Draft -> Quotation -> Confirmed -> Active -> Closed is enforced. Confirmation
 rejects changed quoted plan price, cadence, quantity, policies or selected plan
@@ -93,6 +97,9 @@ use independently migrated UUID schemas and remove only those newly created sche
 - Policy tests cover disabled pause/close/renew for staff and an actual customer
   owner, asserting conflict/no mutation/no misleading action hint.
 - npm test: 79 passed across the current shared+feature frontend suite.
+- Final frontend run on reviewed beedbbd plus the theme correction: 113 tests
+  passed across ten files. Typecheck, lint and production build passed. The shared
+  bundle-size advisory remains a build warning, not a failure or performance claim.
 - npm run typecheck, npm run lint, npm run build: PASS.
 - backend/.venv/bin/ruff check backend scripts/smoke.py: PASS.
 - python3 scripts/check_pack.py and git diff --check: PASS.
@@ -112,6 +119,26 @@ framework overlay or page-width overflow; the deliberately exercised 409 is the
 only expected console error. Screenshots were inspected. Temporary QA scripts,
 reports and screenshots stay outside the repository in /tmp/cadentra-agent2-qa.
 
+Final post-ACTIVE native QA used the same origin/proxy and viewport sizes with
+reviewed beedbbd plus the owned theme fix, in the separate
+cadentra_subscriptions_staff_qa_test database. It exercised the actual recurring
+issuer for the first due cycle, then staff next-cycle quantity edit/reload while
+the issued invoice retained its original amount/lines. Scheduled pause displayed
+2026-11-30 and survived reload; resume cancelled that pending pause; early close
+displayed the same effective date and retained ACTIVE until the boundary; renewal
+navigated to a new linked DRAFT and preserved it on reload without reopening the
+old term or changing the invoice. The template table displayed the human plan name.
+
+Screenshot inspection caught hardcoded light notice backgrounds inheriting pale
+dark-mode text. The scoped CSS correction uses shared semantic colors for notices,
+labels, links, errors and borders. Repeated actual dark/light desktop/mobile QA
+passed; computed notice text contrast was 7.96:1 dark and 10.88:1 light. No page
+errors, blank state, overlay or page-width overflow; the deliberately rejected
+due edit is the only expected 409 console message. Corrected screenshots were
+inspected. Private temporary scripts, report.json, close-desktop.png,
+close-light-desktop.png, mobile.png and mobile-light.png are under
+/tmp/cadentra-agent2-lifecycle-qa. They are not submission fixtures or credentials.
+
 ## Remaining integration gates and honest limits
 
 The historical broad backend run after billing PR #7 reported 176 passed/8 failed:
@@ -122,10 +149,11 @@ suite now passes 124 cases within the green full 314-case run in a separate DB.
 Root/Noel corrected the shared tests/fixture isolation.
 No global truncate, financial-data deletion or database drop was performed.
 
-T09-T13/T33/T34 now have actual service/API/worker/concurrency evidence. The
-integration test slice still requires coordinator review/merge. The remaining
-full-role verification is joint T31 through invoice creation/payment/customer-portal reload, plus live
-   portal ownership isolation. The native staff journey proves only its portion.
+T09-T13/T33/T34 now have actual service/API/worker/concurrency evidence. PR #14
+merged at 209fef8a35d880133f6c011ab6357b5c7ea02502. The remaining full-role
+verification is joint T31 through invoice creation/payment/customer-portal reload,
+plus live portal ownership isolation. Native staff QA proves the staff portion,
+including post-ACTIVE actions, but does not substitute for the joint paid journey.
 No deployment, external email delivery or hardware/performance claim is made.
 
 Actual integrated evidence: four real worker cases and six real billing/action
@@ -148,14 +176,14 @@ account switching. Coordinator creates/reviews/merges PRs using existing auth.
 Keep atomic active-work commits within 30 minutes, incorporate reviewed main at
 least hourly, and report ready slices sooner. Preserve both earlier feature branches.
 
-Title: Verify subscription lifecycle boundaries and billing integration
+Title: Keep subscription notices readable across themes
 Target: main
-Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-integration
+Comparison: https://github.com/9MidhunPM/Cadentra/compare/main...feature/subscription-acceptance
 
-Description: Verify lifecycle/renewal/availability guards, actual bounded worker
-catch-up and both PostgreSQL lock orders for billing versus edit/pause/close.
-Assert durable pause history, closure ordering, full final-cycle pricing, retained
-debt, immutable past invoices and future-only changes. All 314 backend tests and
-121 subtests pass on reviewed main 382fa2b plus this test-only slice; Ruff, pack
-and whitespace checks pass. Joint paid-invoice/customer-portal browser verification
-remains with the reporting/billing owners and does not block these scoped tests.
+Description: Replace hardcoded subscription colors that made effective-date and
+tax notices unreadable in dark mode with existing semantic theme colors. Native
+staff pause/resume/close/renewal and next-cycle edit/reload checks pass against the
+real API/PostgreSQL at desktop/mobile sizes in both themes; notice contrast is
+7.96:1 dark and 10.88:1 light. All 113 frontend tests, typecheck, lint and build
+pass. Only the owned stylesheet and this evidence handoff change; joint T31 remains
+an explicit separate integration gate.

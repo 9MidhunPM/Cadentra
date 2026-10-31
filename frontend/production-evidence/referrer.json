@@ -1,0 +1,25 @@
+{
+  "fixture_only": true,
+  "real_reset_backend_verified": false,
+  "docker_verified": false,
+  "fixed": {
+    "referer_absent_at_upstream": true,
+    "origin_preserved": true,
+    "nginx_error_triggered": true,
+    "referer_absent_from_error_log": true,
+    "marker_absent_from_api_and_error_logs": true
+  },
+  "control_without_policy": {
+    "referer_contains_marker": true,
+    "error_log_contains_marker": true,
+    "origin_preserved": true
+  },
+  "production_change": "Referrer-Policy:no-referrer always in both HTML locations; Cache-Control add_header inheritance accounted for.",
+  "adaptations": [
+    "Task-local wrapper supplies MIME/PID/log/temp paths.",
+    "Static root points to isolated worktree dist.",
+    "Listen address is loopback; occupied8080 would use an unused ephemeral port.",
+    "Docker DNS address and upstream port use loopback DNS/HTTP protocol fixtures."
+  ],
+  "config_sha256": "96b4280b974063368fa06ef76b4caeee9d2ec7a8dfe6e2a2311bc3288325bb99"
+}

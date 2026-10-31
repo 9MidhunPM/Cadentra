@@ -1,6 +1,6 @@
 # Billing verification
 
-Status: persisted financial API and atomic recurring issuer implemented. The billing UI is in final review; joint lifecycle/worker checks remain a separate integration gate.
+Status: persisted financial API and atomic recurring issuer implemented; corrected billing UI is in coordinator review. Joint lifecycle/worker checks pass; the complete browser journey and final billing-page performance remain integration gates.
 
 ## Commands
 
@@ -22,13 +22,19 @@ The preparation checker compares six canonical and nine additional fixtures with
 - test_pricing.py: Decimal cents, deterministic largest-remainder allocation, separate additive taxes, immutable inputs/results and stored-precision/bounds validation.
 - test_rules.py: real rule/API permissions, immutable effective-dated revisions, scoped minimums/date/cap eligibility and locked best-rule selection.
 - test_invoices.py: persisted queries, partial/full/zero settlement, matching/conflicting keys, cancellation, safe customer projection, escaped print, queued email and strict HTTP guards.
-- test_invoice_races.py: independent connections compete for payment capacity, matching payment replay and cancellation; fixture cleanup removes only its generated UUID graph in an explicitly disposable test database.
-- test_issuance.py: one period/invoice under contention, one remaining global discount use, immutable historical snapshots, actual rollback/23505 recovery, shortened full-cycle pricing, paused catch-up and failed-prefix progress across a fresh interpreter.
+- test_invoice_races.py: eight cases force both invoice-lock acquisition orders for payment capacity, matching payment replay, cancellation and matching sends. A third physical connection proves the loser is waiting on the actual PostgreSQL lock. Fixture cleanup removes only its generated UUID graph in an explicitly disposable test database.
+- test_issuance.py: one period/invoice under contention, one remaining global discount use, issued detail/print after a real retained-rate edit, cancelled discounted period replay, actual rollback/23505 recovery, shortened full-cycle pricing, paused catch-up and failed-prefix progress across a fresh interpreter.
 - test_run_due_api.py: actual authentication/role/CSRF guards, strict empty input and server-owned clock/batch size.
 
 Committed issuance fixtures create a generated UUID PostgreSQL schema, migrate it with the reviewed Alembic head, run all connections there, then drop only that schema after workers finish. No public truncation, database drops or disabled history triggers are used. Existing public test data is not silently erased.
 
-A clean generated-schema full backend run passed 146 tests and 121 subtests at the issuer milestone. Exact commands, commit and subsequent verification are recorded in [Noel's handoff](../../../handoffs/noel-biju.md).
+A clean generated-schema combined backend run passed 329 tests and 121 subtests after reviewed main beedbbd, including the actual joint worker and subscription-action races. Exact commands, source commit and verification are recorded in [Noel's handoff](../../../handoffs/noel-biju.md).
+
+The billing UI has 27 billing/payment-command tests and three picker tests
+covering server money/pagination, roles, field errors, durable scoped payment
+recovery across navigation/reload, uncertain replay failures, paid recovery,
+rule writes across pending navigation, and stale reads. These tests use UI
+fixtures; the separate live browser check used real persistent billing data.
 
 ## Domain boundary
 
@@ -36,6 +42,6 @@ Subscription DTOs supply exactly one BASE line and already variant-adjusted prod
 
 The shared money helper uses Decimal ROUND_HALF_UP; tax and percentage inputs support at most four fractional digits. Invoice dates use actual Asia/Kolkata creation date plus payment terms, with original service bounds retained. Replays never reprice or reset dates.
 
-[billing.feature](billing.feature) remains a readable acceptance specification, not an installed BDD runner. [CONCURRENCY.md](CONCURRENCY.md) records the real PostgreSQL protocol and outstanding joint lifecycle checks. Gherkin text or sequential duplicate calls are not race-test evidence.
+[billing.feature](billing.feature) remains a readable acceptance specification, not an installed BDD runner. [CONCURRENCY.md](CONCURRENCY.md) records the real PostgreSQL protocol and joint lifecycle evidence. Gherkin text or sequential duplicate calls are not race-test evidence.
 
 Mailpit invoice SMTP/web-inbox capture is verified locally. External delivery is explicitly deferred by the user until real SMTP is configured. Credentials and private recipients never belong in fixtures or public evidence.
