@@ -1,0 +1,78 @@
+{
+  "purpose": "Additional acceptance fixtures; reference checks are not application verification.",
+  "cases": [
+    {
+      "id": "base_charged_once_with_multiple_product_lines",
+      "base_fee": "100.00", "base_tax_rates": ["18.00"],
+      "lines": [
+        {"key": "L1", "product_id": "P1", "price": "200.00", "variant_delta": "0.00", "quantity": 2, "tax_rates": ["18.00"]},
+        {"key": "L2", "product_id": "P2", "price": "50.00", "variant_delta": "10.00", "quantity": 3, "tax_rates": []}
+      ],
+      "discount": null,
+      "expected": {"subtotal": "680.00", "discount": "0.00", "tax": "90.00", "total": "770.00", "line_discounts": ["0.00", "0.00", "0.00"]}
+    },
+    {
+      "id": "zero_total_without_fabricated_charges",
+      "base_fee": "0.00", "base_tax_rates": [],
+      "lines": [{"key": "L1", "product_id": "P1", "price": "0.00", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["18.00"]}],
+      "discount": null,
+      "expected": {"subtotal": "0.00", "discount": "0.00", "tax": "0.00", "total": "0.00", "line_discounts": ["0.00"]}
+    },
+    {
+      "id": "half_cent_tax_rounds_up",
+      "base_fee": "0.00", "base_tax_rates": [],
+      "lines": [{"key": "L1", "product_id": "P1", "price": "0.05", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["10.00"]}],
+      "discount": null,
+      "expected": {"subtotal": "0.05", "discount": "0.00", "tax": "0.01", "total": "0.06", "line_discounts": ["0.00"]}
+    },
+    {
+      "id": "product_discount_excludes_plan_base",
+      "base_fee": "100.00", "base_tax_rates": ["18.00"],
+      "lines": [{"key": "L1", "product_id": "P1", "price": "200.00", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["18.00"]}],
+      "discount": {"kind": "FIXED", "value": "200.00", "eligible_keys": ["L1"]},
+      "expected": {"subtotal": "300.00", "discount": "200.00", "tax": "18.00", "total": "118.00", "line_discounts": ["0.00", "200.00"]}
+    },
+    {
+      "id": "subscription_discount_includes_plan_base",
+      "base_fee": "100.00", "base_tax_rates": ["18.00"],
+      "lines": [{"key": "L1", "product_id": "P1", "price": "200.00", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["18.00"]}],
+      "discount": {"kind": "FIXED", "value": "150.00", "eligible_keys": ["BASE", "L1"]},
+      "expected": {"subtotal": "300.00", "discount": "150.00", "tax": "27.00", "total": "177.00", "line_discounts": ["50.00", "100.00"]}
+    },
+    {
+      "id": "remainder_tie_uses_key_not_input_order",
+      "base_fee": "0.00", "base_tax_rates": [],
+      "lines": [
+        {"key": "Z", "product_id": "P1", "price": "0.05", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["10.00"]},
+        {"key": "A", "product_id": "P2", "price": "0.05", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["10.00"]},
+        {"key": "M", "product_id": "P3", "price": "0.05", "variant_delta": "0.00", "quantity": 1, "tax_rates": ["10.00"]}
+      ],
+      "discount": {"kind": "FIXED", "value": "0.01", "eligible_keys": ["Z", "A", "M"]},
+      "expected": {"subtotal": "0.15", "discount": "0.01", "tax": "0.02", "total": "0.16", "line_discounts": ["0.00", "0.01", "0.00"]}
+    },
+    {
+      "id": "negative_variant_keeps_nonnegative_unit_price",
+      "base_fee": "0.00", "base_tax_rates": [],
+      "lines": [{"key": "L1", "product_id": "P1", "price": "100.00", "variant_delta": "-20.00", "quantity": 3, "tax_rates": ["18.00"]}],
+      "discount": null,
+      "expected": {"subtotal": "240.00", "discount": "0.00", "tax": "43.20", "total": "283.20", "line_discounts": ["0.00"]}
+    },
+    {
+      "id": "percentage_rounds_once_before_allocation",
+      "base_fee": "0.00", "base_tax_rates": [],
+      "lines": [
+        {"key": "L1", "product_id": "P1", "price": "0.05", "variant_delta": "0.00", "quantity": 1, "tax_rates": []},
+        {"key": "L2", "product_id": "P2", "price": "0.05", "variant_delta": "0.00", "quantity": 1, "tax_rates": []}
+      ],
+      "discount": {"kind": "PERCENT", "value": "10.00", "eligible_keys": ["L1", "L2"]},
+      "expected": {"subtotal": "0.10", "discount": "0.01", "tax": "0.00", "total": "0.09", "line_discounts": ["0.01", "0.00"]}
+    },
+    {
+      "id": "no_eligible_charge_receives_no_discount",
+      "base_fee": "0.00", "base_tax_rates": [],
+      "lines": [{"key": "L1", "product_id": "P1", "price": "100.00", "variant_delta": "0.00", "quantity": 1, "tax_rates": []}],
+      "discount": {"kind": "FIXED", "value": "50.00", "eligible_keys": []},
+      "expected": {"subtotal": "100.00", "discount": "0.00", "tax": "0.00", "total": "100.00", "line_discounts": ["0.00"]}
+    }
+  ]
+}
