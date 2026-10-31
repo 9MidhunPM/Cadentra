@@ -65,11 +65,21 @@ def _template(db, identifier, *, lock=False):
     return row
 
 
-def _window(start, end, terms):
+def _window(start, end, terms, *, today=None):
     if type(start) is not date or type(end) is not date or end <= start:
         raise DomainError("INVALID_SERVICE_WINDOW", "End date must follow start date.", 422)
     if type(terms) is not int or terms < 0:
         raise DomainError("INVALID_TERMS", "Payment terms must be nonnegative days.", 422)
+    # Allow issuance through expiry or today's catch-up, whichever is later.
+    # Billing still checks the actual issue date for any later catch-up.
+    latest_issue_date = max(get_clock().today() if today is None else today, end)
+    if terms > (date.max - latest_issue_date).days:
+        raise DomainError(
+            "INVALID_PAYMENT_TERMS",
+            "Payment terms exceed supported dates.",
+            422,
+            fields={"payment_terms_days": "Due dates must remain within the supported date range."},
+        )
 
 
 def _line_payloads(lines):
@@ -410,6 +420,7 @@ def apply_action_record(
         _require_state(row, "QUOTATION")
         if row.quotation_valid_until is None or today >= row.quotation_valid_until:
             raise DomainError("QUOTATION_EXPIRED", "Revise and reissue the expired quotation.")
+        _window(row.start_date, row.end_date, row.payment_terms_days, today=today)
         get_plan(db, row.plan_id, lock=True)
         snapshot = get_plan_snapshot(db, row.plan_id, row.start_date)
         contractual_fields = (
