@@ -6,6 +6,7 @@ import { useSession, getErrorMessage } from '../lib'
 import { currentNavigation, getNavigation } from './navigation'
 import { PageSearch } from './PageSearch'
 import { useTheme } from './theme'
+import { DevSessionBanner } from '../features/dev-tools/DevSessionBanner'
 
 export function AppShell() {
   const { actor, logout } = useSession()
@@ -98,6 +99,7 @@ export function AppShell() {
           </motion.aside> : null}
         </AnimatePresence></div>
         <div className="main-column" inert={menuOpen}>
+          <DevSessionBanner />
           {logoutError ? <div className="shell-error" role="alert">{logoutError}</div> : null}
           <div className="breadcrumb"><span>{customer ? 'Customer portal' : 'Workspace'}</span><ChevronRight size={13} aria-hidden="true" /><strong>{current?.label || 'Details'}</strong><span className="theme-caption">{theme === 'dark' ? 'Graphite Mint' : 'Sage Commerce'}</span></div>
           <main id="main-content" className="main-content" tabIndex={-1}><motion.div initial={false} animate={routeArrival}><Outlet /></motion.div></main>

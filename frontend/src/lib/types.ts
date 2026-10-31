@@ -14,4 +14,12 @@ export interface ListResponse<T> {
   page: number;
   page_size: number;
 }
-export interface SessionPayload { actor: Actor; csrf_token: string }
+export type DevToolsStatus = { enabled: boolean; unlocked: false } | {
+  enabled: true;
+  unlocked: true;
+  dev_csrf_token: string;
+  expires_at: string;
+  operator: { id: string; name: string };
+  target: Actor;
+};
+export interface SessionPayload { actor: Actor; csrf_token: string; dev_tools?: DevToolsStatus }
