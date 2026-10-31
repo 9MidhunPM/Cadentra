@@ -87,7 +87,6 @@ test('real customer portal owns records and rejects another customer', async ({ 
 })
 
 test('invoice detail and print isolation require owner-backed endpoints', async ({ page }) => {
-  test.skip(process.env.CADENTRA_LIVE_INVOICE_READY !== '1', 'Set CADENTRA_LIVE_INVOICE_READY=1 after invoice helpers are integrated; this is not a passed ownership check')
   await login(page, 'customer_a')
   const own = Object.values(fixture.invoices).find(row => row.customer_id === fixture.customers.A)!
   const foreign = Object.values(fixture.invoices).find(row => row.customer_id === fixture.customers.B)!

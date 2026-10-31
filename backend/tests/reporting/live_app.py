@@ -3,14 +3,22 @@
 import os
 from datetime import date
 
-from sqlalchemy.engine import make_url
+from fixture_database import checked_url, read_manifest, scoped_url
 
 from app.core import clock
 
-url = make_url(os.environ.get('DATABASE_URL', ''))
-if (os.environ.get('APP_ENV') != 'test' or url.host != '127.0.0.1' or url.port != 55431
-        or url.database != 'cadentra_experience_test'):
-    raise RuntimeError('This app only runs against the assigned disposable test database')
+# Resolve the private manifest before importing app DB/settings singletons.
+manifest = os.environ.get("CADENTRA_LIVE_CREDENTIALS")
+if manifest and os.environ.get("CADENTRA_T30_SCHEMA") == "1":
+    from pathlib import Path
+
+    data = read_manifest(Path(manifest))
+    if data.get("state") != "ready":
+        raise RuntimeError("T30 fixture is not committed and ready")
+    os.environ["DATABASE_URL"] = scoped_url(data).render_as_string(hide_password=False)
+    checked_url(schema=data["schema"])
+else:
+    checked_url()
 
 
 class FixedClock(clock.Clock):

@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 
 test('Graphite Mint defaults dark and Sage preference persists after reload', async ({ page }, testInfo) => {
   if (testInfo.project.name === 'desktop') await page.setViewportSize({ width: 1497, height: 1049 })
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect(page.locator('body')).toHaveCSS('color', 'rgb(236, 242, 235)')
@@ -31,7 +31,7 @@ test('Graphite Mint defaults dark and Sage preference persists after reload', as
 })
 
 test('page search filters permitted routes and opens a page by keyboard', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app')
   await page.getByRole('button', { name: 'Search pages', exact: true }).click()
   const search = page.getByRole('combobox', { name: 'Search pages' })
   await expect(search).toBeFocused()
@@ -44,7 +44,7 @@ test('page search filters permitted routes and opens a page by keyboard', async 
 })
 
 test('page-search shortcut and Escape restore focus; empty results are announced', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible()
   await page.keyboard.press('Control+k')
   const search = page.getByRole('combobox', { name: 'Search pages' })
@@ -57,7 +57,7 @@ test('page-search shortcut and Escape restore focus; empty results are announced
 
 test('reduced motion keeps navigation and theme controls usable', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/')
+  await page.goto('/app')
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Switch to light mode' }).click()
   await page.getByRole('button', { name: 'Search pages', exact: true }).click()
@@ -69,7 +69,7 @@ test('reduced motion keeps navigation and theme controls usable', async ({ page 
 
 test('keyboard page selection stays visible in a short viewport', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 420 })
-  await page.goto('/')
+  await page.goto('/app')
   await page.getByRole('button', { name: 'Search pages', exact: true }).click()
   const input = page.getByRole('combobox', { name: 'Search pages' })
   const options = page.getByRole('option')
