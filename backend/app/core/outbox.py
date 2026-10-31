@@ -7,10 +7,13 @@ transport boundary is at-least-once and never creates invoices or payments.
 
 import smtplib
 import ssl
+from contextlib import contextmanager
 from datetime import timedelta
 from email.headerregistry import Address
 from email.message import EmailMessage
+from email.utils import format_datetime
 from urllib.parse import parse_qs, urlsplit
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,10 +27,30 @@ class InvalidPayload(ValueError):
     """Persisted email content is incomplete or unsuitable for this template."""
 
 
+class SMTPNotConfigured(smtplib.SMTPException):
+    """Public site can boot before private delivery credentials are supplied."""
+
+
+def validate_smtp_ready(settings) -> None:
+    if settings.smtp_host.casefold() == "smtp.resend.com" or settings.app_env == "production":
+        if (
+            settings.smtp_host.casefold() != "smtp.resend.com"
+            or not settings.smtp_password.strip()
+            or not settings.smtp_from.strip()
+        ):
+            raise SMTPNotConfigured("SMTP provider credentials or sender are not configured")
+
+
 def build_message(record: EmailOutbox) -> EmailMessage:
     settings = get_settings()
+    validate_smtp_ready(settings)
     message = EmailMessage()
     try:
+        outbox_id = UUID(str(record.id))
+        message["Message-ID"] = f"<{outbox_id}@cadentra-outbox.invalid>"
+        message["Date"] = format_datetime(record.created_at)
+        # Resend retains idempotency keys for 24 hours, not an exactly-once guarantee.
+        message["Resend-Idempotency-Key"] = f"cadentra-outbox/{outbox_id}"
         message["From"] = settings.smtp_from
         message["To"] = Address(addr_spec=record.recipient)
         message["Subject"] = record.subject
@@ -66,6 +89,7 @@ def build_message(record: EmailOutbox) -> EmailMessage:
             )
             if isinstance(html, str) and html.strip():
                 message.add_alternative(html, subtype="html")
+                message.set_boundary(f"cadentra-outbox-{outbox_id.hex}")
         else:
             raise InvalidPayload("Unsupported email kind")
     except (ValueError, TypeError) as error:
@@ -73,9 +97,10 @@ def build_message(record: EmailOutbox) -> EmailMessage:
     return message
 
 
-def send_message(message: EmailMessage) -> None:
-    """Patch this transport boundary in tests; production uses configured SMTP."""
-    settings = get_settings()
+@contextmanager
+def smtp_connection(settings):
+    """One verified STARTTLS/auth path shared by sending and no-mail preflight."""
+    validate_smtp_ready(settings)
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as connection:
         connection.ehlo()
         if settings.smtp_starttls:
@@ -83,6 +108,12 @@ def send_message(message: EmailMessage) -> None:
             connection.ehlo()
         if settings.smtp_user:
             connection.login(settings.smtp_user, settings.smtp_password)
+        yield connection
+
+
+def send_message(message: EmailMessage) -> None:
+    """Patch this transport boundary in tests; production uses configured SMTP."""
+    with smtp_connection(get_settings()) as connection:
         refused = connection.send_message(message)
         if refused:
             raise smtplib.SMTPRecipientsRefused(refused)

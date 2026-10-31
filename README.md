@@ -6,7 +6,11 @@ Cadentra is a subscription management platform for the **Subscription Management
 
 ## Status
 
-Persistent identity/catalog, subscription workflows, recurring invoicing, payment/rule APIs, reporting and customer-owned portal reads are integrated. Real PostgreSQL, concurrency, worker restart, browser and fresh-clone checks are recorded against exact commits in [release evidence](handoffs/RELEASE.md). Billing UI recovery fixes, portal actions and the complete final browser/performance checks are still in progress. Native SMTP capture passes; external delivery is deferred until configured. The user authorized a Dokploy demo at cadentra.midhunpm.in. DNS resolves and the project has been created; deployment and public-origin checks are pending.
+The existing public demo at [cadentra.midhunpm.in](https://cadentra.midhunpm.in) is healthy on migration `0002` at `b662117`. Its 11/11 public API acceptance and desktop/mobile checks are historical baseline evidence, recorded separately in [release evidence](handoffs/RELEASE.md).
+
+Midhun P M's primary coordinator assistant and seven scoped helper tasks are building and reviewing a cinematic release candidate: a homepage and `/app` routing, CycleGuard API/UI, startup-log redaction, exact migration readiness, safe pagination, form/send recovery, and production Resend SMTP on port 587 with STARTTLS. **This candidate has not been deployed.** Helper tasks assist the existing four-person team and do not establish new individual human activity. Focused candidate checks have separate scopes; the historical 393-backend/164-frontend totals are not claimed as a new combined rerun.
+
+Twenty of 23 requirement groups retain scoped verification. Three remain partial: external password-reset delivery, external invoice delivery, and final performance. The user confirmed Resend password and sender/FROM configuration are missing, so no external delivery is verified. The native all-page T30 attempt is paused after 55 passes and a sign-in timeout on case 56; it does not prove the final every-page two-second target. E01–E04 event obligations remain unverified. Root will update deployment state after actual candidate verification.
 
 ## Product scope
 
@@ -48,7 +52,7 @@ Fill in only after verification:
 
 - Portal-selected problem statement: Subscription Management System
 - Approved app/repository name: Cadentra; `9MidhunPM/Cadentra`
-- Demo origin being prepared: `https://cadentra.midhunpm.in`; deployment not yet verified
+- Existing demo: `https://cadentra.midhunpm.in`, healthy baseline `b662117`; cinematic candidate not yet deployed
 - Demonstration video: not recorded
 - Tested commit: see `handoffs/RELEASE.md` (checks and remaining gaps recorded separately)
 - Implemented requirements and remaining gaps: `docs/15-REQUIREMENTS.md`

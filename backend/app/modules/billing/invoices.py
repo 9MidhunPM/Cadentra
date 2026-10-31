@@ -12,6 +12,7 @@ from app.core.auth import Actor, require_customer_ownership
 from app.core.clock import get_clock
 from app.core.errors import DomainError
 from app.core.money import money, money_string
+from app.core.pagination import safe_offset
 from app.models import (
     AuditEvent,
     BillingPeriod,
@@ -259,7 +260,8 @@ def list_invoices(
         raise DomainError("FORBIDDEN", "Your role cannot read invoices.", 403)
     if actor.role == "CUSTOMER" and customer_id is not None:
         raise DomainError("FORBIDDEN", "Customer filters are unavailable in the portal.", 403)
-    if not 1 <= page_size <= 100 or page < 1 or (from_date and to_date and from_date >= to_date):
+    offset = safe_offset(page, page_size, code="INVALID_FILTER")
+    if from_date and to_date and from_date >= to_date:
         raise DomainError("INVALID_FILTER", "Check pagination and date range.", 422)
     if status is not None and status not in {"DRAFT", "CONFIRMED", "PAID", "CANCELLED"}:
         raise DomainError("INVALID_FILTER", "Unknown invoice status.", 422)
@@ -293,9 +295,7 @@ def list_invoices(
         query = query.where(overdue_clause if overdue else ~overdue_clause)
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     rows = db.execute(
-        query.order_by(Invoice.created_at.desc(), Invoice.id.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
+        query.order_by(Invoice.created_at.desc(), Invoice.id.desc()).offset(offset).limit(page_size)
     ).all()
     return {
         "items": [_summary(invoice, period, money(amount)) for invoice, period, amount in rows],
@@ -307,14 +307,11 @@ def list_invoices(
 
 def list_invoice_payments(db, actor, invoice_id, *, page=1, page_size=25):
     invoice = _invoice(db, actor, invoice_id)
-    if page < 1 or not 1 <= page_size <= 100:
-        raise DomainError("INVALID_FILTER", "Check pagination.", 422)
+    offset = safe_offset(page, page_size, code="INVALID_FILTER")
     query = select(Payment).where(Payment.invoice_id == invoice.id)
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     rows = db.scalars(
-        query.order_by(Payment.created_at.desc(), Payment.id.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
+        query.order_by(Payment.created_at.desc(), Payment.id.desc()).offset(offset).limit(page_size)
     ).all()
     return {
         "items": [_payment_data(row, staff=actor.role != "CUSTOMER") for row in rows],

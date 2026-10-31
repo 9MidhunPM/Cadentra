@@ -1,10 +1,20 @@
 import { useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams, type RouteObject } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams, type RouteObject } from 'react-router'
 import { ArrowRight, Layers3, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { Button, ErrorPanel, FormField, PageHeader } from '../../components/ui'
 import { apiClient, ApiError, getErrorMessage, useSession } from '../../lib'
 import type { Actor, ResourceResponse, SessionPayload } from '../../lib'
 import './identity.css'
+
+
+export function workspaceDestination(value: unknown): string {
+  if (typeof value !== 'string' || !value.startsWith('/') || [...value].some(character => character === '\\' || character.charCodeAt(0) <= 32)) return '/app'
+  try {
+    const url = new URL(value, window.location.origin)
+    if (url.origin !== window.location.origin || !/^\/(?:app|overview|cycleguard|customers|catalog|subscriptions|billing|portal|settings)(?:\/|$)/.test(url.pathname)) return '/app'
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch { return '/app' }
+}
 
 type Mode = 'signin' | 'signup' | 'request' | 'reset'
 const passwordHint = 'At least nine characters, with uppercase, lowercase and a special character.'
@@ -38,6 +48,8 @@ function AuthLayout({ children }: { children: ReactNode }) {
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const destination = workspaceDestination(location.state?.from)
   const [params, setParams] = useSearchParams()
   const { status, refresh } = useSession()
   const [name, setName] = useState('')
@@ -52,7 +64,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const needsPassword = mode !== 'request'
   const newPassword = mode === 'signup' || mode === 'reset'
   const invalidToken = mode === 'reset' && (!token || token.length > 256)
-  if (mode === 'signin' && status === 'authenticated') return <Navigate to="/" replace />
+  if (mode === 'signin' && status === 'authenticated') return <Navigate to={destination} replace />
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -73,7 +85,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         await apiClient.request<ResourceResponse<SessionPayload>>('/auth/login', { method: 'POST', json: { email, password } })
         setPassword('')
         await refresh()
-        navigate('/', { replace: true })
+        navigate(destination, { replace: true })
       } else if (mode === 'signup') {
         await apiClient.request<ResourceResponse<Actor>>('/auth/signup', { method: 'POST', json: { name, email, password } })
         setPassword('')

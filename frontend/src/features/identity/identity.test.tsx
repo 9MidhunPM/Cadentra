@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { apiClient, ApiError } from '../../lib'
-import { AuthForm, passwordMeetsRequirements, StaffPage } from './index'
+import { AuthForm, passwordMeetsRequirements, StaffPage, workspaceDestination } from './index'
 
 const session = vi.hoisted(() => ({ status: 'anonymous', refresh: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('../../lib', async importOriginal => ({ ...await importOriginal<typeof import('../../lib')>(), useSession: () => session }))
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 beforeEach(() => { session.status = 'anonymous'; session.refresh.mockClear() })
 function page(mode: 'signin' | 'signup' | 'request' | 'reset', path = '/') {
-  render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/" element={<h1>Workspace</h1>} /><Route path="/form" element={<AuthForm mode={mode} />} /></Routes></MemoryRouter>)
+  render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/app" element={<h1>Workspace</h1>} /><Route path="/form" element={<AuthForm mode={mode} />} /></Routes></MemoryRouter>)
 }
 async function credentials() {
   const user = userEvent.setup()
@@ -124,4 +124,9 @@ describe('identity forms', () => {
     expect(screen.getByLabelText('Temporary password')).toHaveValue('')
     expect(request).toHaveBeenCalledWith('/staff', { method: 'POST', json: { name: 'Staff One', email: 'staff@example.com', temporary_password: 'Abcdefgh!' } })
   })
+})
+
+it('keeps post-login destinations within operational routes', () => {
+  expect(workspaceDestination('/billing/invoices/example?from=home#payments')).toBe('/billing/invoices/example?from=home#payments')
+  for (const value of ['//evil.example', '/\\evil.example', '/\n/evil.example', '/sign-in', '/app/../sign-in', '/%73ign-in', 'https://evil.example', null]) expect(workspaceDestination(value)).toBe('/app')
 })

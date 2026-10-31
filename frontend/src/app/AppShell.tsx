@@ -60,7 +60,7 @@ export function AppShell() {
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="topbar" inert={menuOpen}>
-        <div className="brand-row"><NavLink to="/" className="wordmark" aria-label="Cadentra home"><span className="brand-symbol" aria-hidden="true">C</span><span>Cadentra<small>Brightloop Software</small></span></NavLink></div>
+        <div className="brand-row"><NavLink to="/app" className="wordmark" aria-label="Cadentra home"><span className="brand-symbol" aria-hidden="true">C</span><span>Cadentra<small>Brightloop Software</small></span></NavLink></div>
         <div className="toolbar-content">
           <button ref={menuTrigger} className="icon-button mobile-menu" aria-label="Open navigation" aria-controls="workspace-sidebar" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={22} /></button>
           <PageSearch items={items} disabled={menuOpen} />

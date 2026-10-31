@@ -5,35 +5,35 @@ OWN-WORLD: Cadentra Graphite Mint, four named contributors, billing evidence and
 STORY: current checkpoint → owner activity → evidence/limits → requirements → next actions/history.
 FIRST VIEWPORT: current main, local coverage count and production verification gate; no implied public release.
 FORM: one offline document, embedded JSON facts, semantic sections, functional search/filter and print.
-MAINTENANCE: Root updates project-status-data after meaningful verified checkpoints. Escape '<' as \u003c in JSON. No secrets or private environment values. No heartbeat/live telemetry. -->
+MAINTENANCE: Root updates project-status-data after meaningful verified checkpoints. Escape '<' as \u003c in JSON. No secrets or private environment values. No authored agent heartbeat; hosted analytics may be injected. -->
 <style>
 :root{color-scheme:dark;--background:#171b1a;--surface:#252e2a;--surface-raised:#2b3530;--ink:#ecf2eb;--muted:#adbdb4;--border:#3c4943;--primary:#b9e8b6;--on-primary:#16271b;--danger:#ffb4ab;--danger-bg:#482722;--warning:#f4cd83;--warning-bg:#44371f;--success:#c4eac8;--success-bg:#24432e;--neutral-bg:#303b35;--sidebar:#202725;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--ink);background:var(--background);font-synthesis:none}*{box-sizing:border-box}body{margin:0;min-width:320px}a{color:inherit;text-underline-offset:4px}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}:focus-visible{outline:2px solid var(--primary);outline-offset:4px}h1,h2,h3,p{margin:0}button{min-height:42px;border:1px solid var(--border);border-radius:8px;padding:9px 14px;background:var(--surface);color:var(--ink)}button:hover{background:var(--surface-raised)}.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}.primary:hover{background:var(--success)}.skip{position:fixed;top:-100px;left:16px;padding:12px;background:var(--primary);color:var(--on-primary);z-index:10}.skip:focus{top:12px}.top{border-bottom:1px solid var(--border);background:var(--sidebar)}.top-inner{max-width:1360px;margin:auto;padding:20px 36px;display:flex;align-items:center;justify-content:space-between;gap:20px}.wordmark{display:flex;align-items:center;gap:11px;font-size:22px;font-weight:700;letter-spacing:-.7px;text-decoration:none}.mark{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--primary);border-radius:9px;color:var(--primary);font-size:20px}.tagline{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}.actions{display:flex;flex-wrap:wrap;gap:8px}.container{max-width:1360px;margin:auto;padding:0 36px 64px}.nav{display:flex;gap:24px;overflow-x:auto;border-bottom:1px solid var(--border);padding:19px 0;font-size:12px;color:var(--muted);white-space:nowrap}.nav a{text-decoration:none}.nav a:hover{color:var(--primary)}.hero{padding:44px 0 28px;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(270px,.8fr);gap:48px}.eyebrow{color:var(--primary);text-transform:uppercase;letter-spacing:.15em;font-size:10px;font-weight:700}.hero h1{font-size:clamp(30px,4vw,49px);letter-spacing:-.04em;line-height:1.12;max-width:780px;margin:16px 0}.lede{color:var(--muted);font-size:15px;line-height:1.8;max-width:730px}.meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:25px;color:var(--muted);font-size:11px;line-height:1.8}.badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;line-height:1.5;border-radius:5px;padding:4px 8px;color:var(--muted);background:var(--neutral-bg);white-space:normal}.badge.good{color:var(--success);background:var(--success-bg)}.badge.warn{color:var(--warning);background:var(--warning-bg)}.badge.danger{color:var(--danger);background:var(--danger-bg)}.coverage{border-left:1px solid var(--border);padding-left:32px;align-self:center}.coverage-number{font-size:54px;letter-spacing:-.04em;line-height:1.1;margin:12px 0 8px;font-variant-numeric:tabular-nums}.coverage-number .small{letter-spacing:normal;line-height:1.8}.coverage-number small{font-size:22px;color:var(--muted);font-weight:400;letter-spacing:-.02em}.bar{height:7px;background:var(--border);border-radius:10px;overflow:hidden;margin:18px 0}.bar span{display:block;height:100%;background:var(--primary)}.small{font-size:11px;color:var(--muted);line-height:1.8}.approval{border:1px solid color-mix(in srgb,var(--warning) 42%,var(--border));border-radius:12px;background:var(--warning-bg);padding:22px 24px;margin-bottom:22px;display:grid;grid-template-columns:160px 1fr;gap:22px}.approval h2{font-size:18px;margin-bottom:9px;line-height:1.4}.approval p{font-size:12px;line-height:1.8;color:var(--muted)}.approval .eyebrow{color:var(--warning)}.snapshot{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:16px 0 28px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}.snapshot label{display:flex;align-items:center;gap:8px;white-space:nowrap}.snapshot input{accent-color:var(--primary);width:17px;height:17px}.section{padding-top:40px;scroll-margin-top:20px}.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:20px}.section h2{font-size:25px;font-weight:600;letter-spacing:-.035em}.section-intro{max-width:660px;font-size:12px;color:var(--muted);line-height:1.8;margin-top:9px}.team{border-top:1px solid var(--border)}.person{display:grid;grid-template-columns:230px 1fr 1fr;gap:28px;padding:24px 0;border-bottom:1px solid var(--border)}.person h3{font-size:15px;margin-bottom:5px}.person .role{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px}.column-label{font-size:9px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);font-weight:700;margin-bottom:8px}.person p:not(.role){font-size:12px;line-height:1.8}.person .next{margin-top:10px;color:var(--muted)}.two-columns{display:grid;grid-template-columns:1.35fr 1fr;gap:36px}.ledger{border:1px solid var(--border);border-radius:10px;overflow:hidden}.evidence{padding:19px 22px;border-bottom:1px solid var(--border);background:var(--surface)}.evidence:last-child{border-bottom:0}.evidence h3{font-size:11px;color:var(--muted);font-weight:500}.evidence strong{display:block;font-size:14px;margin:6px 0 8px;line-height:1.5}.evidence p{font-size:11px;color:var(--muted);line-height:1.8}.evidence.warn{border-left:1px solid var(--warning)}.gates{display:grid;gap:12px}.gate{border:1px solid var(--border);border-radius:10px;padding:20px;background:var(--surface)}.gate .gate-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}.gate h3{font-size:14px;margin:8px 0}.gate p{font-size:11px;line-height:1.8;color:var(--muted)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em;overflow-wrap:anywhere}.deployment{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}.deployment h3{font-size:15px;margin-bottom:10px}.deployment p{font-size:11px;color:var(--muted);line-height:1.8}.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.filters label{font-size:11px;display:grid;gap:7px;color:var(--muted)}input[type=search],select{min-height:43px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--ink);padding:10px 12px}input[type=search]{width:min(340px,65vw)}.requirements{border-top:1px solid var(--border)}.requirement{display:grid;grid-template-columns:48px 1fr 130px;gap:18px;padding:17px 2px;border-bottom:1px solid var(--border);align-items:start}.requirement h3{font-size:13px;margin-bottom:6px}.requirement p{font-size:11px;color:var(--muted);line-height:1.7}.requirement .owner{font-size:10px;color:var(--muted);margin-top:7px}.requirement>code{color:var(--primary);font-size:11px;padding-top:2px}.result-count{font-size:11px;color:var(--muted);padding:13px 0}.empty{padding:30px 0;color:var(--muted);font-size:13px}.events{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}.event{border-top:2px solid var(--border);padding-top:13px}.event h3{font-size:12px;margin:9px 0;line-height:1.6}.event p{font-size:11px;color:var(--muted)}.steps{counter-reset:steps;list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}.steps li{counter-increment:steps;display:grid;grid-template-columns:32px 1fr;gap:12px;padding:17px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.8}.steps li:before{content:counter(steps,decimal-leading-zero);font-size:11px;color:var(--primary);padding-top:2px}.workflow{padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-top:24px;font-size:12px;line-height:1.9;color:var(--muted)}.history{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:22px}.history-item{border-top:1px solid var(--border);padding-top:16px}.history-item code{font-size:11px;color:var(--primary)}.history-item h3{font-size:13px;margin:9px 0}.history-item p{font-size:11px;line-height:1.8;color:var(--muted)}.source-note{border-top:1px solid var(--border);margin-top:36px;padding-top:20px;font-size:11px;color:var(--muted);line-height:1.9}footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;border-top:1px solid var(--border);padding-top:24px;margin-top:36px;color:var(--muted);font-size:10px}.full-sha{display:block;margin-top:5px}.stale{color:var(--warning)}[hidden]{display:none!important}
 @media(max-width:1000px){.person{grid-template-columns:200px 1fr}.person>div:last-child{grid-column:2}.two-columns{grid-template-columns:1fr}.events{grid-template-columns:repeat(2,1fr)}.history{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.top-inner{padding:18px 20px;align-items:flex-start;flex-wrap:wrap}.container{padding:0 20px 40px}.tagline{display:none}.nav{gap:22px;padding:17px 0}.hero{grid-template-columns:1fr;gap:25px;padding-top:30px}.hero h1{font-size:35px}.coverage{border-left:0;border-top:1px solid var(--border);padding:22px 0 0}.coverage-number{font-size:44px}.approval{grid-template-columns:1fr;gap:11px;padding:20px}.snapshot{align-items:flex-start;flex-direction:column;gap:13px}.section{padding-top:32px}.section-head{flex-direction:column;gap:18px}.person{grid-template-columns:1fr;gap:17px}.person>div:last-child{grid-column:auto}.requirement{grid-template-columns:36px 1fr;gap:12px}.requirement>.badge{grid-column:2;justify-self:start}.events,.history{grid-template-columns:1fr}.filters{width:100%}.filters label:first-child{flex:1}input[type=search]{width:100%}.section h2{font-size:23px}.lede{font-size:14px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}@media print{:root{color-scheme:light;--background:#fff;--surface:#fff;--surface-raised:#fff;--ink:#202722;--muted:#4b574f;--border:#c8d2c9;--primary:#246343;--on-primary:#fff;--warning:#704b00;--warning-bg:#fff7e5;--success:#22653f;--success-bg:#e6f2e8;--neutral-bg:#edf1ea;--sidebar:#fff}body{font-size:10pt}.top-inner,.container{padding-left:0;padding-right:0}.nav,.actions,.snapshot label,.filters,.skip,.result-count,#empty-results{display:none!important}.hero{padding-top:25px}.section{break-before:auto;padding-top:25px}.person,.gate,.evidence,.requirement,.history-item{break-inside:avoid}.section h2{font-size:20pt}.hero h1{font-size:28pt}.coverage-number{font-size:35pt}.top{background:#fff}.requirement[hidden]{display:grid!important}footer{font-size:8pt}.source-note{font-size:9pt}}
-</style></head><body><a class="skip" href="#main">Skip to project report</a><header class="top"><div class="top-inner"><a class="wordmark" href="#main"><span class="mark" aria-hidden="true">C</span><span id="brand"></span></a><span class="tagline">PROJECT OPERATING REPORT</span><div class="actions"><button id="refresh" class="primary" type="button">Refresh saved snapshot</button><button id="print" type="button">Print report</button></div></div></header><div class="container"><nav class="nav" aria-label="Report sections"><a href="#team">People & work</a><a href="#evidence">Evidence & gates</a><a href="#requirements">Requirement checklist</a><a href="#next">Next actions</a><a href="#history">Source history</a></nav><main id="main"><section class="hero" aria-labelledby="headline"><div><p class="eyebrow" id="subtitle"></p><h1 id="headline"></h1><p class="lede" id="summary"></p><div class="meta"><span id="snapshot-time"></span><span id="age" role="status"></span><span>Main <code id="main-short"></code></span></div></div><aside class="coverage" aria-labelledby="coverage-label"><p class="eyebrow" id="coverage-label"></p><div class="coverage-number" id="coverage-number"></div><div class="bar" role="img" id="coverage-bar"><span></span></div><p class="small" id="coverage-caveat"></p></aside></section><section class="approval" aria-labelledby="blocker-title"><div><p class="eyebrow" id="blocker-level"></p><p class="small" style="margin-top:10px">Current release gate</p></div><div><h2 id="blocker-title"></h2><p id="blocker-detail"></p><p id="blocker-action" style="margin-top:10px"></p></div></section><div class="snapshot"><p id="snapshot-notice"></p><label><input id="auto-reload" type="checkbox">Reload saved snapshot every 60 seconds</label></div><section class="section" id="team"><div class="section-head"><div><h2>Four people. Clear ownership.</h2><p class="section-intro">Delivered work, the current focus and the next handoff—kept separate so an active task never looks finished.</p></div></div><div id="team-rows" class="team"></div></section><section class="section" id="evidence"><div class="section-head"><div><h2>Evidence, with its limits.</h2><p class="section-intro">Local checks have real scope. A historical benchmark, a focused rerun or a captured email does not close a wider release gate.</p></div></div><div class="two-columns"><div class="ledger" id="evidence-rows"></div><aside><div class="gates" id="gates"></div><div class="deployment"><span id="deployment-status" class="badge warn"></span><h3 style="margin-top:15px">Deployment target</h3><p><code id="deployment-target"></code></p><p id="deployment-detail" style="margin-top:10px"></p><p class="small" style="margin-top:16px">Current main <code id="main-full" class="full-sha"></code></p><p id="prepared-root" class="small" style="margin-top:10px"></p></div></aside></div></section><section class="section" id="requirements"><div class="section-head"><div><h2>Product requirement checklist.</h2><p class="section-intro">Local verification is counted at the requirement-group level. Partial external delivery and final-page timing remain visible.</p></div><div class="filters"><label>Search requirements<input id="requirement-search" type="search" placeholder="ID, feature or owner…" autocomplete="off"></label><label>Evidence status<select id="requirement-filter"><option value="all">All groups</option><option value="Locally verified">Locally verified</option><option value="Partial">Partial</option></select></label><button id="reset-filters" type="button">Reset filters</button></div></div><p id="result-count" class="result-count" aria-live="polite"></p><div id="requirement-rows" class="requirements"></div><p id="empty-results" class="empty" hidden>No requirement groups match these filters.</p><div style="margin-top:30px"><h3 style="font-size:16px">Event obligations · outside the product percentage</h3><div id="event-rows" class="events"></div></div></section><section class="section" id="next"><div class="section-head"><div><h2>What happens next.</h2><p class="section-intro">Ordered release work. There is no invented finish time or automatic merge promise.</p></div></div><ol id="next-steps" class="steps"></ol><div id="workflow" class="workflow"></div></section><section class="section" id="history"><div class="section-head"><div><h2>Checkpoints behind this snapshot.</h2><p class="section-intro">Source history preserves ownership and distinguishes the current main from prepared work that has not yet taken its integration turn.</p></div></div><div id="history-rows" class="history"></div><p id="source-policy" class="source-note"></p></section></main><footer><span id="footer-project"></span><span>Offline-capable · no external libraries or telemetry</span></footer></div><noscript><p style="padding:24px">Enable JavaScript to render the embedded saved project snapshot. This document makes no live telemetry requests.</p></noscript>
+</style></head><body><a class="skip" href="#main">Skip to project report</a><header class="top"><div class="top-inner"><a class="wordmark" href="#main"><span class="mark" aria-hidden="true">C</span><span id="brand"></span></a><span class="tagline">PROJECT OPERATING REPORT</span><div class="actions"><button id="refresh" class="primary" type="button">Refresh saved snapshot</button><button id="print" type="button">Print report</button></div></div></header><div class="container"><nav class="nav" aria-label="Report sections"><a href="#team">People & work</a><a href="#evidence">Evidence & gates</a><a href="#requirements">Requirement checklist</a><a href="#next">Next actions</a><a href="#history">Source history</a></nav><main id="main"><section class="hero" aria-labelledby="headline"><div><p class="eyebrow" id="subtitle"></p><h1 id="headline"></h1><p class="lede" id="summary"></p><div class="meta"><span id="snapshot-time"></span><span id="age" role="status"></span><span>Main <code id="main-short"></code></span></div></div><aside class="coverage" aria-labelledby="coverage-label"><p class="eyebrow" id="coverage-label"></p><div class="coverage-number" id="coverage-number"></div><div class="bar" role="img" id="coverage-bar"><span></span></div><p class="small" id="coverage-caveat"></p></aside></section><section class="approval" aria-labelledby="blocker-title"><div><p class="eyebrow" id="blocker-level"></p><p class="small" style="margin-top:10px">Current release gate</p></div><div><h2 id="blocker-title"></h2><p id="blocker-detail"></p><p id="blocker-action" style="margin-top:10px"></p></div></section><div class="snapshot"><p id="snapshot-notice"></p><label><input id="auto-reload" type="checkbox">Reload saved snapshot every 60 seconds</label></div><section class="section" id="team"><div class="section-head"><div><h2>Four people. Clear ownership.</h2><p class="section-intro">Delivered work, the current focus and the next handoff—kept separate so an active task never looks finished.</p></div></div><div id="team-rows" class="team"></div></section><section class="section" id="evidence"><div class="section-head"><div><h2>Evidence, with its limits.</h2><p class="section-intro">Local checks have real scope. A historical benchmark, a focused rerun or a captured email does not close a wider release gate.</p></div></div><div class="two-columns"><div class="ledger" id="evidence-rows"></div><aside><div class="gates" id="gates"></div><div class="deployment"><span id="deployment-status" class="badge warn"></span><h3 style="margin-top:15px">Deployment target</h3><p><code id="deployment-target"></code></p><p id="deployment-detail" style="margin-top:10px"></p><p class="small" style="margin-top:16px">Current main <code id="main-full" class="full-sha"></code></p><p id="prepared-root" class="small" style="margin-top:10px"></p></div></aside></div></section><section class="section" id="requirements"><div class="section-head"><div><h2>Product requirement checklist.</h2><p class="section-intro">Local verification is counted at the requirement-group level. Partial external delivery and final-page timing remain visible.</p></div><div class="filters"><label>Search requirements<input id="requirement-search" type="search" placeholder="ID, feature or owner…" autocomplete="off"></label><label>Evidence status<select id="requirement-filter"><option value="all">All groups</option><option value="Locally verified">Locally verified</option><option value="Partial">Partial</option></select></label><button id="reset-filters" type="button">Reset filters</button></div></div><p id="result-count" class="result-count" aria-live="polite"></p><div id="requirement-rows" class="requirements"></div><p id="empty-results" class="empty" hidden>No requirement groups match these filters.</p><div style="margin-top:30px"><h3 style="font-size:16px">Event obligations · outside the product percentage</h3><div id="event-rows" class="events"></div></div></section><section class="section" id="next"><div class="section-head"><div><h2>What happens next.</h2><p class="section-intro">Ordered release work. There is no invented finish time or automatic merge promise.</p></div></div><ol id="next-steps" class="steps"></ol><div id="workflow" class="workflow"></div></section><section class="section" id="history"><div class="section-head"><div><h2>Checkpoints behind this snapshot.</h2><p class="section-intro">Source history preserves ownership and distinguishes the current main from prepared work that has not yet taken its integration turn.</p></div></div><div id="history-rows" class="history"></div><p id="source-policy" class="source-note"></p></section></main><footer><span id="footer-project"></span><span>Offline-capable source · hosting may add analytics</span></footer></div><noscript><p style="padding:24px">Enable JavaScript to render the embedded saved project snapshot. This authored report has no live agent status connection; hosting may add analytics.</p></noscript>
 <script type="application/json" id="project-status-data">
 {
   "project": "Cadentra",
   "subtitle": "Subscription Management System · Brightloop Software",
-  "snapshotUTC": "2026-10-31T08:04:19Z",
+  "snapshotUTC": "2026-10-31T09:02:48Z",
   "staleAfterMinutes": 15,
-  "headline": "The product journey passes. Release verification continues.",
-  "summary": "The full cross-owner journey has scoped evidence. The approved private deployment environment is saved, and the security patch passes393 backend and164 frontend tests. Production proxy/container verification and complete final-page timings remain open.",
+  "headline": "The public demo is live. A cinematic release is in review.",
+  "summary": "The existing HTTPS demo is healthy on migration 0002 at b662117. The working-tree candidate adds a cinematic homepage, /app routing, CycleGuard, focused security corrections, form/send recovery and production Resend SMTP support. The candidate has not been deployed; focused verification and root review are in progress.",
   "coverageLabel": "Local product requirement groups",
-  "coverageCaveat": "A count of requirement groups, not effort, release readiness or a claim that the whole product is complete. Event obligations and the separate T31 journey are excluded.",
+  "coverageCaveat": "20 of 23 requirement groups retain scoped local verification; three remain partial for external reset delivery, external invoice delivery and final performance. This is not effort, candidate-release readiness or a universal completion claim. Event obligations remain separate.",
   "currentMain": {
-    "sha": "25e63510fa129962ab7b61e3e919061ac085a14f",
-    "label": "Reporting customer drilldowns and production ingress integrated",
-    "state": "Owner integrations verified; actual containers started, public route correction pending"
+    "sha": "b662117d9536f5bae2d86ada0d79777c51b9f0c6",
+    "label": "Verified existing public demo baseline",
+    "state": "HTTPS demo healthy on migration 0002; cinematic candidate remains in root review"
   },
   "preparedRoot": {
-    "sha": "2b1d54015f01a215362be47af2e001deb6303cac",
-    "label": "Verified production proxy identity and private networking",
-    "state": "Published by Midhun P M in main89017d6; production frontend and real runtime verification still required."
+    "sha": "Working tree over b662117",
+    "label": "Cinematic release and correctness candidate",
+    "state": "Homepage and /app routes, CycleGuard API/UI, startup-log redaction, migration readiness, bounded pagination, form/send recovery and Resend SMTP 587 STARTTLS are implemented in the candidate. Review and deployment verification remain pending."
   },
   "deployment": {
-    "state": "Images built · API healthy · public route correction pending",
+    "state": "Existing demo live · cinematic candidate not deployed",
     "target": "https://cadentra.midhunpm.in",
-    "detail": "Actual Dokploy images built; migrations/bootstrap exit0; API/database/private capture healthy, one worker and UID101 web running. No host ports. Public HTTPS returns routing404; explicit app-only routers and a proxy-only API alias are being corrected before acceptance."
+    "detail": "The existing public HTTPS demo is healthy on migration 0002 at b662117. Its earlier public API acceptance and desktop/mobile checks are historical baseline evidence. The new cinematic working tree has not been deployed. Midhun P M will update release state after the candidate is actually deployed and verified."
   },
   "snapshotNotice": "Saved coordinator snapshot, not live agent telemetry. Reload reads this saved file again; it does not contact teammates or infer activity.",
   "team": [
@@ -41,72 +41,72 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "name": "Midhun P M",
       "role": "Platform · catalog · coordination · deployment",
       "done": "Shared platform, identity/catalog, native runtime, local verification and deployment package.",
-      "now": "Actual Docker images/startup succeeded. Correcting the observed Cadentra routing and proxy-only API lookup, then running the public functional acceptance flow.",
-      "next": "Review the frontend proxy candidate and publish the reviewed owner slices before public container/startup checks.",
-      "state": "Release coordination"
+      "now": "Building and reviewing the cinematic release with the primary coordinator assistant and seven scoped helper tasks. Those tasks are tools assisting the existing four-person team, not additional human contributors or proof of new individual human activity.",
+      "next": "Complete focused review, integrate the candidate, deploy and verify HTTPS and /app behavior; configure Resend sender/password before external-delivery acceptance.",
+      "state": "Building cinematic release"
     },
     {
       "name": "Thanushree Suresh",
       "role": "Subscriptions · lifecycle · scheduling",
       "done": "Subscription workflows, actual worker/action races, staff actions and dark/light checks.",
-      "now": "Closing documentation is reviewed. The owner-main push was automatically rejected pending that session’s direct user authorization; the intact candidate is preserved and no workaround is used.",
-      "next": "After direct authorization, obtain a renewed exact main turn and publish the reviewed closing docs.",
-      "state": "Documentation ready"
+      "now": "The integrated subscription/lifecycle workstream remains part of the verified baseline. Root review checks its compatibility with the new /app routing; this saved snapshot does not infer new owner activity.",
+      "next": "Retain lifecycle/ownership behavior through candidate review and report any concrete regression.",
+      "state": "Integrated workstream"
     },
     {
       "name": "Noel Biju",
       "role": "Billing · invoices · payments",
       "done": "Billing, pricing, payment guards and recovery behavior.",
-      "now": "Billing source is unchanged and locally verified. Closeout505c8b3 is prepared; final T30 audit waits for settled proxy source and actual timing evidence.",
-      "next": "Support final-page measurements and the remaining release evidence handoff.",
-      "state": "Performance support"
+      "now": "Billing, invoice and payment work remains integrated. The candidate adds send/form recovery and Resend transport support; missing sender/password configuration still prevents external-delivery verification.",
+      "next": "Preserve invoice/payment correctness and verify real invoice delivery only after configuration is supplied.",
+      "state": "Integrated workstream"
     },
     {
       "name": "Sherin Saji",
       "role": "Experience · reports · customer portal",
       "done": "UI/themes, reporting, portal and production frontend package.",
-      "now": "Production proxy and reporting fixes are integrated through owner SSH. Preparing the proxy-only API alias follow-up; fresh performance data is seeded but no final timings have run.",
-      "next": "Complete the exact production proxy review/integration, then measure final pages on a clean settled source.",
-      "state": "Proxy and final performance"
+      "now": "The experience/reporting/portal baseline remains integrated. The root-coordinated cinematic candidate is under review. Native all-page T30 is paused after 55 passes and a sign-in timeout on the 56th case.",
+      "next": "Complete the final settled-source performance run and preserve the distinction between old public checks and new candidate checks.",
+      "state": "Candidate review"
     }
   ],
   "blockers": [
     {
-      "level": "Deployment verification in progress",
-      "title": "Public route and private upstream need actual verification",
-      "detail": "The shared login quota correction is reviewed and passes393 backend/164 frontend tests, plus26 independent native proxy checks. First actual containers are running, but the platform did not inject the expected route labels and added a default web network attachment. The public request still returns404.",
-      "action": "Add explicit Cadentra-only guarded routers and use the private proxy-only API alias. Keep exact peer trust, then verify real Cloudflare/direct-origin behavior and the persisted public workflow."
+      "level": "Candidate release in progress",
+      "title": "Cinematic working tree is not deployed",
+      "detail": "The existing HTTPS demo is healthy. The homepage, /app routes, CycleGuard API/UI, correctness/security fixes and recovery changes belong to the new working-tree candidate; historical full-suite counts do not verify this whole candidate.",
+      "action": "Finish root review and focused checks, integrate the candidate, then deploy and verify its actual public behavior before changing release state."
     },
     {
-      "level": "Owner-reported pass",
-      "title": "First full T31 journey passed; coordinator rerun remains separate",
-      "detail": "The owner reports 1/1 in 16.6s using harness41ef6df against runtimeff18. The actual UI journey covers product/plan → quotation/active → invoice → payments → reports/portal reload/print and owned lifecycle actions. It includes foreign-record404/nochange and zero page errors.",
-      "action": "Preserve that scoped owner evidence and complete the final repeat and performance checks; do not imply an independent coordinator rerun."
+      "level": "Configuration gap",
+      "title": "External reset and invoice email are not verified",
+      "detail": "Production Resend SMTP support is prepared for port 587 with STARTTLS. The user confirmed the SMTP password and sender/FROM configuration are not supplied. Local capture and transport preparation do not establish delivery.",
+      "action": "Supply the missing configuration through the authorized private environment, then verify actual reset and invoice delivery without publishing credentials."
     },
     {
       "level": "Evidence gap",
-      "title": "Final-page timing and external email remain open",
-      "detail": "External SMTP is explicitly deferred; only local Mailpit capture is evidenced. Historical performance results do not prove every final page meets the brief.",
-      "action": "Measure final surfaces, retain known external-delivery gaps and avoid claiming a public deployment."
+      "title": "Final native all-page performance is incomplete",
+      "detail": "The native T30 attempt has 55 passes, with the 56th case paused on a sign-in timeout. Historical 10-view timings and the existing public API/desktop/mobile checks do not establish every new final page below two seconds.",
+      "action": "Resolve the sign-in harness timeout and rerun the complete final-page measurement on a frozen candidate; report the measured environment and limits."
     }
   ],
   "evidence": [
     {
-      "label": "Combined backend verification",
+      "label": "Historical combined backend verification",
       "result": "393 tests passed",
-      "scope": "Coordinator executed the current root proxy-security candidate against real isolated PostgreSQL test databases. This includes32 new trust/quota regressions; an independent focused review also passed37 proxy/helper cases.",
+      "scope": "393 backend tests passed on the earlier root proxy-security candidate. This historical baseline includes 32 trust/quota regressions and an independent 37-case proxy/helper review. It is not a combined rerun of the new cinematic candidate.",
       "tone": "good"
     },
     {
-      "label": "Frontend checks",
+      "label": "Historical frontend checks",
       "result": "164 tests; lint, type and production build passed",
-      "scope": "Coordinator repeated the current combined frontend on the security candidate. The shared bundle-size advisory remains a build warning; this does not establish every final-page timing.",
+      "scope": "164 frontend tests plus lint, type and production build passed on the earlier combined security candidate. These historical checks do not verify the entire new cinematic candidate or every final-page timing.",
       "tone": "good"
     },
     {
-      "label": "Latest owner repeat",
+      "label": "Historical owner repeat",
       "result": "164 frontend tests passed in the newer owner combined run",
-      "scope": "The earlier155/156 focus timing flake is historical. The test-only waitFor fix and scoped T31 evidence are published in main0b131db. The coordinator passed393 backend tests on the root security candidate.",
+      "scope": "The earlier focus timing correction and scoped T31 evidence were published in main 0b131db. Its 164 frontend tests and the coordinator's 393 backend tests remain historical evidence, not new activity or candidate reruns.",
       "tone": "good"
     },
     {
@@ -142,7 +142,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "label": "Runtime and packaging",
       "result": "PostgreSQL18.6 · 27 tables · migrations0001/0002",
-      "scope": "Native frontend packaging has eight checks and reset-error log privacy proof. Actual container/public-origin verification remains a release gate.",
+      "scope": "PostgreSQL 18.6 and migrations 0001/0002 are part of the verified baseline. Existing public deployment is healthy; the new cinematic candidate still requires actual deployment and public verification.",
       "tone": "neutral"
     },
     {
@@ -160,13 +160,13 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "label": "Backend security review and patch",
       "result": "50 application files reviewed · one Medium finding ·393 backend tests pass",
-      "scope": "The current API fix includes32 trust/quota regressions; independent proxy/helper review passes37 cases. Production web and deployed-chain verification remain open, so complete runtime remediation is not claimed.",
+      "scope": "Historical scoped review of 50 application files found one Medium quota issue and recorded 393 backend tests plus independent proxy/helper checks. New startup-log redaction, readiness and pagination corrections are separately scoped candidate changes; no new whole-product security assurance is claimed.",
       "tone": "warn"
     },
     {
       "label": "Private deployment environment",
       "result": "Explicit user approval received; private environment saved",
-      "scope": "The previously rejected sensitive transfer is now authorized for Cadentra. No values are included here; public deployment is not yet verified.",
+      "scope": "The approved private environment supports the existing public demo. No environment values are included here. The new cinematic candidate and external Resend delivery are not yet verified.",
       "tone": "good"
     },
     {
@@ -182,9 +182,33 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "tone": "good"
     },
     {
-      "label": "First actual Docker deployment",
+      "label": "Historical first Docker deployment",
       "result": "Images built; migrations/bootstrap0; API healthy",
-      "scope": "UID101 web, one worker, private database/capture and no host ports verified. Public route still404; deployed functional/ingress acceptance has not passed.",
+      "scope": "Initial images, migrations/bootstrap, UID 101 web, one worker and private services passed. The initial routing 404 was later corrected for the public baseline at b662117; this entry is historical and does not mean the new candidate is deployed.",
+      "tone": "warn"
+    },
+    {
+      "label": "Existing public baseline",
+      "result": "HTTPS healthy · migration 0002 · b662117",
+      "scope": "Previously verified public API acceptance 11/11 and desktop/mobile checks apply to the existing baseline. This saved report update did not rerun them and does not apply them to the new cinematic release.",
+      "tone": "good"
+    },
+    {
+      "label": "New candidate focused verification",
+      "result": "Readiness/pagination and existing API focus: 33 passed",
+      "scope": "This focused backend group checks exact migration readiness, sanitized database failures, safe pagination and actual staff list routes. Other candidate groups are reported separately; no combined 393-backend/164-frontend rerun is claimed here.",
+      "tone": "neutral"
+    },
+    {
+      "label": "Current native T30 attempt",
+      "result": "55 passes · case 56 sign-in timeout · paused",
+      "scope": "Partial native all-page evidence only. The final complete run and a universal two-second result remain unverified; historical public desktop/mobile checks have a different scope.",
+      "tone": "warn"
+    },
+    {
+      "label": "Resend transport candidate",
+      "result": "SMTP 587 STARTTLS support prepared; credentials incomplete",
+      "scope": "The user confirmed password and sender/FROM configuration are absent. No external reset or invoice email delivery has been verified. No private values are stored in this report.",
       "tone": "warn"
     }
   ],
@@ -198,20 +222,20 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "id": "T30",
       "title": "All final-page performance",
-      "status": "Pending",
-      "note": "Measure every required final surface; older aggregate results are insufficient."
+      "status": "Partial · paused",
+      "note": "Native attempt: 55 passes, 56th case sign-in timeout. The complete settled-source final-page run is not verified."
     },
     {
       "id": "Deployment",
       "title": "Public production readiness",
-      "status": "Environment configured",
-      "note": "Narrow transfer approval is granted and private environment saved. Production proxy hardening, actual containers and public-origin verification remain open."
+      "status": "Existing demo live · candidate not deployed",
+      "note": "The public HTTPS baseline is healthy on migration 0002 at b662117. Deploy and verify the new cinematic candidate before calling it released."
     },
     {
       "id": "SMTP",
       "title": "External reset and invoice delivery",
-      "status": "Deferred",
-      "note": "User explicitly deferred external SMTP. Local capture is the current limit."
+      "status": "Configuration missing",
+      "note": "Resend SMTP 587 STARTTLS support is prepared, but the password and sender/FROM are not configured. No external delivery is verified."
     }
   ],
   "eventObligations": [
@@ -237,11 +261,11 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     }
   ],
   "nextSteps": [
-    "Integrate the reviewed app-only routing labels and proxy-only API alias without widening trusted peers.",
-    "Verify public HTTPS, real ingress restrictions and a persisted fictional invoice/payment/portal workflow.",
-    "Run final native page timings from a clean frozen source with the fresh UUID schema; distinguish them from public production timings.",
-    "Publish reviewed owner closing docs only after each required direct authorization and a fresh serialized GO.",
-    "Keep external SMTP/event obligations explicit and update this saved report after verified checkpoints."
+    "Finish root review and focused verification of the cinematic homepage, /app routing, CycleGuard and correctness/recovery candidate.",
+    "Integrate the reviewed candidate, deploy it, then verify public HTTPS, /app navigation and persisted ownership/financial behavior before updating release status.",
+    "Provide Resend password and sender/FROM through the private environment; verify actual reset and invoice delivery separately from queued/local capture states.",
+    "Resolve the native T30 sign-in timeout and complete the final frozen-source all-page performance run; retain the 55-pass/56th-timeout partial scope.",
+    "Keep four human ownership records accurate, helper activity clearly identified as tooling, and E01–E04 event obligations unverified until evidenced."
   ],
   "workflow": "Midhun P M reviews an exact feature head against an expected main SHA and gives one serialized GO. The owner fetches/rechecks main and uses a normal SSH push with their own verified identity. No gh/API main publishing, force push or concurrent integration turns.",
   "history": [
@@ -278,7 +302,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
     {
       "sha": "eb8d8fd",
       "title": "Root owner-SSH workflow and deployment manifest",
-      "note": "Current main includes portalff18; deployment remains prepared pending approval and actual runtime checks."
+      "note": "At this historical checkpoint, main included portalff18 and deployment was prepared pending approval and actual runtime checks."
     },
     {
       "sha": "00ffa99",
@@ -304,9 +328,14 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "sha": "25e6351",
       "title": "Applied customer reporting drilldowns",
       "note": "Both overdue links preserve only the applied customer;8 reporting tests/type/pack/whitespace pass."
+    },
+    {
+      "sha": "b662117",
+      "title": "Healthy existing public demo baseline",
+      "note": "Public HTTPS and migration 0002 are verified for the existing demo. The subsequent cinematic release is still a working-tree candidate under root review."
     }
   ],
-  "sourcePolicy": "Coordinator-maintained JSON after meaningful verified checkpoints. Sources are exact Git heads, owner handoffs, executed checks and Codex TUI reports. Historical evidence retains its commit/runtime scope. No background heartbeat or automatic agent monitoring is implied.",
+  "sourcePolicy": "Coordinator-maintained JSON after meaningful verified checkpoints. Sources are exact Git heads, owner handoffs, executed checks and scoped Codex TUI reports. Historical evidence retains its commit/runtime scope; tool activity does not prove new human contribution. The authored status source is self-contained and works offline, with no background agent heartbeat. Deployed hosting may inject Cloudflare analytics; this is not a claim that the hosted page has no telemetry.",
   "requirements": [
     {
       "id": "R01",
@@ -320,7 +349,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "title": "Password reset delivery",
       "owner": "Midhun P M",
       "status": "Partial",
-      "note": "Reset token, local SMTP/inbox and error-log privacy verified. External delivery explicitly deferred."
+      "note": "Reset tokens and local capture are verified. Resend transport is prepared in the candidate, but password and sender/FROM are unconfigured; external delivery is not verified."
     },
     {
       "id": "R03",
@@ -404,7 +433,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "title": "Invoice actions and delivery",
       "owner": "Noel Biju",
       "status": "Partial",
-      "note": "Confirm/cancel/print and local send behavior verified. External invoice email delivery deferred."
+      "note": "Confirm/cancel/print and local send behavior are verified. Candidate send/recovery and Resend support are not deployed; missing password/sender configuration prevents external invoice delivery verification."
     },
     {
       "id": "R15",
@@ -453,7 +482,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "title": "Customer portal management",
       "owner": "Sherin Saji + Thanushree Suresh",
       "status": "Locally verified",
-      "note": "Portal lifecycle actions merged and PostgreSQL-tested at the current main checkpoint."
+      "note": "Portal lifecycle actions were merged and PostgreSQL-tested before the current cinematic candidate."
     },
     {
       "id": "R22",
@@ -467,7 +496,7 @@ MAINTENANCE: Root updates project-status-data after meaningful verified checkpoi
       "title": "Every final page below two seconds",
       "owner": "Sherin Saji",
       "status": "Partial",
-      "note": "Historical 10-view/250-sample evidence exists. Every final surface must still be measured."
+      "note": "Historical 10-view/250-sample evidence remains scoped. Current native all-page T30 has 55 passes and a sign-in timeout on case 56; it is paused and does not establish the final every-page target."
     }
   ]
 }

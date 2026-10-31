@@ -10,7 +10,7 @@ describe('route recovery', () => {
     const router = createMemoryRouter([{
       errorElement: <RouteErrorBoundary />,
       children: [
-        { path: '/', element: <h1>Workspace home</h1> },
+        { path: '/app', element: <h1>Workspace home</h1> },
         { path: '/broken', loader: () => { throw new Error('PRIVATE_STACK_AND_RECORD_DATA') }, element: <h1>Never shown</h1> },
       ],
     }], { initialEntries: ['/broken'] })

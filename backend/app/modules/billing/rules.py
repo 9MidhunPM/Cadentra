@@ -13,6 +13,7 @@ from app.core.auth import Actor
 from app.core.clock import get_clock
 from app.core.errors import DomainError
 from app.core.money import money, money_string
+from app.core.pagination import safe_offset
 from app.models import (
     DiscountRevisionProduct,
     DiscountRule,
@@ -218,6 +219,7 @@ def rule_data(db, parent, revision, tax):
 def list_rules(db, actor, tax, page=1, page_size=25):
     if actor.role not in ("ADMIN", "STAFF"):
         raise DomainError("FORBIDDEN", "Staff access is required.", 403)
+    offset = safe_offset(page, page_size)
     parent_model, revision_model = (
         (TaxRule, TaxRuleRevision) if tax else (DiscountRule, DiscountRuleRevision)
     )
@@ -231,7 +233,7 @@ def list_rules(db, actor, tax, page=1, page_size=25):
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     rows = db.execute(
         query.order_by(parent_model.created_at.desc(), parent_model.id.desc())
-        .offset((page - 1) * page_size)
+        .offset(offset)
         .limit(page_size)
     ).all()
     return {

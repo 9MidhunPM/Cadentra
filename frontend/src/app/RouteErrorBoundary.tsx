@@ -14,7 +14,7 @@ export function RouteErrorBoundary() {
       <h1 ref={heading} tabIndex={-1}>We couldn’t open this page</h1>
       <p>Please try loading it again, or return to your workspace.</p>
       <button className="primary-button" onClick={() => window.location.reload()}>Reload page</button>
-      <p><Link to="/">Return to your workspace</Link></p>
+      <p><Link to="/app">Return to your workspace</Link></p>
     </main>
   )
 }
