@@ -93,6 +93,8 @@ test('mobile navigation closes with Escape and restores focus', async ({ page },
   const open = page.getByRole('button', { name: 'Open navigation' })
   await open.click()
   await expect(page.getByRole('dialog', { name: 'Workspace sidebar' })).toBeVisible()
+  await page.keyboard.press('Control+k')
+  await expect(page.getByRole('dialog', { name: 'Search pages' })).toHaveCount(0)
   await page.keyboard.press('Escape')
   await expect(open).toBeFocused()
   await expect(page.getByRole('dialog')).toHaveCount(0)
