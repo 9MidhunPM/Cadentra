@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { apiClient, ApiError, getErrorMessage, useSession, type ListResponse, type ResourceResponse } from '../../lib';
 import { Button, DataTable, DateLabel, ErrorPanel, FormField, LoadingSkeleton, Money, PageHeader, StatusBadge } from '../../components/ui';
 import { fieldError, useResource } from './resource';
@@ -7,6 +7,22 @@ import { beginRuleWrite, completeRuleRead, getRuleWrite, setRuleWrite, useRuleWr
 
 type Kind = 'tax' | 'discount';
 interface Product { id: string; name: string }
+
+function SelectedProductLookup({ id, position, onResolved, onRemove }: { id: string; position: number; onResolved: (product: Product) => void; onRemove: () => void }) {
+  const resource = useResource<ResourceResponse<Product>>(`/products/${encodeURIComponent(id)}`);
+  const product = resource.data?.data;
+  const verified = !!product && product.id === id && typeof product.name === 'string' && product.name.trim().length > 0;
+  useEffect(() => {
+    if (verified && product) onResolved(product);
+  }, [verified, product, onResolved]);
+  const error = resource.error ?? (!resource.loading && !verified ? new ApiError(200, 'INVALID_RESPONSE', 'The product name could not be verified.') : null);
+  return <div role="group" aria-label={`Selected product ${position}`}>
+    <Button variant="secondary" onClick={onRemove}>Remove selected product</Button>
+    {resource.loading && <p role="status">Loading selected product name</p>}
+    {error != null && <><p role="alert">Selected product name unavailable. {getErrorMessage(error)}</p><Button variant="secondary" onClick={resource.reload}>Retry product name</Button></>}
+  </div>;
+}
+
 export function RulePage({ kind }: { kind: Kind }) {
   const { actor } = useSession();
   const admin = actor?.role === 'ADMIN';
@@ -75,6 +91,13 @@ function RuleForm({ kind, rule, onSaved, onCancel, blocked }: { kind: Kind; rule
   const [limit, setLimit] = useState(rule?.usage_limit == null ? '' : String(rule.usage_limit));
   const [active, setActive] = useState(rule?.active ?? true);
   const [selected, setSelected] = useState<{ id: string; name?: string }[]>(() => (rule?.product_ids ?? []).map(id => ({ id })));
+  const rememberProduct = useCallback((resolved: Product) => {
+    setSelected(current => {
+      const selectedProduct = current.find(product => product.id === resolved.id);
+      if (!selectedProduct || selectedProduct.name) return current;
+      return current.map(product => product.id === resolved.id ? { id: product.id, name: resolved.name } : product);
+    });
+  }, []);
   const [search, setSearch] = useState('');
   const [productPage, setProductPage] = useState(1);
   const products = useResource<ListResponse<Product>>(`/products?page=${productPage}&page_size=100&q=${encodeURIComponent(search)}`);
@@ -138,6 +161,6 @@ function RuleForm({ kind, rule, onSaved, onCancel, blocked }: { kind: Kind; rule
     {products.data?.items.map(product => <label className="billing-check" key={product.id}><input type="checkbox" checked={selected.some(item => item.id === product.id)} onChange={event => selectProduct(product, event.target.checked)} />{product.name}</label>)}
     {products.data?.total === 0 && <p>No matching products. Search another name.</p>}
     <nav className="ui-pagination" aria-label="Eligible products pagination"><span className="ui-muted">{products.data ? `${products.data.total} matching ${products.data.total === 1 ? 'product' : 'products'} · Page ${productPage} of ${Math.max(1, Math.ceil(products.data.total / products.data.page_size))}` : 'Product pages unavailable until the list loads.'}</span><div className="ui-actions"><Button variant="secondary" disabled={products.loading || products.error != null || productPage <= 1} onClick={() => setProductPage(page => page - 1)}>Previous products</Button><Button variant="secondary" disabled={products.loading || products.error != null || !products.data || productPage >= Math.ceil(products.data.total / products.data.page_size)} onClick={() => setProductPage(page => page + 1)}>Next products</Button></div></nav>
-    <p className="ui-muted">{selected.length} products selected. Search and page changes retain selections.</p>{selected.map(product => <Button key={product.id} variant="secondary" onClick={() => setSelected(current => current.filter(item => item.id !== product.id))}>Remove selected product {product.name ?? product.id}</Button>)}</div>}
+    <p className="ui-muted">{selected.length} products selected. Search and page changes retain selections.</p>{selected.map((product, index) => product.name ? <div key={product.id} role="group" aria-label={`Selected product ${product.name}`}><Button variant="secondary" onClick={() => setSelected(current => current.filter(item => item.id !== product.id))}>Remove selected product {product.name}</Button></div> : <SelectedProductLookup key={product.id} id={product.id} position={index + 1} onResolved={rememberProduct} onRemove={() => setSelected(current => current.filter(item => item.id !== product.id))} />)}</div>}
   </fieldset>{error != null && <ErrorPanel message={getErrorMessage(error)} />}<div className="ui-actions"><Button type="submit" pending={pending} disabled={blocked}>{rule ? 'Schedule revision' : 'Create rule'}</Button><Button variant="secondary" disabled={pending} onClick={onCancel}>Close form</Button></div></form>;
 }
