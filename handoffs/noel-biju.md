@@ -1,8 +1,80 @@
 # Noel Biju: handoff
 
-Status: BILLING CORE, SEND RECOVERY AND PRODUCT LABELS INTEGRATED; INVOICE LAYOUT READY FOR REVIEW
+Status: FINAL BILLING POLISH IMPLEMENTED; EXACT REVIEW AND SERIALIZED INTEGRATION PENDING
 
-## Current checkpoint: 31 October 2026
+## Current checkpoint: final UI polish, 31 October 2026
+
+Active branch: `feature/billing-final-polish`, isolated at
+`/tmp/cadentra-billing-final-polish`. Source candidate
+`62630106c5f813e4f3d6b81bec18adeab64bb9d2` includes reviewed main
+`1e87dfef4039798f72d202273e2cfa429a5fd1e4`. Implementation commits are
+`fb1fa8d95ba337f07ba72ae3390245f9ca13dcba` and
+`c33eb9aa17dd95e02b80ba92dcd27fe71396fea0`. The original checkout's importer
+drafts are preserved. No schema, identity, shared UI, dependency or routing file
+was edited. Effective author remains `noel-ult`; publication uses `gh-agent3`.
+
+The invoice detail now shows server-provided total, paid and balance near the
+heading. Draft and cancelled amounts say Stored balance and Not payable in both
+summary and lower totals. Confirm/cancel feedback has a persistent focus target;
+failed actions stay in their dialog without a duplicated page error. Payment
+methods use readable labels while preserving API enum values. The All invoices
+link uses the existing 44px mobile minimum. Actor/invoice-scoped payment and
+email recovery is unchanged.
+
+Final performance sampling exposed an intermittent invoice-filter race: React
+Router's search-param callback does not queue rapid edits like React state.
+Two deterministic regressions failed before the fix. Synchronous composition now
+retains all selected filters; per-navigation owner/sequence metadata prevents an
+older local commit from replacing newer edits. Back/Forward and external links
+restore the URL as the next edit's base. Only allowed filters reach the API;
+filter edits reset pagination. The marker contains no account or financial data.
+
+Executed checks:
+
+- `npm test -- src/features/billing/billingFilterNavigation.test.tsx src/features/billing/billing.test.tsx src/features/billing/billingPolish.test.tsx src/features/billing/sendCommands.test.tsx --reporter=dot`
+  passed four files / 47 tests in 5.21 seconds. Coverage includes rapid multi-filter
+  composition, history/external navigation, unchanged recovery, focus after a
+  disappearing trigger, modal-only errors and unchanged external-card enum.
+- `npm run build` passed TypeScript and Vite after merging `1e87dfe`.
+  File-only ESLint and `git diff --check` passed. No full suite or benchmark was
+  repeated for this slice.
+- Independent standards/specification reviews cleared the final scoped changes.
+  The lower nonpayable label and mobile header link findings were corrected.
+- One batched visual round covered five invoice states at 1440, 390 and 320px,
+  plus light mode and an explicitly DOM-only oversized-money edge. It used mocked
+  read-only GETs from sanitized, actual fictional demo DTO snapshots and a
+  synthetic staff session. It is frontend visual evidence, not backend or SMTP
+  integration. No mutation, external request, unexpected API read, page error or
+  console issue occurred. Summary values matched snapshots; tables remained
+  contained and keyboard-scrollable.
+- One correction round passed four cases: 44px return links at 320/390px,
+  explicit nonpayable wording in both detail locations, settled light-theme
+  secondary-button contrast of 15.28:1, and one native browser event burst changing
+  all five filters against a meaningfully filtered invoice snapshot list. URL,
+  visible controls, one matching result and Back/Forward agreed. Zero writes,
+  unexpected reads, external requests, console errors or page errors occurred.
+  The parent inspected representative initial and correction screenshots.
+  Metrics are `/tmp/billing-final-polish-qa-result.json` and
+  `/tmp/billing-final-correction-qa-result.json`; local captures stay outside Git.
+
+Coordinator-owned production import at `71af9f6` is complete: 96 fictional demo
+customers, 80 attributed UCI catalog descriptions, 192 subscriptions, 624 invoices,
+843 payments and 648 period outcomes were added while preserving existing data.
+Imported-demo email suppression sent zero messages. Both real password-reset and
+invoice delivery were subsequently confirmed received by the user; no resend is
+needed. Provider credentials and the controlled recipient are excluded here.
+
+The approved developer hub is a separate coordinated slice: Midhun P M owns
+backend identity, models, migration and environment/deployment; Sherin Saji owns
+hub/shared/portal frontend. Noel supplied independent security review and billing
+integration. No developer-hub deployment or global two-second performance pass
+is claimed by this billing checkpoint. Main publishing still requires exact
+coordinator review and a serialized GO tied to the expected remote main.
+
+## Earlier checkpoint: 31 October 2026
+
+The following notes retain earlier evidence. Their pending delivery and SMTP
+configuration statements are superseded by the current checkpoint above.
 
 Active branch: `feature/billing-mobile-density`, based on reviewed main
 `ea9183623a11b1a91fc4e17eedd3d3889f373f33`. The earlier closeout and verification
