@@ -1,6 +1,30 @@
 # Noel Biju: handoff
 
-Status: FINAL BILLING POLISH IMPLEMENTED; EXACT REVIEW AND SERIALIZED INTEGRATION PENDING
+Status: FINAL BILLING POLISH REVIEWED AND PUBLISHED TO MAIN; SHARED RELEASE VERIFICATION WITH COORDINATOR
+
+## Publication and unfinished-work checkpoint
+
+The exact reviewed feature `fb5e32d7c70849a10d56399032d963defb3000e6`
+was integrated and pushed by Noel using `gh-agent3` as main
+`894121f44e47c384838a953d18caa5a38fa72e07`. Remote main was verified after
+push; its tree exactly matched the reviewed feature. The serialized turn was
+released to Midhun P M. This later commit changes only the handoff and is pushed
+on the feature branch, without a new main push.
+
+At the user's immediate-push cutoff, no billing UI code is unfinished. Remaining
+unverified items are the coordinator's combined production release/live role-hub
+check, a post-release authenticated read-only billing smoke, and the final global
+performance gate. No full benchmark, extra email or financial write was run at
+the cutoff. The hub/backend and portal source reviews found no release blocker;
+their actual deployment remains coordinator-owned.
+
+The original importer drafts in `feature/billing-demo-import` are being preserved
+as an explicit WIP checkpoint. Reviewed successor importer code is already on
+main and populated production; the original draft checkpoint must not be merged
+over that successor. Its local draft tests were not executed by this checkpoint.
+The separate historical `feature/billing-send-contracts` head `c4633eb` remains
+held and excluded from this UI release; a real lost-response send/reload browser
+probe is still unverified. Existing confirmed email receipts need no resend.
 
 ## Current checkpoint: final UI polish, 31 October 2026
 
