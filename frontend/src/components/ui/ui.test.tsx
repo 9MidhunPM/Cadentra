@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useRef, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../../lib/api';
 import { Button, ConfirmDialog, DataTable, DateLabel, FormField, Money, SubscriptionStepper, ToastProvider, useToast } from './index';
@@ -55,6 +56,44 @@ describe('shared controls', () => {
 });
 
 describe('confirmation dialog', () => {
+  it('returns focus to a stable notice when a successful action removes its trigger and dialog', async () => {
+    function Example() {
+      const [active, setActive] = useState(true);
+      const notice = useRef<HTMLParagraphElement>(null);
+      return <><p ref={notice} tabIndex={-1} role="status">{active ? 'Subscription active' : 'Closure scheduled'}</p>{active ? <ConfirmDialog returnFocusRef={notice} trigger={<Button>Close subscription</Button>} title="Schedule closure?" description="This takes effect next cycle." onConfirm={async () => { setActive(false); }} /> : null}</>;
+    }
+    render(<Example />);
+    await userEvent.click(screen.getByRole('button', { name: 'Close subscription' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('status')).toHaveFocus());
+    expect(screen.getByRole('status')).toHaveTextContent('Closure scheduled');
+  });
+  it('keeps normal Cancel focus on the trigger when a fallback notice is supplied', async () => {
+    function Example() {
+      const notice = useRef<HTMLParagraphElement>(null);
+      return <><p ref={notice} tabIndex={-1}>Result notice</p><ConfirmDialog returnFocusRef={notice} trigger={<Button>Pause subscription</Button>} title="Pause?" description="Pause next cycle." onConfirm={() => {}} /></>;
+    }
+    render(<Example />);
+    const trigger = screen.getByRole('button', { name: 'Pause subscription' });
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+  it('keeps entered action values and dialog focus after a rejected confirmation', async () => {
+    function Example() {
+      const notice = useRef<HTMLParagraphElement>(null);
+      const [reason, setReason] = useState('');
+      return <><p ref={notice} tabIndex={-1}>Result notice</p><label>Reason<input value={reason} onChange={event => setReason(event.target.value)} /></label><ConfirmDialog returnFocusRef={notice} title="Close?" description="Review the requested closure." onConfirm={async () => { throw new ApiError(409, 'DUE_BILLING_PENDING', 'Process due billing first.'); }} /></>;
+    }
+    render(<Example />);
+    await userEvent.type(screen.getByLabelText('Reason'), 'Moving plan');
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Process due billing first.');
+    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+    expect(screen.getByLabelText('Reason')).toHaveValue('Moving plan');
+  });
   it('focuses cancel, blocks closing/repeats while pending, and restores trigger focus on success', async () => {
     let finish!: () => void;
     const onConfirm = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
