@@ -114,3 +114,29 @@ Sherin's471808 test/T31-evidence feature remains ready; her owner-main push was 
 First authorized deployment built all images, created only Cadentra networks/volumes and completed migrations/bootstrap with exit0. API, PostgreSQL and private Mailpit report healthy; one worker runs as cadentra and web as UID101. No service publishes a host port. Public HTTPS still returned Traefik404: actual web labels lacked router/enable settings despite the saved native domain record. The root follow-up adds explicit Cadentra-only routers/service8080, Cloudflare middleware on both HTTP/HTTPS and app-only redirect/TLS resolver settings.
 
 Actual Dokploy also attached web to the default network. Root adds cadentra-api-proxy only on the private proxy network; Sherin's separately reviewed follow-up must select that upstream, retaining exact web `.2` API trust. No wider proxy trust or other service/domain changes are authorized by this correction. Actual ingress/source/functional workflow verification remains pending.
+
+## Commerce import closeout implementation ·31 October2026
+
+User-approved plan is executing on feature/commerce-demo-import. Root integrated
+Thanushree's bbed4dc adapter, preserving author history. Coordinator helpers added
+static foundation persistence,192 dated scenarios, billing-intent replay and the
+invoice no-email guard adapted from Noel's preserved draft. Root owns the explicit
+CLI, frozen manifest, existing-record baseline, namespace/rule locks and deployment.
+New public attribution page and a workspace footer link make the CC BY notice
+accessible; this bounded shared-UI addition is a coordinator decision.
+
+Local fresh-database interruption/replay acceptance passed:192 subscriptions,
+624 invoices,843 payments,648 periods, zero outbound emails; rerun adds zero.
+Foundation6, billing13 and owner's subscription4 focused checks passed. Scoped
+Ruff/whitespace plus frontend typecheck/lint/build passed. No broad suite repeat.
+
+Production reset SMTP STARTTLS/auth and HTTPS URL were verified; recipient
+confirmed actual reset receipt. The separate zero-value invoice check created no
+Payment, queued one email, reached SENT on attempt1 without recorded error, and
+the recipient directly confirmed receipt. Do not resend either probe. Private
+credentials/recipient information remain outside Git. Development Mailpit unchanged.
+
+Public bulk import and final performance run remain pending this checkpoint.
+Thanushree's new adapter main push has direct user approval in the root thread;
+its owner integration is serialized before the coordinator's main slice. Older
+three-fix bundle remains separately blocked on its existing owner approval.

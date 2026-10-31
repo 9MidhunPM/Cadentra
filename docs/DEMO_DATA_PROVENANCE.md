@@ -114,3 +114,46 @@ consume uses or alter existing history; no global billing/lifecycle sweep is run
 All imported customers carry a durable no-email provenance marker, with reserved
 example.com contact addresses and pre-enqueue/dispatch suppression. A separately
 authorized reset test to the user's own address is outside that fictional cohort.
+
+## Explicit import operation
+
+`python -m app.demo_data.cli --target local-test` validates the disposable test
+workspace. `--target public-demo` validates only the authorized production HTTPS
+origin. Dry-run is the default. Execution additionally requires `--execute`,
+`--expected-database` with the exact privately verified database name, and
+`--worker-paused` after the coordinator pauses the worker externally.
+
+Before a public run, take a private consistent database backup, pause public web
+ingress and the single worker, and ensure both restart in a `finally` block.
+The CLI keeps a namespace advisory lock and shared discount-table locks for the
+bounded operation; an applicable pre-existing global discount causes refusal.
+There is no import hook in application startup or ordinary deployment.
+
+The durable manifest freezes the anchor, complete static inputs, dated lifecycle
+schedule and every generated cycle/payment intention. Existing business rows are
+hashed before import and must remain byte-equivalent. Retry uses the original
+manifest and existing domain outcomes; it never deletes or rewrites invoices.
+Known operator errors use safe codes; arbitrary database exception text is hidden.
+
+## Coordinator local acceptance, 31 October 2026
+
+On a newly created disposable PostgreSQL database at migration0002, an intentional
+interruption after the third durable cycle recovered successfully. A second full
+rerun created zero additional subscriptions, invoices, payments or periods. A
+pre-existing sentinel product remained unchanged. The resulting cohort contained
+96 customers,80 products,160 variants,8 plans,6 templates,192 subscriptions,
+648 billing outcomes,624 invoices and843 payments. Of96 stored ACTIVE
+subscriptions,12 were paused;24 each were DRAFT,QUOTATION,CONFIRMED and CLOSED.
+
+Invoice states:374 PAID,190 CONFIRMED,30 DRAFT and30 CANCELLED. Fictional cash
+received was INR3217491.20, confirmed/paid invoiced gross INR4562091.00 and
+outstanding INR1344599.80. No email outbox rows were created. These are local
+fixture results; the public application requires its own executed reconciliation.
+The selected catalog source fields are real; every customer and financial figure
+above is synthetic. No funds moved.
+
+Foundation6 and billing13 focused PostgreSQL checks passed; Thanushree's adapter
+has4 focused PostgreSQL checks. Frontend typecheck/lint/production build and scoped
+Ruff/whitespace passed. These counts describe separate checks, not a new full-suite
+claim. The billing adapter began as Noel's preserved draft and was completed by a
+bounded helper under Midhun P M's coordination while Noel's thread was planning.
