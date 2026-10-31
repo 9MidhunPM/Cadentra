@@ -1,9 +1,9 @@
 # Midhun P M: handoff
 
-Status: GATE A VERIFIED; FOUNDATION PR4 READY FOR MERGE
+Status: CORE LOCAL INTEGRATION VERIFIED THROUGH PR12; FINAL UI/JOURNEY ACCEPTANCE IN PROGRESS
 
 Role: Platform & Catalog; team coordination and integration
-Branch: feature/platform-foundation
+Branch: feature/integration-readiness
 Implementation commit: f6f3f79a024cd4da1bc049f8aecb0d1c68ac9df5; reviewed main integration commit b86e3a3f07f1e484fc25c25c7f60ff318ed9714a; final evidence/precision commit follows.
 
 ## Delivered slice
@@ -24,9 +24,9 @@ Models: app.models; app.db.base.Base; app.db.session get_session/SessionFactory 
 
 Frontend foundation PR2 and subscription calendar PR1 reviewed and integrated. Billing pricing PR3 reviewed and integrated with final precision head76c1bd6. Hourly ready-slice/main synchronization requested from all three teammates; merges remain serial and review-gated.
 
-## Next dependency
+## Current dependency
 
-Merge the reviewed backend foundation PR4 after final suite and notify owners of the exact integrated main. Combined frontend/backend/PostgreSQL Gate A verification has passed. Then persistent subscriptions/billing/reporting proceed from reviewed main. Midhun P M owns identity/catalog feature screens next; other owners retain their modules.
+Reviewed main382fa2b integrates the subscription workflows and recurring issuer. Billing UI remains held for review findings; portal actions and the full browser journey are next. Coordinate readiness gates and owner corrections while preserving named ownership. Earlier sections retain historical Gate A evidence.
 
 ## Identity/catalog experience and local mail capture
 
@@ -43,3 +43,9 @@ After incorporating the financial API/privacy commits, the fresh combined suite 
 Reviewed main48c7896 integrates identity/catalog and reporting/portal reads. The independently combined suite passes214backend tests/121subtests and104frontend tests plus type/lint/build/Ruff/pack/whitespace. PR9 local SMTP/reset/inbox proof is separate from external delivery, which is skipped until configured. PR9 scanner findings were reviewed as one synthetic mocked-test password repeated eight times; the failed check remains documented without broad suppression. PR10 scanner passes.
 
 Direct SSH merges are technically available: all three teammate accounts have write access and main is unprotected. The user asked a capability question; no switch away from selected PR review was inferred. PR11 is under independent lifecycle review and combined verification, with a named-plan display follow-up requested. Worker/issuer, portal actions, full T31, fresh-clone and final performance remain gates. No deployment or external delivery claim.
+
+## PR12 and product lookup correction
+
+Combined291backend/121subtests plus unchanged113frontend pass at382fa2b. Actual dedicated-database worker subprocess activation/one4680.00invoice and second-process restart idempotency pass. Fresh remote clone with new venv/npm install from locked caches, new database migration/no-drift, seed twice and actual same-origin Gate A passes. Exact reproduction source382fa2b; evidence /tmp/cadentra-reproduction-evidence-382fa2b/RESULTS.md. The screenshot remains a loading skeleton, not full portal proof. Docker/public deployment/external delivery remain unverified or deferred.
+
+PR13 held despite304backend/130frontend green because an independent added regression proves payment key loss after route unmount; Noel is fixing retained command/reconciliation and product picker pagination. Root adds actual bounded literal q search to GET/products; red regression123/120 then13catalog PostgreSQL tests, Ruff and whitespace pass. Rows and total share the same filter; role/decimal contracts unchanged. New worker/action test slice cd529df is independently reviewing.
