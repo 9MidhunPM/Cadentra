@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigationType, useParams, useSearchParams } from 'react-router';
 import { apiClient, getErrorMessage, useSession, type ListResponse, type ResourceResponse } from '../../lib';
 import { Button, ConfirmDialog, DataTable, DateLabel, ErrorPanel, FormField, LoadingSkeleton, Money, PageHeader, StatusBadge } from '../../components/ui';
 import { fieldError, useResource } from './resource';
@@ -11,6 +11,19 @@ export { PaymentForm };
 
 export function InvoiceList() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const queryOwner = useId();
+  const latestQuery = useRef({ params: new URLSearchParams(searchParams), sequence: 0 });
+  useLayoutEffect(() => {
+    const marker = location.state?.cadentraBillingQuery;
+    // Keep newer synchronous edits through intermediate commits of our own
+    // navigations. History traversal and external links always restore the URL.
+    if (navigationType === 'POP' || marker?.owner !== queryOwner ||
+      typeof marker.sequence !== 'number' || marker.sequence >= latestQuery.current.sequence) {
+      latestQuery.current.params = new URLSearchParams(searchParams);
+    }
+  }, [location.key, location.state, navigationType, queryOwner, searchParams]);
   const rawPage = searchParams.get('page') ?? '1';
   const parsedPage = Number(rawPage);
   const page = /^\d+$/.test(rawPage) && Number.isSafeInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1;
@@ -20,14 +33,16 @@ export function InvoiceList() {
   type FilterKey = typeof filterKeys[number];
   const filters = Object.fromEntries(filterKeys.map(key => [key, searchParams.get(key) ?? ''])) as Record<FilterKey, string>;
   function updateQuery(changes: Partial<Record<FilterKey, string>>, nextPage = 1) {
-    setSearchParams(previous => {
-      const next = new URLSearchParams();
-      for (const key of filterKeys) {
-        const value = changes[key] ?? previous.get(key) ?? '';
-        if (value) next.set(key, value);
-      }
-      next.set('page', String(nextPage));
-      return next;
+    const next = new URLSearchParams();
+    for (const key of filterKeys) {
+      const value = changes[key] ?? latestQuery.current.params.get(key) ?? '';
+      if (value) next.set(key, value);
+    }
+    next.set('page', String(nextPage));
+    latestQuery.current.params = next;
+    const sequence = ++latestQuery.current.sequence;
+    setSearchParams(next, {
+      state: { ...location.state, cadentraBillingQuery: { owner: queryOwner, sequence } },
     });
   }
   const setPage = (nextPage: number) => updateQuery({}, nextPage);
@@ -111,7 +126,7 @@ function InvoiceRecord({ id, actorId }: { id: string; actorId: string }) {
   }
   const invoice = resource.data?.data;
   const notPayable = invoice?.status === 'DRAFT' || invoice?.status === 'CANCELLED';
-  return <section><PageHeader eyebrow="Billing" title={invoice?.number ?? 'Invoice details'} description="Immutable charges and recorded payments." actions={<Link to="/billing/invoices">All invoices</Link>} />
+  return <section><PageHeader eyebrow="Billing" title={invoice?.number ?? 'Invoice details'} description="Immutable charges and recorded payments." actions={<Link className="billing-invoice-link" to="/billing/invoices">All invoices</Link>} />
     <p className="billing-action-notice" ref={successNotice} role="status" aria-live="polite" aria-atomic="true" tabIndex={-1}>{message}</p>
     {resource.loading && <LoadingSkeleton label="Loading invoice" />}{resource.error != null && <ErrorPanel message={getErrorMessage(resource.error)} onRetry={resource.reload} />}
     {invoice && <>
@@ -130,7 +145,7 @@ function InvoiceRecord({ id, actorId }: { id: string; actorId: string }) {
       {send.error != null && <ErrorPanel message={getErrorMessage(send.error)} />}
       {send.phase === 'storage_error' && <p role="alert">Invoice email recovery storage is unavailable or invalid. Sending is blocked. Restore session storage and reload before retrying.</p>}
       <h2>Stored invoice lines</h2><p className="ui-muted billing-scroll-hint">Scroll the line table horizontally to view every charge.</p><div className="ui-table-panel"><div className="ui-table-scroll" role="region" aria-label="Stored invoice lines" tabIndex={0}><table className="ui-table billing-invoice-lines"><caption className="ui-sr-only">Stored invoice lines</caption><thead><tr><th>Description</th><th>Quantity</th><th>Unit price</th><th>Discount</th><th>Tax</th><th>Total</th></tr></thead><tbody>{invoice.lines?.map(line => <tr key={line.id}><td>{line.description}{line.taxes?.map((tax, index) => <small className="billing-tax" key={index}>{tax.name} ({tax.rate_percent}%): <Money amount={tax.amount} currency={invoice.currency} /></small>)}</td><td>{line.quantity}</td><td><Money amount={line.unit_price} currency={invoice.currency} /></td><td><Money amount={line.discount} currency={invoice.currency} /></td><td><Money amount={line.tax_total} currency={invoice.currency} /></td><td><Money amount={line.total} currency={invoice.currency} /></td></tr>)}</tbody></table></div></div>
-      <dl className="billing-totals">{([['Subtotal', invoice.subtotal], ['Discount', invoice.discount_total], ['Tax', invoice.tax_total], ['Total', invoice.total], ['Paid', invoice.paid_amount], [notPayable ? 'Stored balance' : 'Balance due', invoice.balance_due]] as const).map(([label, amount]) => <div key={label}><dt>{label}</dt><dd><Money amount={amount} currency={invoice.currency} /></dd></div>)}</dl>
+      <dl className="billing-totals">{([['Subtotal', invoice.subtotal], ['Discount', invoice.discount_total], ['Tax', invoice.tax_total], ['Total', invoice.total], ['Paid', invoice.paid_amount], [notPayable ? 'Stored balance' : 'Balance due', invoice.balance_due]] as const).map(([label, amount]) => <div key={label}><dt>{label}{notPayable && label === 'Stored balance' && <span className="billing-summary-note">Not payable</span>}</dt><dd><Money amount={amount} currency={invoice.currency} /></dd></div>)}</dl>
       <h2>Payment history</h2><DataTable rows={invoice.payments ?? []} columns={[{ key: 'date', header: 'Paid on', render: row => <DateLabel value={row.paid_on} /> }, { key: 'method', header: 'Method', render: row => paymentMethodLabel(row.method) }, { key: 'amount', header: 'Amount', render: row => <Money amount={row.amount} currency={invoice.currency} /> }]} getRowKey={row => row.id} page={1} pageSize={Math.max(1, invoice.payments?.length ?? 0)} total={invoice.payments?.length ?? 0} onPageChange={() => undefined} caption="Payments" emptyTitle="No payments recorded" />
       {['CONFIRMED', 'PAID'].includes(invoice.status) && <PaymentForm invoice={invoice} onSaved={detail => resource.replace({ data: detail })} />}
       {['DRAFT', 'CONFIRMED'].includes(invoice.status) && (invoice.payments?.length ?? 0) === 0 && <div className="billing-card"><h2>Cancel invoice</h2><FormField error={fieldError(error, 'reason')} id="cancel-reason" label="Cancellation reason"><textarea value={reason} onChange={event => setReason(event.target.value)} /></FormField><ConfirmDialog title="Cancel this invoice?" description="This preserves the period and discount history. It cannot be automatically invoiced again." trigger={<Button variant="danger" disabled={pending || !reason.trim()}>Cancel invoice</Button>} onConfirm={() => action('cancel')} returnFocusRef={successNotice} /></div>}

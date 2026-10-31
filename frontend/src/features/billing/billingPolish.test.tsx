@@ -30,7 +30,7 @@ it.each(['DRAFT', 'CANCELLED'])('does not describe the stored %s balance as paya
   const current = invoice(`polish-label-${status}`, status);
   vi.spyOn(apiClient, 'request').mockResolvedValue({ data: current });
   detail(current.id);
-  await screen.findByText('Not payable');
+  await within(await screen.findByLabelText('Invoice summary')).findByText('Not payable');
   expect(screen.queryByText('Balance due')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Invoice summary')).toHaveTextContent('INR 100.00');
 });
