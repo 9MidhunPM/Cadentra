@@ -11,3 +11,38 @@
 @media(prefers-reduced-motion:reduce){.home-reveal{opacity:1;translate:none;transition:none}}
 /* Match the approved film-frame composition without excess desktop headroom. */
 @media(min-width:801px){.home-hero{min-height:min(1000px,100svh)}.home-header,.home-hero-inner{width:100%}.home-hero-copy{align-self:start;padding-top:35px}.home-hero-product{align-self:start;padding-top:170px}}
+
+/* Full-screen film; the video frame remains uncropped. */
+.home-hero{height:100svh;min-height:0;background:#050a07;display:block}
+.home-film-stage{position:absolute;inset:0;outline:none}
+.home-film-stage video,.home-film-stage img{display:block;width:100%;height:100%;object-fit:contain;background:#050a07}
+.home-film-title{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.home-film-actions{position:absolute;top:20px;right:24px;z-index:2;display:flex;gap:8px}
+.home-film-actions a{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;border:1px solid #c3dfc34d;border-radius:999px;background:#07130ee8;color:#ebf7ee;font-size:12px;backdrop-filter:blur(12px)}
+.home-film-actions a:hover{background:#244333}
+@media(max-width:600px){.home-film-actions{top:16px;right:16px}.home-film-actions a{font-size:11px;padding:10px 12px}}
+
+/* Scroll advances the film while the viewport stays pinned. */
+.home-hero{height:400svh;overflow:visible}
+.home-film-sticky{position:sticky;top:0;height:100svh;overflow:hidden}
+.home-hero-static{height:100svh}
+@media(prefers-reduced-motion:reduce){.home-hero{height:100svh}}
+
+/* Bring the real product section over the last moments of the film. */
+.home-hero + .home-product{position:relative;z-index:3;margin-top:-30svh}
+.home-hero + .home-product::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:clamp(60px,12vh,120px);background:linear-gradient(to bottom,transparent,var(--home-paper));pointer-events:none}
+.home-hero-static + .home-product{margin-top:0}
+.home-hero-static + .home-product::before{display:none}
+@media(prefers-reduced-motion:reduce){.home-hero + .home-product{margin-top:0}.home-hero + .home-product::before{display:none}}
+
+/* Actual navigation and action, styled to echo the concept film. */
+.home-film-header{position:absolute;z-index:4;top:0;left:0;right:0;display:flex;align-items:center;gap:32px;padding:24px clamp(20px,4vw,64px);background:linear-gradient(#030c08ed,transparent);color:#eff8ef}
+.home-film-brand{font-family:Georgia,serif;font-size:26px;font-weight:700;letter-spacing:-.04em;white-space:nowrap}.home-film-brand span{color:#b9edcf}
+.home-film-nav{display:flex;align-items:center;justify-content:center;gap:32px;margin-left:auto;font-size:13px}.home-film-nav a:hover{text-decoration:underline;text-underline-offset:6px}
+.home-film-app,.home-film-explore{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:999px;background:#b9edcf;color:#10271a!important;font-size:13px;font-weight:600;padding:12px 19px;white-space:nowrap}
+.home-film-menu{display:none;position:relative}.home-film-menu summary{cursor:pointer;list-style:none;padding:10px 14px;border:1px solid #ffffff50;border-radius:999px;font-size:12px}.home-film-menu summary::-webkit-details-marker{display:none}.home-film-menu nav{position:absolute;right:0;top:calc(100% + 8px);display:flex;flex-direction:column;min-width:170px;padding:8px;background:#10251bea;border:1px solid #ffffff35;border-radius:12px;box-shadow:0 12px 28px #0008}.home-film-menu nav a{padding:11px 13px;font-size:13px}.home-film-menu nav a:hover{background:#ffffff12}
+.home-film-explore{position:absolute;z-index:3;left:clamp(24px,8vw,130px);bottom:clamp(150px,25vh,250px);box-shadow:0 8px 32px #0008}
+@media(max-width:800px){.home-film-header{padding:18px 20px;gap:12px}.home-film-brand{margin-right:auto;font-size:24px}.home-film-nav{display:none}.home-film-app{padding:10px 14px;font-size:12px}.home-film-menu{display:block}.home-film-explore{left:20px;bottom:27vh}}
+.home-film-scroll-cue{position:absolute;z-index:2;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;color:#c5d9ca;font-size:12px;letter-spacing:.03em;pointer-events:none}
+.home-film-mobile-copy{display:none}
+@media(max-width:600px){.home-film-mobile-copy{display:block;position:absolute;z-index:2;top:16%;left:20px;color:#eff8ef;font-size:clamp(22px,7vw,30px);font-weight:600;line-height:1.15;letter-spacing:-.03em;pointer-events:none}.home-film-scroll-cue{bottom:22px}}
