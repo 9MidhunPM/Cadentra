@@ -37,3 +37,9 @@ The local mail slice adds pinned Mailpit Compose wiring, explicit one-batch outb
 SSH-only clarification is recorded: teammates push with verified owner keys and send prepared PR metadata; coordinator9MidhunPM creates PRs. No participant gh login/token setup.
 
 After incorporating the financial API/privacy commits, the fresh combined suite passed140backend tests and91frontend tests. Native admin browser coverage includes staff creation and confirmed backend403 for a staff product mutation. Filtered Mailpit web inbox shows the fictional reset capture; the token was consumed and removed from the reset URL. Docker and external email remain unverified.
+
+## Integration checkpoint after PR10
+
+Reviewed main48c7896 integrates identity/catalog and reporting/portal reads. The independently combined suite passes214backend tests/121subtests and104frontend tests plus type/lint/build/Ruff/pack/whitespace. PR9 local SMTP/reset/inbox proof is separate from external delivery, which is skipped until configured. PR9 scanner findings were reviewed as one synthetic mocked-test password repeated eight times; the failed check remains documented without broad suppression. PR10 scanner passes.
+
+Direct SSH merges are technically available: all three teammate accounts have write access and main is unprotected. The user asked a capability question; no switch away from selected PR review was inferred. PR11 is under independent lifecycle review and combined verification, with a named-plan display follow-up requested. Worker/issuer, portal actions, full T31, fresh-clone and final performance remain gates. No deployment or external delivery claim.
