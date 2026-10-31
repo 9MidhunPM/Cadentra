@@ -1,0 +1,11 @@
+# Native static-server evidence
+
+The frontend package builds locked sources with Node and serves only dist through an unprivileged NGINX image on8080. Exact /api and /api/ paths proxy unchanged to api:8001; API errors, query strings, cookies, Origin, CSRF headers and bodies retain their meaning. SPA routes fall back to index.html; missing assets remain404. HTML avoids stale manifests, while hashed assets use immutable caching and gzip.
+
+Image tags/digests were checked against official registry metadata on31October2026: [Node26.12.1](https://hub.docker.com/v2/repositories/library/node/tags/26.12.1-bookworm-slim), [NGINX1.30.6](https://hub.docker.com/v2/repositories/nginx/nginx-unprivileged/tags/1.30.6-alpine). The [NGINX-maintained image](https://github.com/nginx/docker-nginx-unprivileged) supplies non-root8080 and task-writable PID/temp defaults. Dockerfile pins both manifest digests rather than mutable tags alone.
+
+Executed: npm ci, production build, unchanged lockfile, native NGINX1.30.6 config validation and [eight HTTP/DNS routing checks](routing.json). The native binary was compiled under /tmp after detached-signature verification against its [official signing key](https://nginx.org/en/pgp_keys.html), fingerprint D6786CE303D9A9022998DC6CC8464D549AF75C0A. Native wrappers changed only MIME/PID/log/temp paths, static asset root, loopback listen address and upstream/DNS fixture addresses. Test processes were stopped.
+
+[Real Chromium referrer/error-path proof](referrer.json) loaded the reset page with a public marker token, then triggered an actual upstream-disconnect502. Explicit no-referrer policy on both HTML locations prevented Referer/token logging and preserved Origin. Removing only those directives reproduced the leak. Access logging is disabled as well. The policy is repeated beside each HTML location's Cache-Control because [add_header inheritance](https://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header) depends on the location's own headers.
+
+These are protocol fixtures, not successful authentication or billing. Docker build/entrypoint/user filesystem, actual Compose DNS/network and production deployment are UNVERIFIED. The native tests do not establish a container execution result.
