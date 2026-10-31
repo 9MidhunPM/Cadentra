@@ -3,8 +3,8 @@
 Status: SUBSCRIPTION WORKFLOWS/API/STAFF UI IMPLEMENTED; JOINT INTEGRATION AUDIT OPEN
 
 Role: Subscription Workflows
-Branch: feature/subscription-acceptance
-Reviewed main incorporated: beedbbdda87774ac6813d3c3e8036db5df465ca3 (PRs #14/#15 merged)
+Branch: feature/subscription-completion
+Reviewed main incorporated: 18e88ff7e1b9abfb2d17c4be50b2e929267c437f
 Backend workflow/API commit: f8fa86715ad607936fbec559a198f7ed2eb9abb4
 Staff UI commit: 58fbb5f6f634a0da842a2beac952675174050941
 Projection privacy fix: f6acf92b6e35a49a29c9f292cc4216ffdcceecc1
@@ -13,6 +13,7 @@ Named template plan labels: c046593f7e91b9fdd58f0b2d16dbd863988fdae5
 Lifecycle/availability boundary coverage: 3f759740b2196f3d8973ba5798214d85d18f3980
 Actual worker/action race verification: a9817959c5af35b06b5d1eecdf3279974423334a
 Theme notice contrast fix: a9b7a0c1b9f6b453395565effc1f34457c5079d6
+Owner SSH integration: 18e88ff7e1b9abfb2d17c4be50b2e929267c437f
 Prior getter implementation a40fe5a and calendar bdb1cf2 were integrated in PRs #6/#1.
 
 ## Delivered behavior
@@ -96,7 +97,6 @@ use independently migrated UUID schemas and remove only those newly created sche
   actual PostgreSQL lock wait; cached template rows refresh coherently.
 - Policy tests cover disabled pause/close/renew for staff and an actual customer
   owner, asserting conflict/no mutation/no misleading action hint.
-- npm test: 79 passed across the current shared+feature frontend suite.
 - Final frontend run on reviewed beedbbd plus the theme correction: 113 tests
   passed across ten files. Typecheck, lint and production build passed. The shared
   bundle-size advisory remains a build warning, not a failure or performance claim.
@@ -168,11 +168,20 @@ integration test DB. Final standards/specification source reviews found no block
 The final integrated run includes all ten cases; no seeded period outcome stands
 in for actual billing in these worker/race tests.
 
-## Coordination and PR
+## Coordination and integration
 
-SSH-only: push with verified gh-agent2/IdentitiesOnly, preserve real commit author,
-and send tested heads to Midhun P M. No gh login, OAuth/token setup or global
-account switching. Coordinator creates/reviews/merges PRs using existing auth.
+The user changed the workflow after billing PR #13: Midhun P M reviews exact
+heads, then each owner merges reviewed code locally and pushes main with their
+own SSH key during an explicitly serialized coordinator window. Do not create
+or merge PRs through gh/API. Preserve real authorship, never force-push or delete
+work, and do not change global Git/SSH/account configuration.
+
+The approved 9672e09 slice was merged with --no-ff from verified main 6cd8b74 and
+pushed by Thanushree's configured author/key to main 18e88ff. A subsequent SSH
+ls-remote verified the exact remote SHA; local HEAD/origin/main were clean and
+0/0. Pack and whitespace checks passed. No GitHub API mutation was used.
+Use command-local ssh -F /dev/null -i "$HOME/.ssh/gh-agent2" -o IdentitiesOnly=yes
+with normal Git push, preserving host-key checks. No private key was read or copied.
 Keep atomic active-work commits within 30 minutes, incorporate reviewed main at
 least hourly, and report ready slices sooner. Preserve both earlier feature branches.
 
